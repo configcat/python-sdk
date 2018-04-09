@@ -1,0 +1,3 @@
+CacheControl>=0.12.3
+requests>=2.17.3
+pyOpenSSL>=17.5.0
