@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The deploy scripts takes one argument: the version for the client lib.
 # It should be run from the root of the repo:
-# bash .\scripts\dist.sh 1.0.0
+# bash .\scripts\dist.sh x.x.x
 # You should set up your .pypirc before executing this script
 
 set -uxe
