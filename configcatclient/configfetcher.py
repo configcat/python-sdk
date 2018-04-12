@@ -19,6 +19,7 @@ class CacheControlConfigFetcher(ConfigFetcher):
         self._session = requests.Session()
         self._request_cache = CacheControl(self._session)
         self._headers = {'User-Agent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
+                         'X-ConfigCat-UserAgent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
                          'Content-Type': "application/json"}
 
     def get_configuration_json(self):

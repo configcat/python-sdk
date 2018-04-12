@@ -7,7 +7,7 @@ import configcatclient
 
 if __name__ == '__main__':
     # Initialize the BetterConfigClient with a project secret.
-    configcatclient.initialize('samples/01')
+    configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
 
     # Current project's setting key name is 'keySampleText'
     my_setting_value = configcatclient.get().get_value('keySampleText', 'default value')

@@ -14,6 +14,6 @@ if __name__ == "__main__":
             "forget to activate a virtual environment?"
         ) from exc
 
-    configcatclient.initialize('samples/01')
+    configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
 
     execute_from_command_line(sys.argv)

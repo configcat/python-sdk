@@ -19,14 +19,14 @@ class AutoPollTests(unittest.TestCase):
 
     def test_client_works(self):
         configcatclient.stop()
-        configcatclient.initialize('samples/01')
+        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         client = configcatclient.get()
         self.assertEqual('This text came from BetterConfig', client.get_value('keySampleText', 'default value'))
         configcatclient.stop()
 
     def test_get_configuration(self):
         configcatclient.stop()
-        configcatclient.initialize('samples/01')
+        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         client = configcatclient.get()
         configuration_json = client.get_configuration_json()
         self.assertEqual('This text came from BetterConfig', configuration_json['keySampleText'])
@@ -34,7 +34,7 @@ class AutoPollTests(unittest.TestCase):
 
     def test_force_refresh(self):
         configcatclient.stop()
-        configcatclient.initialize('samples/01')
+        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         client = configcatclient.get()
         configuration_json = client.get_configuration_json()
         self.assertEqual('This text came from BetterConfig', configuration_json['keySampleText'])
@@ -45,15 +45,15 @@ class AutoPollTests(unittest.TestCase):
 
     def test_reinitialization(self):
         configcatclient.stop()
-        configcatclient.initialize('samples/01')
-        self.assertEqual(configcatclient.get()._project_secret, 'samples/01')
+        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
+        self.assertEqual(configcatclient.get()._project_secret, 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         configcatclient.initialize('hijack')
-        self.assertEqual(configcatclient.get()._project_secret, 'samples/01')
+        self.assertEqual(configcatclient.get()._project_secret, 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         configcatclient.stop()
 
     def test_wrong_param(self):
         configcatclient.stop()
-        configcatclient.initialize('samples/01', 0, -1)
+        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA', 0, -1)
         client = configcatclient.get()
         time.sleep(1)
         self.assertEqual('This text came from BetterConfig', client.get_value('keySampleText', 'default value'))
@@ -69,22 +69,22 @@ class LazyLoadingTests(unittest.TestCase):
 
     def test_reinitialization(self):
         configcatclient.stop()
-        configcatclient.initialize_lazy_loading('samples/01')
-        self.assertEqual(configcatclient.get()._project_secret, 'samples/01')
+        configcatclient.initialize_lazy_loading('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
+        self.assertEqual(configcatclient.get()._project_secret, 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         configcatclient.initialize_lazy_loading('hijack')
-        self.assertEqual(configcatclient.get()._project_secret, 'samples/01')
+        self.assertEqual(configcatclient.get()._project_secret, 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         configcatclient.stop()
 
     def test_client_works(self):
         configcatclient.stop()
-        configcatclient.initialize_lazy_loading('samples/01')
+        configcatclient.initialize_lazy_loading('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         client = configcatclient.get()
         self.assertEqual('This text came from BetterConfig', client.get_value('keySampleText', 'default value'))
         configcatclient.stop()
 
     def test_wrong_param(self):
         configcatclient.stop()
-        configcatclient.initialize_lazy_loading('samples/01', 0)
+        configcatclient.initialize_lazy_loading('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA', 0)
         client = configcatclient.get()
         self.assertEqual('This text came from BetterConfig', client.get_value('keySampleText', 'default value'))
         configcatclient.stop()
@@ -99,15 +99,15 @@ class ManualPollingTests(unittest.TestCase):
 
     def test_reinitialization(self):
         configcatclient.stop()
-        configcatclient.initialize_manual_polling('samples/01')
-        self.assertEqual(configcatclient.get()._project_secret, 'samples/01')
+        configcatclient.initialize_manual_polling('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
+        self.assertEqual(configcatclient.get()._project_secret, 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         configcatclient.initialize_manual_polling('hijack')
-        self.assertEqual(configcatclient.get()._project_secret, 'samples/01')
+        self.assertEqual(configcatclient.get()._project_secret, 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         configcatclient.stop()
 
     def test_client_works(self):
         configcatclient.stop()
-        configcatclient.initialize_manual_polling('samples/01')
+        configcatclient.initialize_manual_polling('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
         client = configcatclient.get()
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
         client.force_refresh()
