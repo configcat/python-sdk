@@ -55,7 +55,7 @@ class AutoPollTests(unittest.TestCase):
         configcatclient.stop()
         configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA', 0, -1)
         client = configcatclient.get()
-        time.sleep(1)
+        time.sleep(2)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
         configcatclient.stop()
 
