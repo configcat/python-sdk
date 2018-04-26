@@ -6,7 +6,7 @@ from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT
 
 
 class ConfigCatClientTests(unittest.TestCase):
-    def test_without_project_secret(self):
+    def test_without_api_key(self):
         with self.assertRaises(ConfigCatClientException):
             ConfigCatClient(None)
 

@@ -6,7 +6,7 @@ pip install configcat-client
 import configcatclient
 
 if __name__ == '__main__':
-    # Initialize the BetterConfigClient with a project secret.
+    # Initialize the ConfigCatClient with an API Key.
     configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA')
 
     # Current project's setting key name is 'keySampleText'

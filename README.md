@@ -21,14 +21,14 @@ pip install configcat-client
 import configcatclient
 ```
 
-**3. Get your Project Secret from the [ConfigCat.com](https://configcat.com) portal**
+**3. Get your API Key from the [ConfigCat.com](https://configcat.com) portal**
 
-![YourConnectionUrl](https://raw.githubusercontent.com/configcat/python-sdk/master/media/readme01.png  "YourProjectSecret")
+![YourConnectionUrl](https://raw.githubusercontent.com/configcat/python-sdk/master/media/readme01.png  "ApiKey")
 
 **4. Initialize and get the client**
 
 ```python
-configcatclient.initialize('<PLACE-YOUR-PROJECT-SECRET-HERE>')
+configcatclient.initialize('<PLACE-YOUR-API-KEY-HERE>')
 client = configcatclient.get()
 ```
 
@@ -67,7 +67,7 @@ Initializing the client and the configuration parameters are different for each 
 
 | ParameterName        | Description           | Default  |
 | --- | --- | --- |
-| ```project_secret```      | Project Secret to access your configuration  | REQUIRED |
+| ```api_key```      | API Key to access your configuration  | REQUIRED |
 | ```poll_interval_seconds ```      | Polling interval|   60 | 
 | ```max_init_wait_time_seconds```      | Maximum waiting time between the client initialization and the first config acquisition in secconds.|   5 |
 | ```on_configuration_changed_callback```      | Callback to get notification about configuration changes. |   None |
@@ -76,7 +76,7 @@ Initializing the client and the configuration parameters are different for each 
 #### Example - increase ```poll_interval_seconds``` to 600 seconds:
 
 ```python
-configcatclient.initialize('<PLACE-YOUR-PROJECT-SECRET-HERE>', poll_interval_seconds=600)
+configcatclient.initialize('<PLACE-YOUR-API-KEY-HERE>', poll_interval_seconds=600)
 ```
 
 #### Example - get notification about configuration changes via ```on_configuration_changed_callback```:  
@@ -86,7 +86,7 @@ def configuration_changed_callback(self):
     # Configuration changed.
     pass
     
-configcatclient.initialize('<PLACE-YOUR-PROJECT-SECRET-HERE>', on_configuration_changed_callback=configuration_changed_callback)
+configcatclient.initialize('<PLACE-YOUR-API-KEY-HERE>', on_configuration_changed_callback=configuration_changed_callback)
 ```
 
 ### Lazy loading
@@ -94,14 +94,14 @@ configcatclient.initialize('<PLACE-YOUR-PROJECT-SECRET-HERE>', on_configuration_
 
 | ParameterName        | Description           | Default  |
 | --- | --- | --- | 
-| ```project_secret```      | Project Secret to access your configuration  | REQUIRED |
+| ```api_key```      | API Key to access your configuration  | REQUIRED |
 | ```cache_time_to_live_seconds```      | Use this value to manage the cache's TTL. |   60 |
 | ```config_cache_class```      | Custom cache implementation class. |   None |
 
 #### Example - increase ```cache_time_to_live_seconds``` to 600 seconds:
 
 ```python
-configcatclient.initialize_lazy_loading('<PLACE-YOUR-PROJECT-SECRET-HERE>', cache_time_to_live_seconds=600)
+configcatclient.initialize_lazy_loading('<PLACE-YOUR-API-KEY-HERE>', cache_time_to_live_seconds=600)
 ```
 
 #### Example - use a custom ```config_cache_class```:
@@ -121,7 +121,7 @@ class InMemoryConfigCache(ConfigCache):
     def set(self, value):
         self._value = value
 
-configcatclient.initialize_lazy_loading('<PLACE-YOUR-PROJECT-SECRET-HERE>', config_cache_class=InMemoryConfigCache)
+configcatclient.initialize_lazy_loading('<PLACE-YOUR-API-KEY-HERE>', config_cache_class=InMemoryConfigCache)
 ```
 
 ### Manual polling
@@ -129,13 +129,13 @@ configcatclient.initialize_lazy_loading('<PLACE-YOUR-PROJECT-SECRET-HERE>', conf
 
 | ParameterName        | Description           | Default  |
 | --- | --- | --- | 
-| ```project_secret```      | Project Secret to access your configuration  | REQUIRED |
+| ```api_key```      | API Key to access your configuration  | REQUIRED |
 | ```config_cache_class```      | Custom cache implementation class. |   None |
 
 #### Example - call ```force_refresh()``` to fetch the latest configuration:
 
 ```python
-configcatclient.initialize_manual_polling('<PLACE-YOUR-PROJECT-SECRET-HERE>')
+configcatclient.initialize_manual_polling('<PLACE-YOUR-API-KEY-HERE>')
 configcatclient.get().get_value('test_key', 'default_value') # This will return 'default_value' 
 configcatclient.get().force_refresh()
 configcatclient.get().get_value('test_key', 'default_value') # This will return the real value for key 'test_key'

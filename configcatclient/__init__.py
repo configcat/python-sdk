@@ -6,15 +6,15 @@ __client = None
 __lock = ReadWriteLock()
 
 
-def initialize(project_secret,
+def initialize(api_key,
                poll_interval_seconds=60,
                max_init_wait_time_seconds=5,
                on_configuration_changed_callback=None,
                config_cache_class=None):
     """
-    Initializes the BetterConfigClient. If the client is already initialized initialize does nothing.
+    Initializes the ConfigCatClient. If the client is already initialized initialize does nothing.
 
-    :param project_secret: The Project Secret.
+    :param api_key: The API Key.
     :param poll_interval_seconds: The client's polls interval in seconds.
     :param on_configuration_changed_callback: You can subscribe to configuration changes with this callback
     :param max_init_wait_time_seconds: maximum waiting time for first configuration fetch in polling mode.
@@ -24,8 +24,8 @@ def initialize(project_secret,
     global __client
     global __lock
 
-    if project_secret is None:
-        raise ConfigCatClientException('Project secret is required.')
+    if api_key is None:
+        raise ConfigCatClientException('API Key is required.')
 
     if __client is not None:
         return
@@ -42,19 +42,19 @@ def initialize(project_secret,
         if max_init_wait_time_seconds < 0:
             max_init_wait_time_seconds = 0
 
-        __client = ConfigCatClient(project_secret, poll_interval_seconds, max_init_wait_time_seconds,
+        __client = ConfigCatClient(api_key, poll_interval_seconds, max_init_wait_time_seconds,
                                    on_configuration_changed_callback, 0, config_cache_class)
     finally:
         __lock.release_write()
 
 
-def initialize_lazy_loading(project_secret,
+def initialize_lazy_loading(api_key,
                             cache_time_to_live_seconds=60,
                             config_cache_class=None):
     """
-    Initializes the BetterConfigClient. If the client is already initialized initialize does nothing.
+    Initializes the ConfigCatClient. If the client is already initialized initialize does nothing.
 
-    :param project_secret: The Project Secret.
+    :param api_key: The API Key.
     :param cache_time_to_live_seconds: The cache TTL.
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
@@ -62,8 +62,8 @@ def initialize_lazy_loading(project_secret,
     global __client
     global __lock
 
-    if project_secret is None:
-        raise ConfigCatClientException('Project secret is required.')
+    if api_key is None:
+        raise ConfigCatClientException('API Key is required.')
 
     if __client is not None:
         return
@@ -77,25 +77,25 @@ def initialize_lazy_loading(project_secret,
         if cache_time_to_live_seconds < 1:
             cache_time_to_live_seconds = 1
 
-        __client = ConfigCatClient(project_secret, 0, 0, None,
+        __client = ConfigCatClient(api_key, 0, 0, None,
                                    cache_time_to_live_seconds, config_cache_class)
     finally:
         __lock.release_write()
 
 
-def initialize_manual_polling(project_secret, config_cache_class=None):
+def initialize_manual_polling(api_key, config_cache_class=None):
     """
-    Initializes the BetterConfigClient. If the client is already initialized initialize does nothing.
+    Initializes the ConfigCatClient. If the client is already initialized initialize does nothing.
 
-    :param project_secret: The Project Secret.
+    :param api_key: The API Key.
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
     """
     global __client
     global __lock
 
-    if project_secret is None:
-        raise ConfigCatClientException('Project secret is required.')
+    if api_key is None:
+        raise ConfigCatClientException('API Key is required.')
 
     if __client is not None:
         return
@@ -106,16 +106,16 @@ def initialize_manual_polling(project_secret, config_cache_class=None):
         if __client is not None:
             return
 
-        __client = ConfigCatClient(project_secret, 0, 0, None, 0, config_cache_class)
+        __client = ConfigCatClient(api_key, 0, 0, None, 0, config_cache_class)
     finally:
         __lock.release_write()
 
 
 def get():
     """
-    Gets the initialized BetterConfigClient.
-    In case you haven't called initialize before it raises a BetterConfigClientException.
-    :return: The initialized BetterConfigClient.
+    Gets the initialized ConfigCatClient.
+    In case you haven't called initialize before it raises a ConfigCatClientException.
+    :return: The initialized ConfigCatClient.
     """
     global __client
     global __lock
@@ -127,7 +127,7 @@ def get():
     finally:
         __lock.release_read()
 
-    raise ConfigCatClientException("Initialize should be called before using BetterConfigClient")
+    raise ConfigCatClientException("Initialize should be called before using ConfigCatClient")
 
 
 def stop():

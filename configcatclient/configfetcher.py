@@ -14,8 +14,8 @@ log = logging.getLogger(sys.modules[__name__].__name__)
 
 class CacheControlConfigFetcher(ConfigFetcher):
 
-    def __init__(self, project_secret, mode):
-        self._project_secret = project_secret
+    def __init__(self, api_key, mode):
+        self._api_key = api_key
         self._session = requests.Session()
         self._request_cache = CacheControl(self._session)
         self._headers = {'User-Agent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
@@ -23,13 +23,13 @@ class CacheControlConfigFetcher(ConfigFetcher):
                          'Content-Type': "application/json"}
 
     def get_configuration_json(self):
-        log.debug("Fetching configuration from BetterConfig")
+        log.debug("Fetching configuration from ConfigCat")
 
-        uri = BASE_URI + self._project_secret + BASE_EXTENSION
+        uri = BASE_URI + self._api_key + BASE_EXTENSION
         response = self._request_cache.get(uri, headers=self._headers, timeout=(10, 30))
         response.raise_for_status()
         json = response.json()
-        log.debug("BetterConfig configuration json fetch response code:[%d] Cached:[%s]",
+        log.debug("ConfigCat configuration json fetch response code:[%d] Cached:[%s]",
                   response.status_code, response.from_cache)
 
         return json
