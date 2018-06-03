@@ -3,7 +3,7 @@ ConfigCat is a cloud based configuration as a service. It integrates with your a
 https://configcat.com  
 
 [![Build Status](https://travis-ci.org/configcat/python-sdk.svg?branch=master)](https://travis-ci.org/configcat/python-sdk) 
-[![codecov](https://codecov.io/gh/ConfigCat/python-sdk/branch/master/graph/badge.svg)](https://codecov.io/gh/ConfigCat/ConfigCat-Client)
+[![codecov](https://codecov.io/gh/ConfigCat/python-sdk/branch/master/graph/badge.svg)](https://codecov.io/gh/ConfigCat/python-sdk)
 [![PyPI](https://img.shields.io/pypi/v/configcat-client.svg)](https://pypi.python.org/pypi/configcat-client)
 [![PyPI](https://img.shields.io/pypi/pyversions/configcat-client.svg)](https://pypi.python.org/pypi/configcat-client)
 

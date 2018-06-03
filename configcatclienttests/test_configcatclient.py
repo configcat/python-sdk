@@ -7,8 +7,11 @@ from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT
 
 class ConfigCatClientTests(unittest.TestCase):
     def test_without_api_key(self):
-        with self.assertRaises(ConfigCatClientException):
+        try:
             ConfigCatClient(None)
+            self.fail('Expected ConfigCatClientException')
+        except ConfigCatClientException:
+            pass
 
     def test_bool(self):
         client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)

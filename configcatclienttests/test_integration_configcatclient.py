@@ -9,13 +9,19 @@ class AutoPollTests(unittest.TestCase):
 
     def test_get_without_initialization(self):
         configcatclient.stop()
-        with self.assertRaises(ConfigCatClientException):
+        try:
             configcatclient.get()
+            self.fail('Expected ConfigCatClientException')
+        except ConfigCatClientException:
+            pass
 
     def test_without_api_key(self):
         configcatclient.stop()
-        with self.assertRaises(ConfigCatClientException):
+        try:
             configcatclient.initialize(None)
+            self.fail('Expected ConfigCatClientException')
+        except ConfigCatClientException:
+            pass
 
     def test_client_works(self):
         configcatclient.stop()
@@ -64,8 +70,11 @@ class LazyLoadingTests(unittest.TestCase):
 
     def test_without_api_key(self):
         configcatclient.stop()
-        with self.assertRaises(ConfigCatClientException):
+        try:
             configcatclient.initialize_lazy_loading(None)
+            self.fail('Expected ConfigCatClientException')
+        except ConfigCatClientException:
+            pass
 
     def test_reinitialization(self):
         configcatclient.stop()
@@ -94,8 +103,11 @@ class ManualPollingTests(unittest.TestCase):
 
     def test_without_api_key(self):
         configcatclient.stop()
-        with self.assertRaises(ConfigCatClientException):
+        try:
             configcatclient.initialize_manual_polling(None)
+            self.fail('Expected ConfigCatClientException')
+        except ConfigCatClientException:
+            pass
 
     def test_reinitialization(self):
         configcatclient.stop()

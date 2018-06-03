@@ -33,9 +33,9 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         end_time = time.time()
         elapsed_time = end_time - start_time
         self.assertEqual(config, None)
-        self.assertGreater(elapsed_time, 1)
-        self.assertLess(elapsed_time, 2)
-
+        self.assertTrue(elapsed_time > 1)
+        self.assertTrue(elapsed_time < 2)
+     
     def test_fetch_call_count(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()

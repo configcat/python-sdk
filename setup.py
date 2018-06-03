@@ -1,10 +1,12 @@
-import uuid
 from setuptools import setup
-from pip.req import parse_requirements
 
 from configcatclient.version import CONFIGCATCLIENT_VERSION
 
-install_reqs = parse_requirements('requirements.txt', session=uuid.uuid1())
+def parse_requirements(filename):
+    lines = (line.strip() for line in open(filename))
+    return [line for line in lines if line]
+
+install_reqs = parse_requirements('requirements.txt')
 reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
@@ -23,6 +25,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',

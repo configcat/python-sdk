@@ -6,6 +6,9 @@ from cachecontrol import CacheControl
 from .interfaces import ConfigFetcher
 from .version import CONFIGCATCLIENT_VERSION
 
+if sys.version_info < (2, 7, 9):
+    requests.packages.urllib3.disable_warnings()
+
 BASE_URI = 'https://cdn.configcat.com/configuration-files/'
 BASE_EXTENSION = '/config.json'
 
