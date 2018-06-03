@@ -6,8 +6,7 @@ def parse_requirements(filename):
     lines = (line.strip() for line in open(filename))
     return [line for line in lines if line]
 
-install_reqs = parse_requirements('requirements.txt')
-reqs = [str(ir.req) for ir in install_reqs]
+reqs = parse_requirements('requirements.txt')
 
 setup(
     name='configcat-client',
