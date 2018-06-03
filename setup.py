@@ -1,10 +1,10 @@
 from setuptools import setup
-
-from configcatclient.version import CONFIGCATCLIENT_VERSION
+from version import CONFIGCATCLIENT_VERSION
 
 def parse_requirements(filename):
     lines = (line.strip() for line in open(filename))
     return [line for line in lines if line]
+
 
 reqs = parse_requirements('requirements.txt')
 

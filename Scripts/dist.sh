@@ -8,8 +8,9 @@ set -uxe
 
 echo "Starting ConfigCat-Client "$1" distribution"
 
-#Update version in configcatclient/version.py
+#Update version in configcatclient/version.py and version.py
 echo "CONFIGCATCLIENT_VERSION = \"$1\"" > configcatclient/version.py
+echo "CONFIGCATCLIENT_VERSION = \"$1\"" > version.py
 
 python setup.py sdist upload
 
