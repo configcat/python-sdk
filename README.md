@@ -19,22 +19,27 @@ pip install configcat-client
 
 ```python
 import configcatclient
+
+# Optional import
+from configcatclient.user import User 
 ```
 
 **3. Get your API Key from the [ConfigCat.com](https://configcat.com) portal**
 
 ![YourConnectionUrl](https://raw.githubusercontent.com/configcat/python-sdk/master/media/readme01.png  "ApiKey")
 
-**4. Initialize and get the client**
+**4. Initialize the client**
 
 ```python
 configcatclient.initialize('<PLACE-YOUR-API-KEY-HERE>')
-client = configcatclient.get()
 ```
 
 **5. Get your config value**
 ```python
-isMyAwesomeFeatureEnabled = client.get_value('key-of-my-awesome-feature', False)
+# optional User object initialization for rollout calculations. 
+user = User('<EMAIL_OR_SESSIONID_OR_USERID>')
+
+isMyAwesomeFeatureEnabled = configcatclient.get_value('key-of-my-awesome-feature', False, user)
 if isMyAwesomeFeatureEnabled:
     # show your awesome feature to the world!
 ```
@@ -44,13 +49,37 @@ if isMyAwesomeFeatureEnabled:
 configcatclient.stop()
 ```
 
+## User object
+If you want to get advantage from our percentage rollout and targeted rollout features, you should pass a ```User``` object to the ```get_value(key, default_value, user)``` calls.
+We strongly recommend you to pass the ```User``` object in every call so later you can use these awesome features without rebuilding your application.
+
+```User(...)```
+
+| ParameterName        | Description           | Default  |
+| --- | --- | --- |
+| ```key```      | Mandatory, unique identifier for the User or Session. e.g. Email address, Primary key, Session Id  | REQUIRED |
+| ```email ```      | Optional parameter for easier targeting rule definitions |   None |
+| ```country```      | Optional parameter for easier targeting rule definitions |   None | 
+| ```custom```      | Optional dictionary for custom attributes of the User for advanced targeting rule definitions. e.g. User role, Subscription type. |   None |
+
+Example simple user object:  
+```python
+User('developer@configcat.com')
+```
+
+Example user object with optional custom attributes:  
+```python
+User('developer@configcat.com', 'developer@configcat.com', 'Hungary', {'UserRole': 'admin', 'Subscription': 'unlimited'})
+```
+
+
 ## Configuration
 Client supports three different caching policies to acquire the configuration from ConfigCat. When the client fetches the latest configuration, puts it into the internal cache and serves any configuration acquisition from cache. With these caching policies you can manage your configurations' lifetimes easily.
 
 ### Auto polling (default)
 Client downloads the latest configuration and puts into a cache repeatedly. Use ```poll_interval_seconds``` parameter to manage polling interval.
 Use ```on_configuration_changed_callback``` parameter to get notification about configuration changes. 
-*
+
 ### Lazy loading
 Client downloads the latest configuration only when it is not present or expired in the cache. 
 Use ```cache_time_to_live_seconds``` parameter to manage configuration lifetime.
@@ -136,18 +165,17 @@ configcatclient.initialize_lazy_loading('<PLACE-YOUR-API-KEY-HERE>', config_cach
 
 ```python
 configcatclient.initialize_manual_polling('<PLACE-YOUR-API-KEY-HERE>')
-configcatclient.get().get_value('test_key', 'default_value') # This will return 'default_value' 
-configcatclient.get().force_refresh()
-configcatclient.get().get_value('test_key', 'default_value') # This will return the real value for key 'test_key'
+configcatclient.get_value('test_key', 'default_value') # This will return 'default_value' 
+configcatclient.force_refresh()
+configcatclient.get_value('test_key', 'default_value') # This will return the real value for key 'test_key'
 ```
 
 ## Members
 ### Methods
 | Name        | Description           |
 | :------- | :--- |
-| ``` configcatclient.get().get_configuration_json() ``` | Returns configuration as a json dictionary |
-| ``` configcatclient.get().get_value(key, defaultValue) ``` | Returns the value of the key |
-| ``` configcatclient.get().force_refresh() ``` | Fetches the latest configuration from the server. You can use this method with WebHooks to ensure up to date configuration values in your application. |
+| ``` configcatclient.get_value(key, defaultValue, user=None) ``` | Returns the value of the key |
+| ``` configcatclient.force_refresh() ``` | Fetches the latest configuration from the server. You can use this method with WebHooks to ensure up to date configuration values in your application. |
 
 ## Logging
 The ConfigCat SDK uses the default Python `logging` package for logging.
