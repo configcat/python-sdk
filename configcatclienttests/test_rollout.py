@@ -43,6 +43,12 @@ class RolloutTests(unittest.TestCase):
 
         self.assertEqual('', errors)
 
+    def test_wrong_user_object(self):
+        configcatclient.stop()
+        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        setting_value = configcatclient.get_value('stringContainsDogDefaultCat', 'Lion', {'Email': 'a@configcat.com'})
+        self.assertEqual('Cat', setting_value)
+
     """
     def test_create_matrix(self):
         script_dir = path.dirname(__file__)
