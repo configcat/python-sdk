@@ -4,7 +4,7 @@ from .manualpollingcachepolicy import ManualPollingCachePolicy
 from .autopollingcachepolicy import AutoPollingCachePolicy
 from .configfetcher import CacheControlConfigFetcher
 from .configcache import InMemoryConfigCache
-from .variationevaluator import VariationEvaluator
+from .rolloutevaluator import RolloutEvaluator
 import logging
 import sys
 
@@ -48,7 +48,7 @@ class ConfigCatClient(object):
         if config is None:
             return default_value
 
-        return VariationEvaluator.evaluate(key, user, default_value, config)
+        return RolloutEvaluator.evaluate(key, user, default_value, config)
 
     def force_refresh(self):
         self._cache_policy.force_refresh()

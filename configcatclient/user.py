@@ -1,4 +1,4 @@
-__PREDEFINED__ = ["key", 'email', 'country']
+__PREDEFINED__ = ["identifier", 'email', 'country']
 
 
 class User(object):
@@ -6,13 +6,13 @@ class User(object):
      The user object for variation evaluation
     """
 
-    def __init__(self, key, email=None, country=None, custom=None):
-        self.__key = key
-        self.__data = {'key': key, 'email': email, 'country': country}
+    def __init__(self, identifier, email=None, country=None, custom=None):
+        self.__identifier = identifier
+        self.__data = {'identifier': identifier, 'email': email, 'country': country}
         self.__custom = custom
 
-    def get_key(self):
-        return self.__key
+    def get_identifier(self):
+        return self.__identifier
 
     def get_attribute(self, attribute):
         attribute = str(attribute).lower()

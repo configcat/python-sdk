@@ -7,7 +7,7 @@ from .user import User
 log = logging.getLogger(sys.modules[__name__].__name__)
 
 
-class VariationEvaluator(object):
+class RolloutEvaluator(object):
 
     @staticmethod
     def evaluate(key, user, default_value, config):
@@ -25,12 +25,12 @@ class VariationEvaluator(object):
             return setting_descriptor.get('Value', default_value)
 
         # Evaluate targeting rules
-        targeted_rollout_rules = setting_descriptor.get('TargetedRolloutRules', [])
-        for targeted_rollout_rule in targeted_rollout_rules:
-            comparison_attribute = targeted_rollout_rule.get('ComparisonAttribute')
-            comparison_value = targeted_rollout_rule.get('ComparisonValue')
-            comparator = targeted_rollout_rule.get('Comparator')
-            value = targeted_rollout_rule.get('Value')
+        rollout_rules = setting_descriptor.get('RolloutRules', [])
+        for rollout_rule in rollout_rules:
+            comparison_attribute = rollout_rule.get('ComparisonAttribute')
+            comparison_value = rollout_rule.get('ComparisonValue')
+            comparator = rollout_rule.get('Comparator')
+            value = rollout_rule.get('Value')
             user_value = user.get_attribute(comparison_attribute)
 
             if comparator == 0:
@@ -47,16 +47,16 @@ class VariationEvaluator(object):
                     return value
 
         # Evaluate variations
-        percentage_rollout_items = setting_descriptor.get('PercentageRolloutItems', [])
-        if len(percentage_rollout_items) > 0:
-            user_key = user.get_key()
+        rollout_percentage_items = setting_descriptor.get('RolloutPercentageItems', [])
+        if len(rollout_percentage_items) > 0:
+            user_key = user.get_identifier()
             hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
             hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:15], 16) % 100
 
             bucket = 0
-            for percentage_rollout_item in percentage_rollout_items or []:
-                bucket += percentage_rollout_item.get('Percentage', 0)
+            for rollout_percentage_item in rollout_percentage_items or []:
+                bucket += rollout_percentage_item.get('Percentage', 0)
                 if hash_val < bucket:
-                    return percentage_rollout_item.get('Value')
+                    return rollout_percentage_item.get('Value')
 
         return setting_descriptor.get('Value', default_value)
