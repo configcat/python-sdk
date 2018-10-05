@@ -14,6 +14,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 0)
         config = cache_policy.get()
         self.assertEqual(config, TEST_JSON)
+        cache_policy.stop()
 
     def test_cache(self):
         config_fetcher = ConfigFetcherMock()
@@ -35,6 +36,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         value = cache_policy.get()
         self.assertEqual(value, TEST_JSON)
         self.assertEqual(config_fetcher.get_call_count, 2)
+        cache_policy.stop()
 
     def test_force_refresh(self):
         config_fetcher = ConfigFetcherMock()
@@ -51,6 +53,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         value = cache_policy.get()
         self.assertEqual(value, TEST_JSON)
         self.assertEqual(config_fetcher.get_call_count, 2)
+        cache_policy.stop()
 
     def test_httperror(self):
         config_fetcher = ConfigFetcherWithErrorMock(HTTPError("error"))
@@ -60,6 +63,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         # Get value from Config Store, which indicates a config_fetcher call
         value = cache_policy.get()
         self.assertEqual(value, None)
+        cache_policy.stop()
 
     def test_exception(self):
         config_fetcher = ConfigFetcherWithErrorMock(Exception("error"))
@@ -69,11 +73,6 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         # Get value from Config Store, which indicates a config_fetcher call
         value = cache_policy.get()
         self.assertEqual(value, None)
-
-    def test_stop(self):
-        config_fetcher = ConfigFetcherMock()
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache)
         cache_policy.stop()
 
 
