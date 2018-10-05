@@ -3,14 +3,23 @@ import time
 
 from configcatclient.interfaces import ConfigFetcher, ConfigCache
 
-TEST_JSON = '{"testKey": "testValue"}'
-TEST_JSON2 = '{"testKey": "testValue", "testKey2": "testValue2"}'
-TEST_OBJECT = json.loads('{'
-                         '   "testBoolKey" : true,'
-                         '   "testStringKey" : "testValue",'
-                         '   "testIntKey" : 1,'
-                         '   "testDoubleKey" : 1.1'
-                         '}')
+TEST_JSON = '{"testKey": { "Value": "testValue", "SettingType": 1, ' \
+            '"PercentageRolloutItems": [], "TargetedRolloutRules": [] }}'
+
+TEST_JSON2 = '{"testKey": { "Value": "testValue", "SettingType": 1, ' \
+             '"PercentageRolloutItems": [], "TargetedRolloutRules": [] }, ' \
+             '"testKey2": { "Value": "testValue2", "SettingType": 1, ' \
+             '"PercentageRolloutItems": [], "TargetedRolloutRules": [] }}'
+
+TEST_OBJECT = json.loads(
+    '{"testBoolKey": '
+    '{"Value": true,"SettingType": 0, "PercentageRolloutItems": [],"TargetedRolloutRules": []},'
+    '"testStringKey": '
+    '{"Value": "testValue","SettingType": 1, "PercentageRolloutItems": [],"TargetedRolloutRules": []},'
+    '"testIntKey": '
+    '{"Value": 1,"SettingType": 2, "PercentageRolloutItems": [],"TargetedRolloutRules": []},'
+    '"testDoubleKey": '
+    '{"Value": 1.1,"SettingType": 3,"PercentageRolloutItems": [],"TargetedRolloutRules": []}}')
 
 
 class ConfigFetcherMock(ConfigFetcher):
