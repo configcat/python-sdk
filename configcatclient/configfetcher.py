@@ -10,7 +10,7 @@ if sys.version_info < (2, 7, 9):
     requests.packages.urllib3.disable_warnings()
 
 BASE_URI = 'https://cdn.configcat.com/configuration-files/'
-BASE_EXTENSION = '/config.json'
+BASE_EXTENSION = '/config_v2.json'
 
 log = logging.getLogger(sys.modules[__name__].__name__)
 

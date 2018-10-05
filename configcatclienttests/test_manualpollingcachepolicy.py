@@ -14,6 +14,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         value = cache_policy.get()
         self.assertEqual(value, None)
         self.assertEqual(config_fetcher.get_call_count, 0)
+        cache_policy.stop()
 
     def test_with_refresh(self):
         config_fetcher = ConfigFetcherMock()
@@ -23,6 +24,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         value = cache_policy.get()
         self.assertEqual(value, TEST_JSON)
         self.assertEqual(config_fetcher.get_call_count, 1)
+        cache_policy.stop()
 
     def test_with_refresh_httperror(self):
         config_fetcher = ConfigFetcherWithErrorMock(HTTPError("error"))
@@ -31,6 +33,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         cache_policy.force_refresh()
         value = cache_policy.get()
         self.assertEqual(value, None)
+        cache_policy.stop()
 
     def test_with_refresh_exception(self):
         config_fetcher = ConfigFetcherWithErrorMock(Exception("error"))
@@ -39,11 +42,6 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         cache_policy.force_refresh()
         value = cache_policy.get()
         self.assertEqual(value, None)
-
-    def test_stop(self):
-        config_fetcher = ConfigFetcherMock()
-        config_cache = InMemoryConfigCache()
-        cache_policy = ManualPollingCachePolicy(config_fetcher, config_cache)
         cache_policy.stop()
 
 

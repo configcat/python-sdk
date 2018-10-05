@@ -2,7 +2,7 @@ import unittest
 
 from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
-from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT
+from configcatclienttests.mocks import ConfigCacheMock
 
 
 class ConfigCatClientTests(unittest.TestCase):
@@ -38,14 +38,9 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertEqual('default', client.get_value('testUnknownKey', 'default'))
         client.stop()
 
-    def testInvalidation(self):
+    def test_invalidation(self):
         client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
         self.assertEqual(True, client.get_value('testBoolKey', False))
-        client.stop()
-
-    def test_config_json(self):
-        client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
-        self.assertEqual(TEST_OBJECT, client.get_configuration_json())
         client.stop()
 
 
