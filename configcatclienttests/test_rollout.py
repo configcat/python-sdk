@@ -36,7 +36,7 @@ class RolloutTests(unittest.TestCase):
             for setting_key in setting_keys:
                 value = configcatclient.get_value(setting_key, None, user_object)
                 if str(value) != str(test_object[i + 4]):
-                    errors += 'Key: ' + test_object[0] + '. SettingKey: ' + setting_key + \
+                    errors += 'Identifier: ' + test_object[0] + '. SettingKey: ' + setting_key + \
                               '. Expected: ' + str(test_object[i + 4]) + '. Result: ' + str(value) + '.\n'
                 i += 1
 
