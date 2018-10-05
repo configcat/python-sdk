@@ -57,7 +57,7 @@ We strongly recommend you to pass the ```User``` object in every call so later y
 
 | ParameterName        | Description           | Default  |
 | --- | --- | --- |
-| ```key```      | Mandatory, unique identifier for the User or Session. e.g. Email address, Primary key, Session Id  | REQUIRED |
+| ```identifier```      | Mandatory, unique identifier for the User or Session. e.g. Email address, Primary key, Session Id  | REQUIRED |
 | ```email ```      | Optional parameter for easier targeting rule definitions |   None |
 | ```country```      | Optional parameter for easier targeting rule definitions |   None | 
 | ```custom```      | Optional dictionary for custom attributes of the User for advanced targeting rule definitions. e.g. User role, Subscription type. |   None |
