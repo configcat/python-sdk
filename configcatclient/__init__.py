@@ -111,7 +111,7 @@ def initialize_manual_polling(api_key, config_cache_class=None):
         __lock.release_write()
 
 
-def get():
+def __get():
     """
     Gets the initialized ConfigCatClient.
     In case you haven't called initialize before it raises a ConfigCatClientException.
@@ -128,6 +128,20 @@ def get():
         __lock.release_read()
 
     raise ConfigCatClientException("Initialize should be called before using ConfigCatClient")
+
+
+def get_value(key, default_value, user=None):
+    """  Gets a value from the configuration identified by the given key.
+    :param key: the identifier of the configuration value.
+    :param default_value: in case of any failure, this value will be returned.
+    :param user: optional ..class:: User object for rollout purposes.
+    :return: the configuration value identified by the given key.
+    """
+    return __get().get_value(key, default_value, user)
+
+
+def force_refresh():
+    __get().force_refresh()
 
 
 def stop():
