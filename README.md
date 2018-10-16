@@ -64,12 +64,12 @@ We strongly recommend you to pass the ```User``` object in every call so later y
 
 Example simple user object:  
 ```python
-User('developer@configcat.com')
+User('jane@example.com')
 ```
 
 Example user object with optional custom attributes:  
 ```python
-User('developer@configcat.com', 'developer@configcat.com', 'Hungary', {'UserRole': 'admin', 'Subscription': 'unlimited'})
+User('jane@example.com', 'jane@example.com', 'Hungary', {'UserRole': 'admin', 'Subscription': 'unlimited'})
 ```
 
 
