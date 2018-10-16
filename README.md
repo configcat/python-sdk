@@ -50,7 +50,7 @@ configcatclient.stop()
 ```
 
 ## User object
-If you want to get advantage from our percentage rollout and targeted rollout features, you should pass a ```User``` object to the ```get_value(key, default_value, user)``` calls.
+If you want to get advantage from our targeting features, you should pass a ```User``` object to the ```get_value(key, default_value, user)``` calls.
 We strongly recommend you to pass the ```User``` object in every call so later you can use these awesome features without rebuilding your application.
 
 ```User(...)```
