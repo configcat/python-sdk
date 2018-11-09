@@ -51,7 +51,7 @@ class RolloutEvaluator(object):
         if len(rollout_percentage_items) > 0:
             user_key = user.get_identifier()
             hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
-            hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:15], 16) % 100
+            hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
             bucket = 0
             for rollout_percentage_item in rollout_percentage_items or []:
