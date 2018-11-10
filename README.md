@@ -6,6 +6,7 @@ https://configcat.com
 [![codecov](https://codecov.io/gh/ConfigCat/python-sdk/branch/master/graph/badge.svg)](https://codecov.io/gh/ConfigCat/python-sdk)
 [![PyPI](https://img.shields.io/pypi/v/configcat-client.svg)](https://pypi.python.org/pypi/configcat-client)
 [![PyPI](https://img.shields.io/pypi/pyversions/configcat-client.svg)](https://pypi.python.org/pypi/configcat-client)
+[![Known Vulnerabilities](https://snyk.io/test/github/configcat/python-sdk/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/configcat/python-sdk?targetFile=requirements.txt)
 
 ## Getting started
 
