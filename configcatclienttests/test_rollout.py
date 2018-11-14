@@ -23,21 +23,34 @@ class RolloutTests(unittest.TestCase):
         configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
         errors = ''
         for line in content:
-            test_object = line.rstrip().split(';')
+            user_descriptor = line.rstrip().split(';')
 
             user_object = None
-            if test_object[0] is not None and test_object[0] != '' and test_object[0] != '##nouserobject##':
-                custom = None
-                if test_object[3] is not None and test_object[3] != '':
-                    custom = {'Custom1': test_object[3]}
-                user_object = User(test_object[0], test_object[1], test_object[2], custom)
+            if user_descriptor[0] is not None and user_descriptor[0] != '' and user_descriptor[0] != '##null##':
+
+                if user_descriptor[0] is not None and user_descriptor[0] != '' and user_descriptor[0] != '##null##':
+                    identifier = user_descriptor[0]
+
+                    email = None
+                    if user_descriptor[1] is not None and user_descriptor[1] != '' and user_descriptor[1] != '##null##':
+                        email = user_descriptor[1]
+
+                    country = None
+                    if user_descriptor[2] is not None and user_descriptor[2] != '' and user_descriptor[2] != '##null##':
+                        country = user_descriptor[2]
+
+                    custom = None
+                    if user_descriptor[3] is not None and user_descriptor[3] != '' and user_descriptor[3] != '##null##':
+                        custom = {'Custom1': user_descriptor[3]}
+
+                user_object = User(identifier, email, country, custom)
 
             i = 0
             for setting_key in setting_keys:
                 value = configcatclient.get_value(setting_key, None, user_object)
-                if str(value) != str(test_object[i + 4]):
-                    errors += 'Identifier: ' + test_object[0] + '. SettingKey: ' + setting_key + \
-                              '. Expected: ' + str(test_object[i + 4]) + '. Result: ' + str(value) + '.\n'
+                if str(value) != str(user_descriptor[i + 4]):
+                    errors += 'Identifier: ' + user_descriptor[0] + '. SettingKey: ' + setting_key + \
+                              '. Expected: ' + str(user_descriptor[i + 4]) + '. Result: ' + str(value) + '.\n'
                 i += 1
 
         self.assertEqual('', errors)
@@ -70,12 +83,22 @@ class RolloutTests(unittest.TestCase):
             for line in content:
                 user_descriptor = line.rstrip().split(';')[:4]
                 user_object = None
-                if user_descriptor[0] is not None and user_descriptor[0] != '' 
-                    and user_descriptor[0] != '##nouserobject##':
+                if user_descriptor[0] is not None and user_descriptor[0] != '' and user_descriptor[0] != '##null##':
+                    identifier = user_descriptor[0]
+                     
+                    email = None
+                    if user_descriptor[1] is not None and user_descriptor[1] != '' and user_descriptor[1] != '##null##':
+                        email = user_descriptor[1]
+                        
+                    country = None
+                    if user_descriptor[2] is not None and user_descriptor[2] != '' and user_descriptor[2] != '##null##':
+                        country = user_descriptor[2]
+                        
                     custom = None
-                    if user_descriptor[3] is not None and user_descriptor[3] != '':
+                    if user_descriptor[3] is not None and user_descriptor[3] != '' and user_descriptor[3] != '##null##':
                         custom = {'Custom1': user_descriptor[3]}
-                    user_object = User(user_descriptor[0], user_descriptor[1], user_descriptor[2], custom)
+                    
+                    user_object = User(identifier, email, country, custom)
 
                 for setting_key in setting_keys:
                     value = configcatclient.get_value(setting_key, None, user_object)
