@@ -22,6 +22,8 @@ script:
   - py.test  --cov=./
 after_success:
   - codecov
+before_deploy:
+  pip install twine
 deploy:
   provider: pypi
   user: "$PYPI_USERNAME"
