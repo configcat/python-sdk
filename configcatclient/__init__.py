@@ -1,162 +1,71 @@
 from .configcatclient import ConfigCatClient
 from .interfaces import ConfigCatClientException
-from .readwritelock import ReadWriteLock
-
-__client = None
-__lock = ReadWriteLock()
 
 
-def initialize(api_key,
-               poll_interval_seconds=60,
-               max_init_wait_time_seconds=5,
-               on_configuration_changed_callback=None,
-               config_cache_class=None):
+def create_client(api_key):
     """
-    Initializes the ConfigCatClient. If the client is already initialized initialize does nothing.
+    Create an instance of ConfigCatClient and setup Auto Poll mode with default options
 
-    :param api_key: The API Key.
-    :param poll_interval_seconds: The client's polls interval in seconds.
+    :param api_key: ConfigCat ApiKey to access your configuration.
+    """
+    return create_client_with_auto_poll(api_key)
+
+
+def create_client_with_auto_poll(api_key, poll_interval_seconds=60, max_init_wait_time_seconds=5,
+                                 on_configuration_changed_callback=None, config_cache_class=None):
+    """
+    Create an instance of ConfigCatClient and setup Auto Poll mode with custom options
+
+    :param api_key: ConfigCat ApiKey to access your configuration.
+    :param poll_interval_seconds: The client's poll interval in seconds. Default: 60 seconds.
     :param on_configuration_changed_callback: You can subscribe to configuration changes with this callback
     :param max_init_wait_time_seconds: maximum waiting time for first configuration fetch in polling mode.
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
     """
-    global __client
-    global __lock
 
     if api_key is None:
         raise ConfigCatClientException('API Key is required.')
 
-    if __client is not None:
-        return
+    if poll_interval_seconds < 1:
+        poll_interval_seconds = 1
 
-    try:
-        __lock.acquire_write()
+    if max_init_wait_time_seconds < 0:
+        max_init_wait_time_seconds = 0
 
-        if __client is not None:
-            return
-
-        if poll_interval_seconds < 1:
-            poll_interval_seconds = 1
-
-        if max_init_wait_time_seconds < 0:
-            max_init_wait_time_seconds = 0
-
-        __client = ConfigCatClient(api_key, poll_interval_seconds, max_init_wait_time_seconds,
-                                   on_configuration_changed_callback, 0, config_cache_class)
-    finally:
-        __lock.release_write()
+    return ConfigCatClient(api_key, poll_interval_seconds, max_init_wait_time_seconds,
+                           on_configuration_changed_callback, 0, config_cache_class)
 
 
-def initialize_lazy_loading(api_key,
-                            cache_time_to_live_seconds=60,
-                            config_cache_class=None):
+def create_client_with_lazy_load(api_key, cache_time_to_live_seconds=60, config_cache_class=None):
     """
-    Initializes the ConfigCatClient. If the client is already initialized initialize does nothing.
+    Create an instance of ConfigCatClient and setup Lazy Load mode with custom options
 
-    :param api_key: The API Key.
+    :param api_key: ConfigCat ApiKey to access your configuration.
     :param cache_time_to_live_seconds: The cache TTL.
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
     """
-    global __client
-    global __lock
 
     if api_key is None:
         raise ConfigCatClientException('API Key is required.')
 
-    if __client is not None:
-        return
+    if cache_time_to_live_seconds < 1:
+        cache_time_to_live_seconds = 1
 
-    try:
-        __lock.acquire_write()
-
-        if __client is not None:
-            return
-
-        if cache_time_to_live_seconds < 1:
-            cache_time_to_live_seconds = 1
-
-        __client = ConfigCatClient(api_key, 0, 0, None,
-                                   cache_time_to_live_seconds, config_cache_class)
-    finally:
-        __lock.release_write()
+    return ConfigCatClient(api_key, 0, 0, None, cache_time_to_live_seconds, config_cache_class)
 
 
-def initialize_manual_polling(api_key, config_cache_class=None):
+def create_client_with_manual_poll(api_key, config_cache_class=None):
     """
-    Initializes the ConfigCatClient. If the client is already initialized initialize does nothing.
+    Create an instance of ConfigCatClient and setup Manual Poll mode with custom options
 
-    :param api_key: The API Key.
+    :param api_key: ConfigCat ApiKey to access your configuration.
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
     """
-    global __client
-    global __lock
 
     if api_key is None:
         raise ConfigCatClientException('API Key is required.')
 
-    if __client is not None:
-        return
-
-    try:
-        __lock.acquire_write()
-
-        if __client is not None:
-            return
-
-        __client = ConfigCatClient(api_key, 0, 0, None, 0, config_cache_class)
-    finally:
-        __lock.release_write()
-
-
-def __get():
-    """
-    Gets the initialized ConfigCatClient.
-    In case you haven't called initialize before it raises a ConfigCatClientException.
-    :return: The initialized ConfigCatClient.
-    """
-    global __client
-    global __lock
-
-    try:
-        __lock.acquire_read()
-        if __client is not None:
-            return __client
-    finally:
-        __lock.release_read()
-
-    raise ConfigCatClientException("Initialize should be called before using ConfigCatClient")
-
-
-def get_value(key, default_value, user=None):
-    """  Gets a value from the configuration identified by the given key.
-    :param key: the identifier of the configuration value.
-    :param default_value: in case of any failure, this value will be returned.
-    :param user: optional ..class:: User object for rollout purposes.
-    :return: the configuration value identified by the given key.
-    """
-    return __get().get_value(key, default_value, user)
-
-
-def force_refresh():
-    __get().force_refresh()
-
-
-def stop():
-    """
-    Closes all resources
-    """
-    global __client
-    global __lock
-
-    try:
-        __lock.acquire_write()
-
-        if __client is not None:
-            __client.stop()
-
-        __client = None
-    finally:
-        __lock.release_write()
+    return ConfigCatClient(api_key, 0, 0, None, 0, config_cache_class)

@@ -19,47 +19,46 @@ class RolloutTests(unittest.TestCase):
         setting_keys = header.split(';')[4:]
         content.pop(0)
 
-        configcatclient.stop()
-        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
         errors = ''
         for line in content:
             user_descriptor = line.rstrip().split(';')
 
             user_object = None
             if user_descriptor[0] is not None and user_descriptor[0] != '' and user_descriptor[0] != '##null##':
+                email = None
+                country = None
+                custom = None
 
-                if user_descriptor[0] is not None and user_descriptor[0] != '' and user_descriptor[0] != '##null##':
-                    identifier = user_descriptor[0]
+                identifier = user_descriptor[0]
 
-                    email = None
-                    if user_descriptor[1] is not None and user_descriptor[1] != '' and user_descriptor[1] != '##null##':
-                        email = user_descriptor[1]
+                if user_descriptor[1] is not None and user_descriptor[1] != '' and user_descriptor[1] != '##null##':
+                    email = user_descriptor[1]
 
-                    country = None
-                    if user_descriptor[2] is not None and user_descriptor[2] != '' and user_descriptor[2] != '##null##':
-                        country = user_descriptor[2]
+                if user_descriptor[2] is not None and user_descriptor[2] != '' and user_descriptor[2] != '##null##':
+                    country = user_descriptor[2]
 
-                    custom = None
-                    if user_descriptor[3] is not None and user_descriptor[3] != '' and user_descriptor[3] != '##null##':
-                        custom = {'Custom1': user_descriptor[3]}
+                if user_descriptor[3] is not None and user_descriptor[3] != '' and user_descriptor[3] != '##null##':
+                    custom = {'Custom1': user_descriptor[3]}
 
                 user_object = User(identifier, email, country, custom)
 
             i = 0
             for setting_key in setting_keys:
-                value = configcatclient.get_value(setting_key, None, user_object)
+                value = client.get_value(setting_key, None, user_object)
                 if str(value) != str(user_descriptor[i + 4]):
                     errors += 'Identifier: ' + user_descriptor[0] + '. SettingKey: ' + setting_key + \
                               '. Expected: ' + str(user_descriptor[i + 4]) + '. Result: ' + str(value) + '.\n'
                 i += 1
 
         self.assertEqual('', errors)
+        client.stop()
 
     def test_wrong_user_object(self):
-        configcatclient.stop()
-        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
-        setting_value = configcatclient.get_value('stringContainsDogDefaultCat', 'Lion', {'Email': 'a@configcat.com'})
+        client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        setting_value = client.get_value('stringContainsDogDefaultCat', 'Lion', {'Email': 'a@configcat.com'})
         self.assertEqual('Cat', setting_value)
+        client.stop()
 
     """
     def test_create_matrix(self):
@@ -75,8 +74,7 @@ class RolloutTests(unittest.TestCase):
         setting_keys = header.split(';')[4:]
         content.pop(0)
 
-        configcatclient.stop()
-        configcatclient.initialize('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
         with open(out_file_path, 'w') as f:
             f.writelines(header + '\n')
 
@@ -101,7 +99,7 @@ class RolloutTests(unittest.TestCase):
                     user_object = User(identifier, email, country, custom)
 
                 for setting_key in setting_keys:
-                    value = configcatclient.get_value(setting_key, None, user_object)
+                    value = client.get_value(setting_key, None, user_object)
                     user_descriptor.append(str(value))
 
                 f.writelines(';'.join(user_descriptor)  + '\n')
