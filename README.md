@@ -33,6 +33,7 @@ import configcatclient
 ```python
 configcat_client = configcatclient.create_client('#YOUR-API-KEY#')
 ```
+> We strongly recommend using the *ConfigCat Client* as a Singleton object in your application.
 
 ### 5. Get your setting value
 ```python
