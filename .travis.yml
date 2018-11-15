@@ -29,6 +29,7 @@ deploy:
   user: "$PYPI_USERNAME"
   password: "$PYPI_PASSWORD"
   skip_existing: true
+  edge: true
   on:
     tags: true
     branch: master
