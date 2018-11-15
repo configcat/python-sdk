@@ -22,4 +22,16 @@ script:
   - py.test  --cov=./
 after_success:
   - codecov
+deploy:
+  provider: pypi
+  user: "$PYPI_USERNAME"
+  password: "$PYPI_PASSWORD"
+  skip_cleanup: true
+  on:
+    tags: true
+    branch: master
+notifications:
+  email:
+    on_success: never
+    on_failure: never
 

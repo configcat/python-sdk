@@ -17,7 +17,7 @@ setup(
     author='ConfigCat',
     author_email='developer@configcat.com',
     description='ConfigCat SDK for Python. https://configcat.com',
-    long_description='ConfigCat SDK for Python. https://configcat.com',
+    long_description='ConfigCat is a configuration as a service that lets you manage your features and configurations without actually deploying new code.',
     install_requires=reqs,
     classifiers=[
         'Intended Audience :: Developers',

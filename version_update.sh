@@ -1,22 +1,15 @@
 #!/usr/bin/env bash
 # The deploy scripts takes one argument: the version for the client lib.
 # It should be run from the root of the repo:
-# bash .\scripts\dist.sh x.x.x
-# You should set up your .pypirc before executing this script
+# bash .\version_update.sh x.x.x
 
 set -uxe
-
-echo "Starting ConfigCat-Client "$1" distribution"
 
 #Update version in configcatclient/version.py
 echo "CONFIGCATCLIENT_VERSION = \"$1\"" > configcatclient/version.py
 
+#Update version in configcatclient/setup.py
 sed "s/configcatclient_version=.*/configcatclient_version=\"$1\"/g" setup.py > setup.py.tmp
 mv setup.py.tmp setup.py
 
-echo "CONFIGCATCLIENT_VERSION = \"$1\"" > version.py
-
-python setup.py sdist upload
-
-echo "Done with ConfigCat-Client distribution"
 echo "Commit and push changes"
