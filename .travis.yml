@@ -23,7 +23,7 @@ script:
 after_success:
   - codecov
 before_deploy:
-  pip install twine
+  - pip install twine
 deploy:
   provider: pypi
   user: "$PYPI_USERNAME"
