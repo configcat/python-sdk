@@ -13,28 +13,28 @@ https://configcat.com
 
 ## Getting started
 
-###1. Install the package with `pip`
+### 1. Install the package with `pip`
 
 ```bash
 pip install configcat-client
 ```
 
-###2. Import `configcatclient` to your application
+### 2. Import `configcatclient` to your application
 
 ```python
 import configcatclient
 ```
 
-###3. <a href="https://configcat.com/Account/Login" target="_blank">Log in to ConfigCat Management Console</a> and go to your *Project* to get your *API Key*:
+### 3. <a href="https://configcat.com/Account/Login" target="_blank">Log in to ConfigCat Management Console</a> and go to your *Project* to get your *API Key*:
 ![API-KEY](https://raw.githubusercontent.com/ConfigCat/python-sdk/master/media/readme01.png  "API-KEY")
 
-###4. Create a *ConfigCat* client instance:
+### 4. Create a *ConfigCat* client instance:
 
 ```python
 configcat_client = configcatclient.create_client('#YOUR-API-KEY#')
 ```
 
-###5. Get your setting value
+### 5. Get your setting value
 ```python
 isMyAwesomeFeatureEnabled = configcat_client.get_value('isMyAwesomeFeatureEnabled', False)
 if isMyAwesomeFeatureEnabled:
@@ -43,7 +43,7 @@ else:
     do_the_old_thing()
 ```
 
-###6. Stop *ConfigCat* client on application exit
+### 6. Stop *ConfigCat* client on application exit
 ```python
 configcat_client.stop()
 ```
