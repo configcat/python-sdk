@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 import os
 import sys
-import configcatclient
-
-
-class Application(object):
-    def __init__(self):
-        pass
-
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "webappsample.settings")
@@ -19,7 +12,5 @@ if __name__ == "__main__":
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
-
-    Application.configcat_client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
 
     execute_from_command_line(sys.argv)
