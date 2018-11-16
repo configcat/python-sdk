@@ -1,6 +1,6 @@
 # ConfigCat Console Sample App
 
-To run the sanple project you need [ConfigCatClient](https://pypi.org/project/configcat-client/) installed
+To run the sample project you need [ConfigCatClient](https://pypi.org/project/configcat-client/) installed.
 ```
 pip install configcat-client
 ```

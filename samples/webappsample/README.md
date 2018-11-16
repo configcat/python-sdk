@@ -1,6 +1,6 @@
 # ConfigCat Django Sample App
 
-To run the sanple project you need [Django](https://www.djangoproject.com/) and [ConfigCatClient](https://pypi.org/project/configcat-client/) installed
+To run the sample project you need [Django](https://www.djangoproject.com/) and [ConfigCatClient](https://pypi.org/project/configcat-client/) installed.
 ```
 pip install Django
 pip install configcat-client
