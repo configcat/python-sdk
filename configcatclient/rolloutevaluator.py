@@ -28,10 +28,13 @@ class RolloutEvaluator(object):
         rollout_rules = setting_descriptor.get('RolloutRules', [])
         for rollout_rule in rollout_rules:
             comparison_attribute = rollout_rule.get('ComparisonAttribute')
+            user_value = user.get_attribute(comparison_attribute)
+            if user_value is None or not user_value:
+                continue
+
             comparison_value = rollout_rule.get('ComparisonValue')
             comparator = rollout_rule.get('Comparator')
             value = rollout_rule.get('Value')
-            user_value = user.get_attribute(comparison_attribute)
 
             if comparator == 0:
                 if str(user_value) in [x.strip() for x in str(comparison_value).split(',')]:
