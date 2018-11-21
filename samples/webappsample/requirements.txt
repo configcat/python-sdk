@@ -1,1 +1,1 @@
-configcat-client>=2.0.9
+configcat-client>=2.0.10
