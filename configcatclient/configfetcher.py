@@ -1,9 +1,7 @@
 import requests
 import logging
-import urllib.parse
 import sys
 from cachecontrol import CacheControl
-
 from .interfaces import ConfigFetcher
 from .version import CONFIGCATCLIENT_VERSION
 
@@ -27,14 +25,13 @@ class CacheControlConfigFetcher(ConfigFetcher):
                          'X-ConfigCat-UserAgent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
                          'Content-Type': "application/json"}
         if base_url is not None:
-            self._base_url = base_url
+            self._base_url = base_url.rstrip('/')
         else:
             self._base_url = BASE_URL
 
     def get_configuration_json(self):
         log.debug("Fetching configuration from ConfigCat")
-        path = BASE_PATH + self._api_key + BASE_EXTENSION
-        uri = urllib.parse.urljoin(self._base_url, path)
+        uri = self._base_url + '/' + BASE_PATH + self._api_key + BASE_EXTENSION
         response = self._request_cache.get(uri, headers=self._headers, timeout=(10, 30))
         response.raise_for_status()
         json = response.json()
