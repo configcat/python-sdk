@@ -43,6 +43,16 @@ class AutoPollTests(unittest.TestCase):
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
         client.stop()
 
+    def test_client_works_valid_base_url(self):
+        client = configcatclient.create_client_with_auto_poll(_API_KEY, base_url='https://cdn.configcat.com')
+        self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
+        client.stop()
+
+    def test_client_works_invalid_base_url(self):
+        client = configcatclient.create_client_with_auto_poll(_API_KEY, base_url='https://invalidcdn.configcat.com')
+        self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
+        client.stop()
+
     def test_force_refresh(self):
         client = configcatclient.create_client_with_auto_poll(_API_KEY)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
@@ -71,6 +81,16 @@ class LazyLoadingTests(unittest.TestCase):
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
         client.stop()
 
+    def test_client_works_valid_base_url(self):
+        client = configcatclient.create_client_with_lazy_load(_API_KEY, base_url='https://cdn.configcat.com')
+        self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
+        client.stop()
+
+    def test_client_works_invalid_base_url(self):
+        client = configcatclient.create_client_with_lazy_load(_API_KEY, base_url='https://invalidcdn.configcat.com')
+        self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
+        client.stop()
+
     def test_wrong_param(self):
         client = configcatclient.create_client_with_lazy_load(_API_KEY, 0)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
@@ -93,6 +113,17 @@ class ManualPollingTests(unittest.TestCase):
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
         client.stop()
 
+    def test_client_works_valid_base_url(self):
+        client = configcatclient.create_client_with_manual_poll(_API_KEY, base_url='https://cdn.configcat.com')
+        client.force_refresh()
+        self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
+        client.stop()
+
+    def test_client_works_invalid_base_url(self):
+        client = configcatclient.create_client_with_manual_poll(_API_KEY, base_url='https://invalidcdn.configcat.com')
+        client.force_refresh()
+        self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
+        client.stop()
 
 if __name__ == '__main__':
     unittest.main()

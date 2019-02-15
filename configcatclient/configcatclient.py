@@ -19,7 +19,8 @@ class ConfigCatClient(object):
                  max_init_wait_time_seconds=5,
                  on_configuration_changed_callback=None,
                  cache_time_to_live_seconds=60,
-                 config_cache_class=None):
+                 config_cache_class=None,
+                 base_url=None):
 
         if api_key is None:
             raise ConfigCatClientException('API Key is required.')
@@ -32,15 +33,15 @@ class ConfigCatClient(object):
             self._config_cache = InMemoryConfigCache()
 
         if poll_interval_seconds > 0:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'p')
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'p', base_url)
             self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache, poll_interval_seconds,
                                                         max_init_wait_time_seconds, on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'l')
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'l', base_url)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
                                                         cache_time_to_live_seconds)
         else:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'm')
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'm', base_url)
             self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache)
 
     def get_value(self, key, default_value, user=None):
