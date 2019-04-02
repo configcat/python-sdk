@@ -1,8 +1,8 @@
 # ConfigCat SDK for Python
-ConfigCat SDK for Python provides easy integration between ConfigCat service and applications using Python.
-
-ConfigCat is a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments.
 https://configcat.com  
+ConfigCat SDK for Python provides easy integration for your application to ConfigCat.
+
+ConfigCat is a feature flag and configuration management service that lets you separate releases from deployments. You can turn your features ON/OFF using ConfigCat's Management Console even after they are deployed. ConfigCat lets you target specific groups of users based on region, email or any other custom user attribute.
 
 [![Build Status](https://travis-ci.com/configcat/python-sdk.svg?branch=master)](https://travis-ci.com/configcat/python-sdk) 
 [![codecov](https://codecov.io/gh/ConfigCat/python-sdk/branch/master/graph/badge.svg)](https://codecov.io/gh/ConfigCat/python-sdk)
