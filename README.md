@@ -25,7 +25,7 @@ pip install configcat-client
 import configcatclient
 ```
 
-### 3. <a href="https://configcat.com/Account/Login" target="_blank">Log in to ConfigCat Management Console</a> and go to your *Project* to get your *API Key*:
+### 3. <a href="https://app.configcat.com/connect" target="_blank">Log in to ConfigCat Management Console</a> and select *Connect your applications* to get your *API Key*:
 ![API-KEY](https://raw.githubusercontent.com/ConfigCat/python-sdk/master/media/readme01.png  "API-KEY")
 
 ### 4. Create a *ConfigCat* client instance:
