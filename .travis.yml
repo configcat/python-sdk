@@ -37,6 +37,8 @@ deploy:
     python: 2.7
 notifications:
   email:
+    recipients:
+      - developer@configcat.com      
     on_success: never
-    on_failure: never
+    on_failure: always
 
