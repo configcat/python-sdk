@@ -43,6 +43,11 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertEqual(True, client.get_value('testBoolKey', False))
         client.stop()
 
+    def test_get_all_keys(self):
+        client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
+        self.assertEqual(['testBoolKey', 'testStringKey', 'testIntKey', 'testDoubleKey'], client.get_all_keys())
+        client.stop()
+
 
 if __name__ == '__main__':
     unittest.main()

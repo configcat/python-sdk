@@ -51,6 +51,13 @@ class ConfigCatClient(object):
 
         return RolloutEvaluator.evaluate(key, user, default_value, config)
 
+    def get_all_keys(self):
+        config = self._cache_policy.get()
+        if config is None:
+            return []
+
+        return list(config)
+
     def force_refresh(self):
         self._cache_policy.force_refresh()
 
