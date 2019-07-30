@@ -1,4 +1,5 @@
 language: python
+dist: trusty
 sudo: true
 python:
   - "2.6"
