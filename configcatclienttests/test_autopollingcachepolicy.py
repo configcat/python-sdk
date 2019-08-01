@@ -38,7 +38,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         self.assertTrue(elapsed_time > 1)
         self.assertTrue(elapsed_time < 2)
         cache_policy.stop()
-     
+
     def test_fetch_call_count(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
