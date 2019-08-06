@@ -1,8 +1,11 @@
+import logging
 import unittest
 import time
 
 import configcatclient
 from configcatclient import ConfigCatClientException
+
+logging.basicConfig()
 
 _API_KEY = 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA'
 
@@ -135,6 +138,7 @@ class ManualPollingTests(unittest.TestCase):
         client.force_refresh()
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
         client.stop()
+
 
 if __name__ == '__main__':
     unittest.main()

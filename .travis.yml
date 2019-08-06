@@ -14,14 +14,14 @@ install:
   - "virtualenv venv --no-site-packages"
   - "source venv/bin/activate"
   - pip install --upgrade pip setuptools
-  - pip install coverage
+  - pip install pytest --upgrade
+  - pip install pytest-cov --upgrade
   - pip install codecov
   - pip install --force-reinstall twine==1.12.1
   - pip install -r requirements.txt
 # command to run tests
 script:
-  - coverage run --source configcatclient --omit "venv/*" -m unittest discover configcatclienttests "test_*.py"
-  - coverage report -m
+  - py.test --cov=configcatclient configcatclienttests
 after_success:
   - codecov
 deploy:

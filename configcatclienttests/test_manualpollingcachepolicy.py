@@ -1,9 +1,12 @@
+import logging
 import unittest
 from requests import HTTPError
 
 from configcatclient.configcache import InMemoryConfigCache
 from configcatclient.manualpollingcachepolicy import ManualPollingCachePolicy
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON
+
+logging.basicConfig()
 
 
 class ManualPollingCachePolicyTests(unittest.TestCase):
