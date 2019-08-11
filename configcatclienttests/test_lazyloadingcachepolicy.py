@@ -1,3 +1,4 @@
+import logging
 import unittest
 import time
 from requests import HTTPError
@@ -5,6 +6,8 @@ from requests import HTTPError
 from configcatclient.configcache import InMemoryConfigCache
 from configcatclient.lazyloadingcachepolicy import LazyLoadingCachePolicy
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON
+
+logging.basicConfig()
 
 
 class LazyLoadingCachePolicyTests(unittest.TestCase):

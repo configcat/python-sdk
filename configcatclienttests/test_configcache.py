@@ -1,7 +1,10 @@
+import logging
 import unittest
 
 from configcatclient.configcache import InMemoryConfigCache
 from configcatclienttests.mocks import TEST_JSON
+
+logging.basicConfig()
 
 
 class ConfigCacheTests(unittest.TestCase):

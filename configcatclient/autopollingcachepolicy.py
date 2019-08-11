@@ -30,9 +30,18 @@ class AutoPollingCachePolicy(CachePolicy):
         self._start_time = datetime.datetime.utcnow()
         self._lock = ReadWriteLock()
 
-        self.thread = Thread(target=self.run, args=())
+        self.thread = Thread(target=self._run, args=[])
         self.thread.daemon = True
         self.thread.start()
+
+    def _run(self):
+        if self._is_running:
+            return
+
+        self._is_running = True
+        while self._is_running:
+            self.force_refresh()
+            time.sleep(self._poll_interval_seconds)
 
     def get(self):
         while not self._initialized \
@@ -44,15 +53,6 @@ class AutoPollingCachePolicy(CachePolicy):
             return self._config_cache.get()
         finally:
             self._lock.release_read()
-
-    def run(self):
-        if self._is_running:
-            return
-        self._is_running = True
-
-        while self._is_running:
-            self.force_refresh()
-            time.sleep(self._poll_interval_seconds)
 
     def force_refresh(self):
         try:

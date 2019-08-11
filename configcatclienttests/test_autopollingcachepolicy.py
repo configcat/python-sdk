@@ -1,3 +1,4 @@
+import logging
 import unittest
 import time
 from requests import HTTPError
@@ -6,6 +7,9 @@ from configcatclient.autopollingcachepolicy import AutoPollingCachePolicy
 from configcatclient.configcache import InMemoryConfigCache
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, ConfigFetcherWaitMock, \
     ConfigFetcherCountMock, TEST_JSON, CallCounter, TEST_JSON2
+
+logging.basicConfig()
+log = logging.getLogger(__name__)
 
 
 class AutoPollingCachePolicyTests(unittest.TestCase):
@@ -96,7 +100,6 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
         cache_policy = AutoPollingCachePolicy(config_fetcher, config_cache, 2, 5, None)
-        cache_policy.run()
         time.sleep(2.200)
         self.assertEqual(config_fetcher.get_call_count, 2)
         cache_policy.stop()
@@ -106,7 +109,6 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
         cache_policy = AutoPollingCachePolicy(config_fetcher, config_cache, 2, 5, call_counter.callback)
-        cache_policy.run()
         time.sleep(1)
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(call_counter.get_call_count, 1)
@@ -124,7 +126,6 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
         cache_policy = AutoPollingCachePolicy(config_fetcher, config_cache, 2, 5, call_counter.callback_exception)
-        cache_policy.run()
         time.sleep(1)
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(call_counter.get_call_count, 1)
