@@ -2,7 +2,7 @@ import logging
 import sys
 import datetime
 import time
-from threading import Thread
+from threading import Thread, Event
 from requests import HTTPError
 
 from .readwritelock import ReadWriteLock
@@ -32,13 +32,13 @@ class AutoPollingCachePolicy(CachePolicy):
 
         self.thread = Thread(target=self._run, args=[])
         self.thread.daemon = True
+        self._is_started = Event()
         self.thread.start()
+        self._is_started.wait()
 
     def _run(self):
-        if self._is_running:
-            return
-
         self._is_running = True
+        self._is_started.set()
         while self._is_running:
             self.force_refresh()
             time.sleep(self._poll_interval_seconds)
