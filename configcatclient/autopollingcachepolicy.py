@@ -39,9 +39,11 @@ class AutoPollingCachePolicy(CachePolicy):
     def _run(self):
         self._is_running = True
         self._is_started.set()
-        while self._is_running:
+        while True:
             self.force_refresh()
             time.sleep(self._poll_interval_seconds)
+            if not self._is_running:
+                break
 
     def get(self):
         while not self._initialized \
