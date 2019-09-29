@@ -37,7 +37,7 @@ if __name__ == '__main__':
     print("'keySampleText' value from ConfigCat: " + str(my_setting_value))
 
     # 'myKeyNotExits' setting doesn't exist in the project configuration and the client returns default value ('N/A');
-    my_setting_not_exists = client.get_value('myKeyNotExits', 'N/A')
-    print("'myKeyNotExits' value from ConfigCat: " + str(my_setting_not_exists))
+    my_setting_not_exists = client.get_value('myKeyNotExists', 'N/A')
+    print("'myKeyNotExists' value from ConfigCat: " + str(my_setting_not_exists))
 
     client.stop()
