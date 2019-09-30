@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import sys
+import semver
 
 from .user import User
 
@@ -36,18 +37,46 @@ class RolloutEvaluator(object):
             comparator = rollout_rule.get('Comparator')
             value = rollout_rule.get('Value')
 
+            # IS ONE OF
             if comparator == 0:
                 if str(user_value) in [x.strip() for x in str(comparison_value).split(',')]:
                     return value
+            # IS NOT ONE OF
             elif comparator == 1:
                 if str(user_value) not in [x.strip() for x in str(comparison_value).split(',')]:
                     return value
+            # CONTAINS
             elif comparator == 2:
                 if str(user_value).__contains__(str(comparison_value)):
                     return value
+            # DOES NOT CONTAIN
             elif comparator == 3:
                 if not str(user_value).__contains__(str(comparison_value)):
                     return value
+
+            # IS ONE OF, IS NOT ONE OF (Semantic version)
+            elif 4 <= comparator <= 5:
+                try:
+                    match = False
+                    for x in filter(None, [x.strip() for x in str(comparison_value).split(',')]):
+                        match = semver.match(str(user_value).strip(), '==' + x) or match
+                    if (match and comparator == 4) or (not match and comparator == 5):
+                        return value
+                except ValueError as e:
+                    # If any of the
+                    # TODO logging
+                    pass
+
+            # LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (Semantic version)
+            elif 6 <= comparator <= 9:
+                try:
+                    comparators = ['<', '<=', '>', '>=']
+                    if semver.match(str(user_value).strip(), comparators[comparator - 6] + str(comparison_value).strip()):
+                        return value
+                except ValueError as e:
+                    # If any of the
+                    # TODO logging
+                    pass
 
         # Evaluate variations
         rollout_percentage_items = setting_descriptor.get('RolloutPercentageItems', [])

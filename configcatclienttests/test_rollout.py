@@ -8,8 +8,14 @@ from configcatclient.user import User
 class RolloutTests(unittest.TestCase):
 
     def test_matrix(self):
+        self._test_matrix('./testmatrix.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+
+    def test_matrix_semantic(self):
+        self._test_matrix('./testmatrix_semantic.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA')
+
+    def _test_matrix(self, file_path, api_key):
         script_dir = path.dirname(__file__)
-        file_path = path.join(script_dir, './testmatrix.csv')
+        file_path = path.join(script_dir, file_path)
 
         with open(file_path, 'r') as f:
             content = f.readlines()
@@ -19,7 +25,7 @@ class RolloutTests(unittest.TestCase):
         setting_keys = header.split(';')[4:]
         content.pop(0)
 
-        client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        client = configcatclient.create_client(api_key)
         errors = ''
         for line in content:
             user_descriptor = line.rstrip().split(';')
@@ -60,11 +66,21 @@ class RolloutTests(unittest.TestCase):
         self.assertEqual('Cat', setting_value)
         client.stop()
 
-    """
+
+'''
     def test_create_matrix(self):
+        self._test_create_matrix('./testmatrix.csv', './testmatrix_out.csv',
+                                 'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+    
+
+    def test_create_matrix_semantic(self):
+        self._test_create_matrix('./testmatrix_semantic.csv', './testmatrix_semantic_out.csv',
+                                 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA')
+    
+    def _test_create_matrix(self, file_path, out_file_path, api_key):
         script_dir = path.dirname(__file__)
-        file_path = path.join(script_dir, './testmatrix.csv')
-        out_file_path = path.join(script_dir, './testmatrix_out.csv')
+        file_path = path.join(script_dir, file_path)
+        out_file_path = path.join(script_dir, out_file_path)
 
         with open(file_path, 'r') as f:
             content = f.readlines()
@@ -74,7 +90,7 @@ class RolloutTests(unittest.TestCase):
         setting_keys = header.split(';')[4:]
         content.pop(0)
 
-        client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        client = configcatclient.create_client(api_key)
         with open(out_file_path, 'w') as f:
             f.writelines(header + '\n')
 
@@ -103,4 +119,4 @@ class RolloutTests(unittest.TestCase):
                     user_descriptor.append(str(value))
 
                 f.writelines(';'.join(user_descriptor)  + '\n')
-    """
+'''
