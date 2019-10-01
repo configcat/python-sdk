@@ -7,7 +7,7 @@ from configcatclient.user import User
 
 class RolloutTests(unittest.TestCase):
 
-    def test_matrix(self):
+    def test_matrix_text(self):
         self._test_matrix('./testmatrix.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
 
     def test_matrix_semantic(self):
@@ -68,7 +68,7 @@ class RolloutTests(unittest.TestCase):
 
 
 '''
-    def test_create_matrix(self):
+    def test_create_matrix_text(self):
         self._test_create_matrix('./testmatrix.csv', './testmatrix_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
     
