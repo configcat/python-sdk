@@ -125,6 +125,24 @@ class RolloutEvaluator(object):
                     self._logger.warning(self._format_validation_error_rule(comparison_attribute, comparator,
                                                                             comparison_value, str(e)))
                     continue
+            elif 10 <= comparator <= 15:
+                try:
+                    user_value_float = float(str(user_value).replace(",", "."))
+                    comparison_value_float = float(str(comparison_value).replace(",", "."))
+
+                    if (comparator == 10 and user_value_float == comparison_value_float) \
+                            or (comparator == 11 and user_value_float != comparison_value_float) \
+                            or (comparator == 12 and user_value_float < comparison_value_float) \
+                            or (comparator == 13 and user_value_float <= comparison_value_float) \
+                            or (comparator == 14 and user_value_float > comparison_value_float) \
+                            or (comparator == 15 and user_value_float >= comparison_value_float):
+                        self._logger.info(self._format_match_rule(comparison_attribute, comparator, comparison_value,
+                                                                  value))
+                        return value
+                except Exception as e:
+                    self._logger.warning(self._format_validation_error_rule(comparison_attribute, comparator,
+                                                                            comparison_value, str(e)))
+                    continue
 
             self._logger.info(self._format_no_match_rule(comparison_attribute, comparator, comparison_value))
 

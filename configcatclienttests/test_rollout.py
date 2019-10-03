@@ -14,6 +14,9 @@ class RolloutTests(unittest.TestCase):
     def test_matrix_semantic(self):
         self._test_matrix('./testmatrix_semantic.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA')
 
+    def test_matrix_number(self):
+        self._test_matrix('./testmatrix_number.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw')
+
     def _test_matrix(self, file_path, api_key):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
@@ -75,10 +78,13 @@ class RolloutTests(unittest.TestCase):
         self._test_create_matrix('./testmatrix.csv', './testmatrix_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
     
-
     def test_create_matrix_semantic(self):
         self._test_create_matrix('./testmatrix_semantic.csv', './testmatrix_semantic_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA')
+    
+    def test_create_matrix_number(self):
+        self._test_create_matrix('./testmatrix_number.csv', './testmatrix_number_out.csv',
+                                 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw')
     
     def _test_create_matrix(self, file_path, out_file_path, api_key):
         script_dir = path.dirname(__file__)
