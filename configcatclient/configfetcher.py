@@ -1,5 +1,5 @@
 import requests
-import logging
+
 import sys
 from cachecontrol import CacheControl
 from .interfaces import ConfigFetcher
@@ -11,8 +11,6 @@ if sys.version_info < (2, 7, 9):
 BASE_URL = 'https://cdn.configcat.com'
 BASE_PATH = 'configuration-files/'
 BASE_EXTENSION = '/config_v2.json'
-
-log = logging.getLogger(sys.modules[__name__].__name__)
 
 
 class CacheControlConfigFetcher(ConfigFetcher):
@@ -30,13 +28,10 @@ class CacheControlConfigFetcher(ConfigFetcher):
             self._base_url = BASE_URL
 
     def get_configuration_json(self):
-        log.debug("Fetching configuration from ConfigCat")
         uri = self._base_url + '/' + BASE_PATH + self._api_key + BASE_EXTENSION
         response = self._request_cache.get(uri, headers=self._headers, timeout=(10, 30))
         response.raise_for_status()
         json = response.json()
-        log.debug("ConfigCat configuration json fetch response code:[%d] Cached:[%s]",
-                  response.status_code, response.from_cache)
 
         return json
 

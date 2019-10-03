@@ -1,12 +1,14 @@
 from setuptools import setup
 
+
 def parse_requirements(filename):
     lines = (line.strip() for line in open(filename))
     return [line for line in lines if line]
 
-configcatclient_version="2.1.1"
 
-reqs = parse_requirements('requirements.txt')
+configcatclient_version = "2.1.1"
+
+requirements = parse_requirements('requirements.txt')
 
 setup(
     name='configcat-client',
@@ -17,8 +19,9 @@ setup(
     author='ConfigCat',
     author_email='developer@configcat.com',
     description='ConfigCat SDK for Python. https://configcat.com',
-    long_description='ConfigCat is a configuration as a service that lets you manage your features and configurations without actually deploying new code.',
-    install_requires=reqs,
+    long_description='ConfigCat is a configuration as a service that lets you manage your features and configurations '
+                     'without actually deploying new code.',
+    install_requires=requirements,
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',

@@ -1,19 +1,17 @@
-import logging
-import sys
 import datetime
 from requests import HTTPError
+import traceback
 
 from .readwritelock import ReadWriteLock
-from .interfaces import CachePolicy
-
-log = logging.getLogger(sys.modules[__name__].__name__)
+from .interfaces import CachePolicy, ConfigCatLogger
 
 
 class LazyLoadingCachePolicy(CachePolicy):
 
-    def __init__(self, config_fetcher, config_cache, cache_time_to_live_seconds=60):
+    def __init__(self, config_fetcher, config_cache, logger: ConfigCatLogger, cache_time_to_live_seconds=60):
         if cache_time_to_live_seconds < 1:
             cache_time_to_live_seconds = 1
+        self._logger = logger
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
         self._cache_time_to_live = datetime.timedelta(seconds=cache_time_to_live_seconds)
@@ -36,7 +34,6 @@ class LazyLoadingCachePolicy(CachePolicy):
 
         try:
             self._lock.acquire_read()
-
             config = self._config_cache.get()
             return config
         finally:
@@ -48,16 +45,16 @@ class LazyLoadingCachePolicy(CachePolicy):
 
             try:
                 self._lock.acquire_write()
-
                 self._config_cache.set(configuration)
                 self._last_updated = datetime.datetime.utcnow()
             finally:
                 self._lock.release_write()
 
         except HTTPError as e:
-            log.error('Received unexpected response from ConfigFetcher ' + str(e.response))
+            self._logger.error('Double-check your API KEY at https://app.configcat.com/apikey.'
+                               ' Received unexpected response: %s' % str(e.response))
         except:
-            log.exception(sys.exc_info()[0])
+            self._logger.error('Exception in LazyLoadingCachePolicy.force_refresh: %s' % traceback.format_exc())
 
     def stop(self):
         pass

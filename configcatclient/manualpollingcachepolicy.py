@@ -1,18 +1,16 @@
-import logging
-import sys
 from requests import HTTPError
+import traceback
 
 from .readwritelock import ReadWriteLock
-from .interfaces import CachePolicy
-
-log = logging.getLogger(sys.modules[__name__].__name__)
+from .interfaces import CachePolicy, ConfigCatLogger
 
 
 class ManualPollingCachePolicy(CachePolicy):
 
-    def __init__(self, config_fetcher, config_cache):
+    def __init__(self, config_fetcher, config_cache, logger: ConfigCatLogger):
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
+        self._logger = logger
         self._lock = ReadWriteLock()
 
     def get(self):
@@ -36,9 +34,10 @@ class ManualPollingCachePolicy(CachePolicy):
                 self._lock.release_write()
 
         except HTTPError as e:
-            log.error('Received unexpected response from ConfigFetcher ' + str(e.response))
+            self._logger.error('Double-check your API KEY at https://app.configcat.com/apikey.'
+                               ' Received unexpected response: [%s]' % str(e.response))
         except:
-            log.exception(sys.exc_info()[0])
+            self._logger.error('Exception in ManualPollingCachePolicy.force_refresh: %s' % traceback.format_exc())
 
     def stop(self):
         pass
