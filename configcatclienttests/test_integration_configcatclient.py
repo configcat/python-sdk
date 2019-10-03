@@ -78,9 +78,9 @@ class AutoPollTests(unittest.TestCase):
 
     def test_client_works_invalid_proxy(self):
         proxies = {'https': '0.0.0.0:0'}
-        auth = HTTPProxyAuth("test", "test")
+        proxy_auth = HTTPProxyAuth("test", "test")
         client = configcatclient.create_client_with_auto_poll(_API_KEY, log_level=LogLevel.INFO,
-                                                              proxies=proxies, auth=auth)
+                                                              proxies=proxies, proxy_auth=proxy_auth)
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
         client.stop()
 
