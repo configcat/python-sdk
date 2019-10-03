@@ -1,4 +1,4 @@
-from configcatclient.interfaces import ConfigCatLogger, LogLevel
+from .interfaces import ConfigCatLogger, LogLevel
 
 
 def _format_message(message, level):

@@ -1,7 +1,6 @@
 import hashlib
 import semver
 
-from configcatclient.interfaces import ConfigCatLogger
 from .user import User
 
 
