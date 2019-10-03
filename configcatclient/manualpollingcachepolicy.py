@@ -7,7 +7,7 @@ from .interfaces import CachePolicy, ConfigCatLogger
 
 class ManualPollingCachePolicy(CachePolicy):
 
-    def __init__(self, config_fetcher, config_cache, logger: ConfigCatLogger):
+    def __init__(self, config_fetcher, config_cache, logger):
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
         self._logger = logger

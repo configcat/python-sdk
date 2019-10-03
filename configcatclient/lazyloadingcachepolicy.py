@@ -8,7 +8,7 @@ from .interfaces import CachePolicy, ConfigCatLogger
 
 class LazyLoadingCachePolicy(CachePolicy):
 
-    def __init__(self, config_fetcher, config_cache, logger: ConfigCatLogger, cache_time_to_live_seconds=60):
+    def __init__(self, config_fetcher, config_cache, logger, cache_time_to_live_seconds=60):
         if cache_time_to_live_seconds < 1:
             cache_time_to_live_seconds = 1
         self._logger = logger

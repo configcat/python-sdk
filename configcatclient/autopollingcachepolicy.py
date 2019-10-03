@@ -10,7 +10,7 @@ from .interfaces import CachePolicy, ConfigCatLogger
 
 class AutoPollingCachePolicy(CachePolicy):
 
-    def __init__(self, config_fetcher, config_cache, logger: ConfigCatLogger,
+    def __init__(self, config_fetcher, config_cache, logger,
                  poll_interval_seconds=60, max_init_wait_time_seconds=5,
                  on_configuration_changed_callback=None):
         if poll_interval_seconds < 1:

@@ -27,7 +27,7 @@ class RolloutEvaluator(object):
         '>= (Number)'
     ]
 
-    def __init__(self, logger: ConfigCatLogger):
+    def __init__(self, logger):
         self._logger = logger
 
     def evaluate(self, key, user: User, default_value, config):

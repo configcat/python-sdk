@@ -20,7 +20,7 @@ class ConfigCatClient(object):
                  config_cache_class=None,
                  base_url=None,
                  log_level=LogLevel.WARNING,
-                 logger: ConfigCatLogger = None):
+                 logger = None):
 
         if api_key is None:
             raise ConfigCatClientException('API Key is required.')
@@ -71,7 +71,7 @@ class ConfigCatClient(object):
     def force_refresh(self):
         self._cache_policy.force_refresh()
 
-    def set_log_level(self, log_level: LogLevel):
+    def set_log_level(self, log_level):
         self._logger.set_log_level(log_level)
 
     def stop(self):

@@ -93,7 +93,7 @@ class ConfigCatLogger(object):
     def __init__(self):
         self.log_level = LogLevel.WARNING
 
-    def set_log_level(self, log_level: LogLevel):
+    def set_log_level(self, log_level):
         self.log_level = log_level
 
     @abstractmethod

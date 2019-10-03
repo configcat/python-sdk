@@ -13,7 +13,7 @@ def create_client(api_key):
 
 def create_client_with_auto_poll(api_key, poll_interval_seconds=60, max_init_wait_time_seconds=5,
                                  on_configuration_changed_callback=None, config_cache_class=None,
-                                 base_url=None, log_level=LogLevel.WARNING, logger: ConfigCatLogger = None):
+                                 base_url=None, log_level=LogLevel.WARNING, logger=None):
     """
     Create an instance of ConfigCatClient and setup Auto Poll mode with custom options
 
@@ -42,7 +42,7 @@ def create_client_with_auto_poll(api_key, poll_interval_seconds=60, max_init_wai
 
 
 def create_client_with_lazy_load(api_key, cache_time_to_live_seconds=60, config_cache_class=None,
-                                 base_url=None, log_level=LogLevel.WARNING, logger: ConfigCatLogger = None):
+                                 base_url=None, log_level=LogLevel.WARNING, logger=None):
     """
     Create an instance of ConfigCatClient and setup Lazy Load mode with custom options
 
@@ -66,7 +66,7 @@ def create_client_with_lazy_load(api_key, cache_time_to_live_seconds=60, config_
 
 
 def create_client_with_manual_poll(api_key, config_cache_class=None,
-                                   base_url=None, log_level=LogLevel.WARNING, logger: ConfigCatLogger = None):
+                                   base_url=None, log_level=LogLevel.WARNING, logger=None):
     """
     Create an instance of ConfigCatClient and setup Manual Poll mode with custom options
 
