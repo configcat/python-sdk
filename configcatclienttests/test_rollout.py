@@ -2,7 +2,7 @@ import unittest
 from os import path
 
 import configcatclient
-from configcatclient import LogLevel
+from configcatclient.interfaces import LogLevel
 from configcatclient.user import User
 
 
