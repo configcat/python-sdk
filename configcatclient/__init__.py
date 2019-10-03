@@ -1,5 +1,5 @@
 from .configcatclient import ConfigCatClient
-from .interfaces import ConfigCatClientException, LogLevel, ConfigCatLogger
+from .interfaces import ConfigCatClientException, LogLevel
 
 
 def create_client(api_key):
