@@ -1,6 +1,5 @@
-from configcatclient.logger import ConfigCatConsoleLogger
-from configcatclient.user import User
-from .interfaces import ConfigCatClientException, ConfigCatLogger, LogLevel
+from .logger import ConfigCatConsoleLogger
+from .interfaces import ConfigCatClientException, LogLevel
 from .lazyloadingcachepolicy import LazyLoadingCachePolicy
 from .manualpollingcachepolicy import ManualPollingCachePolicy
 from .autopollingcachepolicy import AutoPollingCachePolicy
@@ -20,7 +19,7 @@ class ConfigCatClient(object):
                  config_cache_class=None,
                  base_url=None,
                  log_level=LogLevel.WARNING,
-                 logger = None):
+                 logger=None):
 
         if api_key is None:
             raise ConfigCatClientException('API Key is required.')

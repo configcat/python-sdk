@@ -2,7 +2,7 @@ from requests import HTTPError
 import traceback
 
 from .readwritelock import ReadWriteLock
-from .interfaces import CachePolicy, ConfigCatLogger
+from .interfaces import CachePolicy
 
 
 class ManualPollingCachePolicy(CachePolicy):
