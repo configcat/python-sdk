@@ -91,7 +91,7 @@ class ConfigCatLogger(object):
     __metaclass__ = ABCMeta
 
     def __init__(self):
-        self.log_level: LogLevel = LogLevel.WARNING
+        self.log_level = LogLevel.WARNING
 
     def set_log_level(self, log_level: LogLevel):
         self.log_level = log_level
