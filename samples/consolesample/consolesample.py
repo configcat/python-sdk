@@ -21,7 +21,8 @@ if __name__ == '__main__':
     print("'keySampleText' value from ConfigCat: " + str(my_setting_value))
 
     # 2. As the passed User's custom attribute - SubscriptionType - is unlimited this will print 'Lion'
-    my_setting_value = client.get_value('keySampleText', 'default value', User('key', custom={'SubscriptionType': 'unlimited'}))
+    my_setting_value = client.get_value('keySampleText', 'default value',
+                                        User('key', custom={'SubscriptionType': 'unlimited'}))
     print("'keySampleText' value from ConfigCat: " + str(my_setting_value))
 
     # 3/a. As the passed User doesn't fill in any rules, this will serve 'Falcon' or 'Horse'.
