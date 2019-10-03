@@ -54,7 +54,7 @@ class ConfigCatClient(object):
             self._config_fetcher = CacheControlConfigFetcher(api_key, 'm', base_url)
             self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache, self._logger)
 
-    def get_value(self, key, default_value, user: User = None):
+    def get_value(self, key, default_value, user=None):
         config = self._cache_policy.get()
         if config is None:
             return default_value

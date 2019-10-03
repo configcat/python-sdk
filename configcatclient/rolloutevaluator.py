@@ -30,7 +30,7 @@ class RolloutEvaluator(object):
     def __init__(self, logger):
         self._logger = logger
 
-    def evaluate(self, key, user: User, default_value, config):
+    def evaluate(self, key, user, default_value, config):
         self._logger.info('Evaluating get_value(\'%s\').' % key)
 
         setting_descriptor = config.get(key, None)
