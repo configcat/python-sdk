@@ -2,6 +2,8 @@ import logging
 import unittest
 import time
 
+from requests.auth import HTTPProxyAuth
+
 import configcatclient
 from configcatclient import ConfigCatClientException
 from configcatclient.interfaces import LogLevel
@@ -71,6 +73,14 @@ class AutoPollTests(unittest.TestCase):
     def test_client_works_invalid_base_url(self):
         client = configcatclient.create_client_with_auto_poll(_API_KEY, base_url='https://invalidcdn.configcat.com',
                                                               log_level=LogLevel.INFO)
+        self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
+        client.stop()
+
+    def test_client_works_invalid_proxy(self):
+        proxies = {'https': '0.0.0.0:0'}
+        auth = HTTPProxyAuth("test", "test")
+        client = configcatclient.create_client_with_auto_poll(_API_KEY, log_level=LogLevel.INFO,
+                                                              proxies=proxies, auth=auth)
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
         client.stop()
 

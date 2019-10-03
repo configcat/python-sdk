@@ -19,7 +19,9 @@ class ConfigCatClient(object):
                  config_cache_class=None,
                  base_url=None,
                  log_level=LogLevel.WARNING,
-                 logger=None):
+                 logger=None,
+                 proxies=None,
+                 proxy_auth=None):
 
         if api_key is None:
             raise ConfigCatClientException('API Key is required.')
@@ -41,21 +43,24 @@ class ConfigCatClient(object):
             self._config_cache = InMemoryConfigCache()
 
         if poll_interval_seconds > 0:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'p', base_url)
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'p', base_url, proxies, proxy_auth)
             self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache, self._logger,
                                                         poll_interval_seconds, max_init_wait_time_seconds,
                                                         on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'l', base_url)
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'l', base_url, proxies, proxy_auth)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache, self._logger,
                                                         cache_time_to_live_seconds)
         else:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'm', base_url)
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'm', base_url, proxies, proxy_auth)
             self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache, self._logger)
 
     def get_value(self, key, default_value, user=None):
         config = self._cache_policy.get()
         if config is None:
+            self._logger.warning('Evaluating get_value(\'%s\') failed. Cache is empty. '
+                                 'Returning default_value in your get_value call: [%s].' %
+                                 (key, str(default_value)))
             return default_value
 
         return self._rollout_evaluator.evaluate(key, user, default_value, config)
