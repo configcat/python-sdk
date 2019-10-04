@@ -10,7 +10,7 @@ if sys.version_info < (2, 7, 9):
 
 BASE_URL = 'https://cdn.configcat.com'
 BASE_PATH = 'configuration-files/'
-BASE_EXTENSION = '/config_v2.json'
+BASE_EXTENSION = '/config_v3.json'
 
 
 class CacheControlConfigFetcher(ConfigFetcher):
