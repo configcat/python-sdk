@@ -26,6 +26,14 @@ class RolloutEvaluator(object):
         '>= (Number)'
     ]
 
+    VALUE = 'v'
+    COMPARATOR = 't'
+    COMPARISON_ATTRIBUTE = 'a'
+    COMPARISON_VALUE = 'c'
+    ROLLOUT_PERCENTAGE_ITEMS = 'p'
+    PERCENTAGE = 'p'
+    ROLLOUT_RULES = 'r'
+
     def __init__(self, logger):
         self._logger = logger
 
@@ -40,8 +48,8 @@ class RolloutEvaluator(object):
                                (key, key, str(default_value), ', '.join(list(config))))
             return default_value
 
-        rollout_rules = setting_descriptor.get('r', [])
-        rollout_percentage_items = setting_descriptor.get('p', [])
+        rollout_rules = setting_descriptor.get(self.ROLLOUT_RULES, [])
+        rollout_percentage_items = setting_descriptor.get(self.ROLLOUT_PERCENTAGE_ITEMS, [])
 
         if user is not None and type(user) is not User:
             self._logger.warning('Evaluating get_value(\'%s\'). User Object is not an instance of User type.' % key)
@@ -54,7 +62,7 @@ class RolloutEvaluator(object):
                                      'in order to make targeting work properly. '
                                      'Read more: https://configcat.com/docs/advanced/user-object/' %
                                      key)
-            return_value = setting_descriptor.get('v', default_value)
+            return_value = setting_descriptor.get(self.VALUE, default_value)
             self._logger.info('Returning [%s]' % str(return_value))
             return return_value
 
@@ -62,16 +70,16 @@ class RolloutEvaluator(object):
 
         # Evaluate targeting rules
         for rollout_rule in rollout_rules:
-            comparison_attribute = rollout_rule.get('a')
-            comparison_value = rollout_rule.get('c')
-            comparator = rollout_rule.get('t')
+            comparison_attribute = rollout_rule.get(self.COMPARISON_ATTRIBUTE)
+            comparison_value = rollout_rule.get(self.COMPARISON_VALUE)
+            comparator = rollout_rule.get(self.COMPARATOR)
 
             user_value = user.get_attribute(comparison_attribute)
             if user_value is None or not user_value:
                 self._logger.info(self._format_no_match_rule(comparison_attribute, comparator, comparison_value))
                 continue
 
-            value = rollout_rule.get('v')
+            value = rollout_rule.get(self.VALUE)
 
             # IS ONE OF
             if comparator == 0:
@@ -154,13 +162,13 @@ class RolloutEvaluator(object):
 
             bucket = 0
             for rollout_percentage_item in rollout_percentage_items or []:
-                bucket += rollout_percentage_item.get('p', 0)
+                bucket += rollout_percentage_item.get(self.PERCENTAGE, 0)
                 if hash_val < bucket:
-                    percentage_value = rollout_percentage_item.get('v')
+                    percentage_value = rollout_percentage_item.get(self.VALUE)
                     self._logger.info('Evaluating %% options. Returning %s' % percentage_value)
                     return percentage_value
 
-        def_value = setting_descriptor.get('v', default_value)
+        def_value = setting_descriptor.get(self.VALUE, default_value)
         self._logger.info('Returning %s' % def_value)
         return def_value
 
