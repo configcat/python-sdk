@@ -1,11 +1,14 @@
-from .logger import ConfigCatConsoleLogger
-from .interfaces import ConfigCatClientException, LogLevel
+from .interfaces import ConfigCatClientException
 from .lazyloadingcachepolicy import LazyLoadingCachePolicy
 from .manualpollingcachepolicy import ManualPollingCachePolicy
 from .autopollingcachepolicy import AutoPollingCachePolicy
 from .configfetcher import CacheControlConfigFetcher
 from .configcache import InMemoryConfigCache
 from .rolloutevaluator import RolloutEvaluator
+import logging
+import sys
+
+log = logging.getLogger(sys.modules[__name__].__name__)
 
 
 class ConfigCatClient(object):
@@ -18,8 +21,6 @@ class ConfigCatClient(object):
                  cache_time_to_live_seconds=60,
                  config_cache_class=None,
                  base_url=None,
-                 log_level=LogLevel.WARNING,
-                 logger=None,
                  proxies=None,
                  proxy_auth=None):
 
@@ -27,15 +28,7 @@ class ConfigCatClient(object):
             raise ConfigCatClientException('API Key is required.')
 
         self._api_key = api_key
-
-        if logger:
-            self._logger = logger
-        else:
-            self._logger = ConfigCatConsoleLogger()
-
-        self._logger.set_log_level(log_level)
-
-        self._rollout_evaluator = RolloutEvaluator(self._logger)
+        self._rollout_evaluator = RolloutEvaluator()
 
         if config_cache_class:
             self._config_cache = config_cache_class()
@@ -44,23 +37,23 @@ class ConfigCatClient(object):
 
         if poll_interval_seconds > 0:
             self._config_fetcher = CacheControlConfigFetcher(api_key, 'p', base_url, proxies, proxy_auth)
-            self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache, self._logger,
+            self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                         poll_interval_seconds, max_init_wait_time_seconds,
                                                         on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
             self._config_fetcher = CacheControlConfigFetcher(api_key, 'l', base_url, proxies, proxy_auth)
-            self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache, self._logger,
+            self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
                                                         cache_time_to_live_seconds)
         else:
             self._config_fetcher = CacheControlConfigFetcher(api_key, 'm', base_url, proxies, proxy_auth)
-            self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache, self._logger)
+            self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache)
 
     def get_value(self, key, default_value, user=None):
         config = self._cache_policy.get()
         if config is None:
-            self._logger.warning('Evaluating get_value(\'%s\') failed. Cache is empty. '
-                                 'Returning default_value in your get_value call: [%s].' %
-                                 (key, str(default_value)))
+            log.warning('Evaluating get_value(\'%s\') failed. Cache is empty. '
+                        'Returning default_value in your get_value call: [%s].' %
+                        (key, str(default_value)))
             return default_value
 
         return self._rollout_evaluator.evaluate(key, user, default_value, config)
@@ -74,9 +67,6 @@ class ConfigCatClient(object):
 
     def force_refresh(self):
         self._cache_policy.force_refresh()
-
-    def set_log_level(self, log_level):
-        self._logger.set_log_level(log_level)
 
     def stop(self):
         self._cache_policy.stop()

@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from enum import Enum
 
 
 class ConfigFetcher(object):
@@ -63,60 +62,6 @@ class CachePolicy(object):
     def stop(self):
         """
 
-        :return:
-        """
-
-
-class LogLevel(Enum):
-    OFF = 0
-    ERROR = 1
-    WARNING = 2
-    INFO = 3
-
-    def __le__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value <= other.value
-        return NotImplemented
-
-    def __ge__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value >= other.value
-        return NotImplemented
-
-
-class ConfigCatLogger(object):
-    """
-        Logger interface
-    """
-    __metaclass__ = ABCMeta
-
-    def __init__(self):
-        self.log_level = LogLevel.WARNING
-
-    def set_log_level(self, log_level):
-        self.log_level = log_level
-
-    @abstractmethod
-    def info(self, message):
-        """
-
-        :param message:
-        :return:
-        """
-
-    @abstractmethod
-    def warning(self, message):
-        """
-
-        :param message:
-        :return:
-        """
-
-    @abstractmethod
-    def error(self, message):
-        """
-
-        :param message:
         :return:
         """
 

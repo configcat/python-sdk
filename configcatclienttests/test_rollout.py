@@ -1,9 +1,11 @@
+import logging
 import unittest
 from os import path
 
 import configcatclient
-from configcatclient.interfaces import LogLevel
 from configcatclient.user import User
+
+logging.basicConfig(level=logging.INFO)
 
 
 class RolloutTests(unittest.TestCase):
@@ -30,7 +32,6 @@ class RolloutTests(unittest.TestCase):
         content.pop(0)
 
         client = configcatclient.create_client(api_key)
-        client.set_log_level(LogLevel.INFO)
         errors = ''
         for line in content:
             user_descriptor = line.rstrip().split(';')
@@ -56,7 +57,6 @@ class RolloutTests(unittest.TestCase):
 
             i = 0
             for setting_key in setting_keys:
-                print('------------------------------')
                 value = client.get_value(setting_key, None, user_object)
                 if str(value) != str(user_descriptor[i + 4]):
                     errors += 'Identifier: ' + user_descriptor[0] + '. SettingKey: ' + setting_key + \

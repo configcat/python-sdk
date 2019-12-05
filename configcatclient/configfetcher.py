@@ -1,5 +1,5 @@
 import requests
-
+import logging
 import sys
 from cachecontrol import CacheControl
 from .interfaces import ConfigFetcher
@@ -11,6 +11,8 @@ if sys.version_info < (2, 7, 9):
 BASE_URL = 'https://cdn.configcat.com'
 BASE_PATH = 'configuration-files/'
 BASE_EXTENSION = '/config_v3.json'
+
+log = logging.getLogger(sys.modules[__name__].__name__)
 
 
 class CacheControlConfigFetcher(ConfigFetcher):

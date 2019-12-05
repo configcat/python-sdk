@@ -1,24 +1,25 @@
+import logging
+import sys
 import datetime
 import time
 from threading import Thread, Event
 from requests import HTTPError
-import traceback
 
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
+log = logging.getLogger(sys.modules[__name__].__name__)
+
 
 class AutoPollingCachePolicy(CachePolicy):
 
-    def __init__(self, config_fetcher, config_cache, logger,
+    def __init__(self, config_fetcher, config_cache,
                  poll_interval_seconds=60, max_init_wait_time_seconds=5,
                  on_configuration_changed_callback=None):
         if poll_interval_seconds < 1:
             poll_interval_seconds = 1
         if max_init_wait_time_seconds < 0:
             max_init_wait_time_seconds = 0
-
-        self._logger = logger
 
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
@@ -78,15 +79,15 @@ class AutoPollingCachePolicy(CachePolicy):
                     if self._on_configuration_changed_callback is not None:
                         self._on_configuration_changed_callback()
                 except:
-                    self._logger.error('Exception in on_configuration_changed_callback: %s' % traceback.format_exc())
+                    log.exception(sys.exc_info()[0])
 
             if not self._initialized and old_configuration is not None:
                 self._initialized = True
         except HTTPError as e:
-            self._logger.error('Double-check your API KEY at https://app.configcat.com/apikey.'
-                               ' Received unexpected response: %s' % str(e.response))
+            log.error('Double-check your API KEY at https://app.configcat.com/apikey.'
+                      ' Received unexpected response: %s' % str(e.response))
         except:
-            self._logger.error('Exception in AutoPollingCachePolicy.force_refresh: %s' % traceback.format_exc())
+            log.exception(sys.exc_info()[0])
 
     def stop(self):
         self._is_running = False
