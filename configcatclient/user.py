@@ -25,3 +25,17 @@ class User(object):
                     return self.__custom[customField]
 
         return None
+
+    def __str__(self):
+        r = '{\n    "Identifier": "%s"' % self.__identifier
+        if self.__data['email'] is not None:
+            r += ',\n    "Email": "%s"' % self.__data['email']
+        if self.__data['country'] is not None:
+            r += ',\n    "Country": "%s"' % self.__data['country']
+        if self.__custom is not None:
+            r += ',\n    "Custom": {'
+            for customField in self.__custom:
+                r += '\n        "%s": "%s",' % (customField, self.__custom[customField])
+            r += '\n    }'
+        r += '\n}'
+        return r

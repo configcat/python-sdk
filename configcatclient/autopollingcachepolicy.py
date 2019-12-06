@@ -14,7 +14,8 @@ log = logging.getLogger(sys.modules[__name__].__name__)
 class AutoPollingCachePolicy(CachePolicy):
 
     def __init__(self, config_fetcher, config_cache,
-                 poll_interval_seconds=60, max_init_wait_time_seconds=5, on_configuration_changed_callback=None):
+                 poll_interval_seconds=60, max_init_wait_time_seconds=5,
+                 on_configuration_changed_callback=None):
         if poll_interval_seconds < 1:
             poll_interval_seconds = 1
         if max_init_wait_time_seconds < 0:
@@ -58,29 +59,33 @@ class AutoPollingCachePolicy(CachePolicy):
 
     def force_refresh(self):
         try:
-            self._lock.acquire_read()
-            old_configuration = self._config_cache.get()
-        finally:
-            self._lock.release_read()
-
-        try:
             configuration = self._config_fetcher.get_configuration_json()
 
             try:
-                self._lock.acquire_write()
-                self._config_cache.set(configuration)
-                self._initialized = True
+                self._lock.acquire_read()
+                old_configuration = self._config_cache.get()
             finally:
-                self._lock.release_write()
+                self._lock.release_read()
 
-            try:
-                if self._on_configuration_changed_callback is not None and configuration != old_configuration:
-                    self._on_configuration_changed_callback()
-            except:
-                log.exception(sys.exc_info()[0])
+            if configuration != old_configuration:
+                try:
+                    self._lock.acquire_write()
+                    self._config_cache.set(configuration)
+                    self._initialized = True
+                finally:
+                    self._lock.release_write()
 
+                try:
+                    if self._on_configuration_changed_callback is not None:
+                        self._on_configuration_changed_callback()
+                except:
+                    log.exception(sys.exc_info()[0])
+
+            if not self._initialized and old_configuration is not None:
+                self._initialized = True
         except HTTPError as e:
-            log.error('Received unexpected response from ConfigFetcher ' + str(e.response))
+            log.error('Double-check your API KEY at https://app.configcat.com/apikey.'
+                      ' Received unexpected response: %s' % str(e.response))
         except:
             log.exception(sys.exc_info()[0])
 

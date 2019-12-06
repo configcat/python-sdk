@@ -29,7 +29,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         self.assertEqual(config_fetcher.get_call_count, 1)
         cache_policy.stop()
 
-    def test_with_refresh_httperror(self):
+    def test_with_refresh_http_error(self):
         config_fetcher = ConfigFetcherWithErrorMock(HTTPError("error"))
         config_cache = InMemoryConfigCache()
         cache_policy = ManualPollingCachePolicy(config_fetcher, config_cache)

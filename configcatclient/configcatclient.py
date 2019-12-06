@@ -20,12 +20,15 @@ class ConfigCatClient(object):
                  on_configuration_changed_callback=None,
                  cache_time_to_live_seconds=60,
                  config_cache_class=None,
-                 base_url=None):
+                 base_url=None,
+                 proxies=None,
+                 proxy_auth=None):
 
         if api_key is None:
             raise ConfigCatClientException('API Key is required.')
 
         self._api_key = api_key
+        self._rollout_evaluator = RolloutEvaluator()
 
         if config_cache_class:
             self._config_cache = config_cache_class()
@@ -33,23 +36,27 @@ class ConfigCatClient(object):
             self._config_cache = InMemoryConfigCache()
 
         if poll_interval_seconds > 0:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'p', base_url)
-            self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache, poll_interval_seconds,
-                                                        max_init_wait_time_seconds, on_configuration_changed_callback)
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'p', base_url, proxies, proxy_auth)
+            self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
+                                                        poll_interval_seconds, max_init_wait_time_seconds,
+                                                        on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'l', base_url)
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'l', base_url, proxies, proxy_auth)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
                                                         cache_time_to_live_seconds)
         else:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'm', base_url)
+            self._config_fetcher = CacheControlConfigFetcher(api_key, 'm', base_url, proxies, proxy_auth)
             self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache)
 
     def get_value(self, key, default_value, user=None):
         config = self._cache_policy.get()
         if config is None:
+            log.warning('Evaluating get_value(\'%s\') failed. Cache is empty. '
+                        'Returning default_value in your get_value call: [%s].' %
+                        (key, str(default_value)))
             return default_value
 
-        return RolloutEvaluator.evaluate(key, user, default_value, config)
+        return self._rollout_evaluator.evaluate(key, user, default_value, config)
 
     def get_all_keys(self):
         config = self._cache_policy.get()

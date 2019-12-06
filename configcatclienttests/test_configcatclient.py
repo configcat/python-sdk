@@ -5,7 +5,7 @@ from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
 from configcatclienttests.mocks import ConfigCacheMock
 
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO)
 
 
 class ConfigCatClientTests(unittest.TestCase):
@@ -49,7 +49,7 @@ class ConfigCatClientTests(unittest.TestCase):
     def test_get_all_keys(self):
         client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
         # Two list should have exactly the same elements, order doesn't matter.
-        self.assertEqual(set(['testBoolKey', 'testStringKey', 'testIntKey', 'testDoubleKey']),
+        self.assertEqual({'testBoolKey', 'testStringKey', 'testIntKey', 'testDoubleKey'},
                          set(client.get_all_keys()))
         client.stop()
 

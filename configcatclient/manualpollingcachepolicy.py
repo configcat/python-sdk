@@ -36,7 +36,8 @@ class ManualPollingCachePolicy(CachePolicy):
                 self._lock.release_write()
 
         except HTTPError as e:
-            log.error('Received unexpected response from ConfigFetcher ' + str(e.response))
+            log.error('Double-check your API KEY at https://app.configcat.com/apikey.'
+                      ' Received unexpected response: [%s]' % str(e.response))
         except:
             log.exception(sys.exc_info()[0])
 

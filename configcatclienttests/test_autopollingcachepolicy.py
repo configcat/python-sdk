@@ -9,7 +9,6 @@ from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithError
     ConfigFetcherCountMock, TEST_JSON, CallCounter, TEST_JSON2
 
 logging.basicConfig()
-log = logging.getLogger(__name__)
 
 
 class AutoPollingCachePolicyTests(unittest.TestCase):

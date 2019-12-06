@@ -13,7 +13,7 @@ def create_client(api_key):
 
 def create_client_with_auto_poll(api_key, poll_interval_seconds=60, max_init_wait_time_seconds=5,
                                  on_configuration_changed_callback=None, config_cache_class=None,
-                                 base_url=None):
+                                 base_url=None, proxies=None, proxy_auth=None):
     """
     Create an instance of ConfigCatClient and setup Auto Poll mode with custom options
 
@@ -24,6 +24,8 @@ def create_client_with_auto_poll(api_key, poll_interval_seconds=60, max_init_wai
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
     :param base_url: You can set a base_url if you want to use a proxy server between your application and ConfigCat
+    :param proxies: Proxy addresses. e.g. { 'https': 'your_proxy_ip:your_proxy_port' }
+    :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
     """
 
     if api_key is None:
@@ -36,11 +38,11 @@ def create_client_with_auto_poll(api_key, poll_interval_seconds=60, max_init_wai
         max_init_wait_time_seconds = 0
 
     return ConfigCatClient(api_key, poll_interval_seconds, max_init_wait_time_seconds,
-                           on_configuration_changed_callback, 0, config_cache_class, base_url)
+                           on_configuration_changed_callback, 0, config_cache_class, base_url, proxies, proxy_auth)
 
 
 def create_client_with_lazy_load(api_key, cache_time_to_live_seconds=60, config_cache_class=None,
-                                 base_url=None):
+                                 base_url=None, proxies=None, proxy_auth=None):
     """
     Create an instance of ConfigCatClient and setup Lazy Load mode with custom options
 
@@ -49,6 +51,8 @@ def create_client_with_lazy_load(api_key, cache_time_to_live_seconds=60, config_
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
     :param base_url: You can set a base_url if you want to use a proxy server between your application and ConfigCat
+    :param proxies: Proxy addresses. e.g. { "https": "your_proxy_ip:your_proxy_port" }
+    :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
     """
 
     if api_key is None:
@@ -57,11 +61,12 @@ def create_client_with_lazy_load(api_key, cache_time_to_live_seconds=60, config_
     if cache_time_to_live_seconds < 1:
         cache_time_to_live_seconds = 1
 
-    return ConfigCatClient(api_key, 0, 0, None, cache_time_to_live_seconds, config_cache_class, base_url)
+    return ConfigCatClient(api_key, 0, 0, None, cache_time_to_live_seconds, config_cache_class, base_url,
+                           proxies, proxy_auth)
 
 
 def create_client_with_manual_poll(api_key, config_cache_class=None,
-                                   base_url=None):
+                                   base_url=None, proxies=None, proxy_auth=None):
     """
     Create an instance of ConfigCatClient and setup Manual Poll mode with custom options
 
@@ -69,9 +74,11 @@ def create_client_with_manual_poll(api_key, config_cache_class=None,
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
     :param base_url: You can set a base_url if you want to use a proxy server between your application and ConfigCat
+    :param proxies: Proxy addresses. e.g. { "https": "your_proxy_ip:your_proxy_port" }
+    :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
     """
 
     if api_key is None:
         raise ConfigCatClientException('API Key is required.')
 
-    return ConfigCatClient(api_key, 0, 0, None, 0, config_cache_class, base_url)
+    return ConfigCatClient(api_key, 0, 0, None, 0, config_cache_class, base_url, proxies, proxy_auth)

@@ -36,7 +36,6 @@ class LazyLoadingCachePolicy(CachePolicy):
 
         try:
             self._lock.acquire_read()
-
             config = self._config_cache.get()
             return config
         finally:
@@ -48,14 +47,14 @@ class LazyLoadingCachePolicy(CachePolicy):
 
             try:
                 self._lock.acquire_write()
-
                 self._config_cache.set(configuration)
                 self._last_updated = datetime.datetime.utcnow()
             finally:
                 self._lock.release_write()
 
         except HTTPError as e:
-            log.error('Received unexpected response from ConfigFetcher ' + str(e.response))
+            log.error('Double-check your API KEY at https://app.configcat.com/apikey.'
+                      ' Received unexpected response: %s' % str(e.response))
         except:
             log.exception(sys.exc_info()[0])
 

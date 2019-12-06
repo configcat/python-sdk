@@ -12,14 +12,14 @@ from webapp.apps import WebappConfig
 # 1. As the passed User's country is Hungary this will return 'Dog'.
 def index1(request):
     my_setting_value = WebappConfig.configcat_client.get_value('keySampleText', 'default value',
-                                                              User('key', country='Hungary'))
+                                                               User('key', country='Hungary'))
     return HttpResponse("Hello, world. 'keySampleText' value from ConfigCat: " + str(my_setting_value))
 
 
 # 2. As the passed User's custom attribute - SubscriptionType - is unlimited this will return 'Lion'.
 def index2(request):
     my_setting_value = WebappConfig.configcat_client.get_value('keySampleText', 'default value',
-                                                              User('key', custom={'SubscriptionType': 'unlimited'}))
+                                                               User('key', custom={'SubscriptionType': 'unlimited'}))
     return HttpResponse("Hello, world. 'keySampleText' value from ConfigCat: " + str(my_setting_value))
 
 

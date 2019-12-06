@@ -58,7 +58,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         self.assertEqual(config_fetcher.get_call_count, 2)
         cache_policy.stop()
 
-    def test_httperror(self):
+    def test_http_error(self):
         config_fetcher = ConfigFetcherWithErrorMock(HTTPError("error"))
         config_cache = InMemoryConfigCache()
         cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
