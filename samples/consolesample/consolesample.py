@@ -4,7 +4,10 @@ pip install configcat-client
 """
 
 import configcatclient
+import logging
 from configcatclient.user import User
+
+logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == '__main__':
     # Initialize the ConfigCatClient with an API Key.
