@@ -81,11 +81,15 @@ class RolloutTests(unittest.TestCase):
     def test_create_matrix_semantic(self):
         self._test_create_matrix('./testmatrix_semantic.csv', './testmatrix_semantic_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA')
-    
+
+    def test_create_matrix_semnatic_2(self):
+        self._test_create_matrix('./testmatrix_input_semantic_2.csv', './testmatrix_semantic_2.csv',
+                                 'PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w')
+
     def test_create_matrix_number(self):
         self._test_create_matrix('./testmatrix_number.csv', './testmatrix_number_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw')
-    
+
     def _test_create_matrix(self, file_path, out_file_path, api_key):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
@@ -97,6 +101,7 @@ class RolloutTests(unittest.TestCase):
         # CSV header
         header = content[0].rstrip()
         setting_keys = header.split(';')[4:]
+        custom_attribute = header.split(';')[3]
         content.pop(0)
 
         client = configcatclient.create_client(api_key)
@@ -119,7 +124,7 @@ class RolloutTests(unittest.TestCase):
                         
                     custom = None
                     if user_descriptor[3] is not None and user_descriptor[3] != '' and user_descriptor[3] != '##null##':
-                        custom = {'Custom1': user_descriptor[3]}
+                        custom = {custom_attribute: user_descriptor[3]}
                     
                     user_object = User(identifier, email, country, custom)
 
