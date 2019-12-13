@@ -16,6 +16,9 @@ class RolloutTests(unittest.TestCase):
     def test_matrix_semantic(self):
         self._test_matrix('./testmatrix_semantic.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA')
 
+    def test_matrix_semantic_2(self):
+        self._test_matrix('./testmatrix_semantic_2.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w')
+
     def test_matrix_number(self):
         self._test_matrix('./testmatrix_number.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw')
 
@@ -29,6 +32,7 @@ class RolloutTests(unittest.TestCase):
         # CSV header
         header = content[0].rstrip()
         setting_keys = header.split(';')[4:]
+        custom_key = header.split(';')[3]
         content.pop(0)
 
         client = configcatclient.create_client(api_key)
@@ -51,7 +55,7 @@ class RolloutTests(unittest.TestCase):
                     country = user_descriptor[2]
 
                 if user_descriptor[3] is not None and user_descriptor[3] != '' and user_descriptor[3] != '##null##':
-                    custom = {'Custom1': user_descriptor[3]}
+                    custom = {custom_key: user_descriptor[3]}
 
                 user_object = User(identifier, email, country, custom)
 
