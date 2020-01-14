@@ -19,8 +19,8 @@ if __name__ == '__main__':
     userObject = User('Some UserID', email='configcat@example.com', custom={
                       'version': '1.0.0'})
 
-    my_setting_value = client.get_value(
+    value = client.get_value(
         'isPOCFeatureEnabled', False, userObject)
-    print("'isPOCFeatureEnabled' value from ConfigCat: " + str(my_setting_value))
+    print("'isPOCFeatureEnabled' value from ConfigCat: " + str(alue))
 
     client.stop()
