@@ -8,7 +8,7 @@ import logging
 from configcatclient.user import User
 
 # Setting the log level to Info to show detailed feature flag evaluation.
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARN)
 
 if __name__ == '__main__':
     # Initialize the ConfigCatClient with an API Key.
@@ -21,6 +21,6 @@ if __name__ == '__main__':
 
     value = client.get_value(
         'isPOCFeatureEnabled', False, userObject)
-    print("'isPOCFeatureEnabled' value from ConfigCat: " + str(alue))
+    print("'isPOCFeatureEnabled' value from ConfigCat: " + str(value))
 
     client.stop()
