@@ -77,7 +77,7 @@ class RolloutEvaluator(object):
 
             user_value = user.get_attribute(comparison_attribute)
             if user_value is None or not user_value:
-                log.info(self._format_no_match_rule(comparison_attribute, comparator, comparison_value))
+                log.info(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
                 continue
 
             value = rollout_rule.get(self.VALUE)
@@ -85,22 +85,26 @@ class RolloutEvaluator(object):
             # IS ONE OF
             if comparator == 0:
                 if str(user_value) in [x.strip() for x in str(comparison_value).split(',')]:
-                    log.info(self._format_match_rule(comparison_attribute, comparator, comparison_value, value))
+                    log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                     comparison_value, value))
                     return value
             # IS NOT ONE OF
             elif comparator == 1:
                 if str(user_value) not in [x.strip() for x in str(comparison_value).split(',')]:
-                    log.info(self._format_match_rule(comparison_attribute, comparator, comparison_value, value))
+                    log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                     comparison_value, value))
                     return value
             # CONTAINS
             elif comparator == 2:
                 if str(user_value).__contains__(str(comparison_value)):
-                    log.info(self._format_match_rule(comparison_attribute, comparator, comparison_value, value))
+                    log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                     comparison_value, value))
                     return value
             # DOES NOT CONTAIN
             elif comparator == 3:
                 if not str(user_value).__contains__(str(comparison_value)):
-                    log.info(self._format_match_rule(comparison_attribute, comparator, comparison_value, value))
+                    log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                     comparison_value, value))
                     return value
 
             # IS ONE OF, IS NOT ONE OF (Semantic version)
@@ -110,10 +114,11 @@ class RolloutEvaluator(object):
                     for x in filter(None, [x.strip() for x in str(comparison_value).split(',')]):
                         match = semver.match(str(user_value).strip(), '==' + x) or match
                     if (match and comparator == 4) or (not match and comparator == 5):
-                        log.info(self._format_match_rule(comparison_attribute, comparator, comparison_value, value))
+                        log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                         comparison_value, value))
                         return value
                 except ValueError as e:
-                    log.warning(self._format_validation_error_rule(comparison_attribute, comparator,
+                    log.warning(self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, str(e)))
                     continue
 
@@ -122,10 +127,11 @@ class RolloutEvaluator(object):
                 try:
                     if semver.match(str(user_value).strip(),
                                     self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()):
-                        log.info(self._format_match_rule(comparison_attribute, comparator, comparison_value, value))
+                        log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                         comparison_value, value))
                         return value
                 except ValueError as e:
-                    log.warning(self._format_validation_error_rule(comparison_attribute, comparator,
+                    log.warning(self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, str(e)))
                     continue
             elif 10 <= comparator <= 15:
@@ -139,14 +145,15 @@ class RolloutEvaluator(object):
                             or (comparator == 13 and user_value_float <= comparison_value_float) \
                             or (comparator == 14 and user_value_float > comparison_value_float) \
                             or (comparator == 15 and user_value_float >= comparison_value_float):
-                        log.info(self._format_match_rule(comparison_attribute, comparator, comparison_value, value))
+                        log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                         comparison_value, value))
                         return value
                 except Exception as e:
-                    log.warning(self._format_validation_error_rule(comparison_attribute, comparator,
+                    log.warning(self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, str(e)))
                     continue
 
-            log.info(self._format_no_match_rule(comparison_attribute, comparator, comparison_value))
+            log.info(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
 
         # Evaluate variations
         if len(rollout_percentage_items) > 0:
@@ -166,14 +173,14 @@ class RolloutEvaluator(object):
         log.info('Returning %s' % def_value)
         return def_value
 
-    def _format_match_rule(self, comparison_attribute, comparator, comparison_value, value):
-        return 'Evaluating rule: [%s] [%s] [%s] => match, returning: %s' \
-               % (comparison_attribute, self.COMPARATOR_TEXTS[comparator], comparison_value, value)
+    def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
+        return 'Evaluating rule: [%s:%s] [%s] [%s] => match, returning: %s' \
+               % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value, value)
 
-    def _format_no_match_rule(self, comparison_attribute, comparator, comparison_value):
-        return 'Evaluating rule: [%s] [%s] [%s] => no match' \
-               % (comparison_attribute, self.COMPARATOR_TEXTS[comparator], comparison_value)
+    def _format_no_match_rule(self, comparison_attribute, user_value, comparator, comparison_value):
+        return 'Evaluating rule: [%s:%s] [%s] [%s] => no match' \
+               % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value)
 
-    def _format_validation_error_rule(self, comparison_attribute, comparator, comparison_value, error):
-        return 'Evaluating rule: [%s] [%s] [%s] => SKIP rule. Validation error: %s' \
-               % (comparison_attribute, self.COMPARATOR_TEXTS[comparator], comparison_value, error)
+    def _format_validation_error_rule(self, comparison_attribute, user_value, comparator, comparison_value, error):
+        return 'Evaluating rule: [%s:%s] [%s] [%s] => SKIP rule. Validation error: %s' \
+               % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value, error)
