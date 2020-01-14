@@ -8,7 +8,7 @@ import logging
 from configcatclient.user import User
 
 # Setting the log level to Info to show detailed feature flag evaluation.
-logging.basicConfig(level=logging.WARN)
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':
     # Initialize the ConfigCatClient with an API Key.
