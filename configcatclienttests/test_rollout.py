@@ -22,6 +22,9 @@ class RolloutTests(unittest.TestCase):
     def test_matrix_number(self):
         self._test_matrix('./testmatrix_number.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw')
 
+    def test_matrix_number(self):
+        self._test_matrix('./testmatrix_sensitive.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA')
+
     def _test_matrix(self, file_path, api_key):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)

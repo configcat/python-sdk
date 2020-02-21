@@ -9,7 +9,6 @@ log = logging.getLogger(sys.modules[__name__].__name__)
 
 
 class RolloutEvaluator(object):
-
     SEMANTIC_VERSION_COMPARATORS = ['<', '<=', '>', '>=']
     COMPARATOR_TEXTS = [
         'IS ONE OF',
@@ -27,7 +26,9 @@ class RolloutEvaluator(object):
         '< (Number)',
         '<= (Number)',
         '> (Number)',
-        '>= (Number)'
+        '>= (Number)',
+        'IS ONE OF (Sensitive)',
+        'IS NOT ONE OF (Sensitive)'
     ]
 
     VALUE = 'v'
@@ -152,6 +153,18 @@ class RolloutEvaluator(object):
                     log.warning(self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, str(e)))
                     continue
+                    # IS ONE OF (Sensitive)
+            elif comparator == 16:
+                if str(hashlib.sha1(user_value).hexdigest()) in [x.strip() for x in str(comparison_value).split(',')]:
+                    log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                     comparison_value, value))
+                    return value
+                # IS NOT ONE OF (Sensitive)
+            elif comparator == 17:
+                if str(hashlib.sha1(user_value).hexdigest()) not in [x.strip() for x in str(comparison_value).split(',')]:
+                    log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                     comparison_value, value))
+                    return value
 
             log.info(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
 
