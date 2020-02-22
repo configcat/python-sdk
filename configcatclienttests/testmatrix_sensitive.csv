@@ -1,4 +1,5 @@
 Identifier;Email;Country;Custom1;isOneOfSensitive;isNotOneOfSensitive
+##null##;;;;ToAll;ToAll
 id1;macska@example.com;;;Macska;Kigyo
 Kutya;;;;Allat;ToAll
 Sas;;;;ToAll;Kigyo
