@@ -153,13 +153,13 @@ class RolloutEvaluator(object):
                     log.warning(self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, str(e)))
                     continue
-                    # IS ONE OF (Sensitive)
+            # IS ONE OF (Sensitive)
             elif comparator == 16:
                 if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [x.strip() for x in str(comparison_value).split(',')]:
                     log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                      comparison_value, value))
                     return value
-                # IS NOT ONE OF (Sensitive)
+            # IS NOT ONE OF (Sensitive)
             elif comparator == 17:
                 if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [x.strip() for x in str(comparison_value).split(',')]:
                     log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
