@@ -5,6 +5,9 @@
    py.test configcatclienttests
    ```
 2. Increase the version of the library with the `version_update.sh` script.
+   ```bash
+   ./version_update.sh x.x.x
+   ```
 ## Publish
 Use the **same version** for the git tag as in the `configcatclient/version.py`.
 - Via git tag
