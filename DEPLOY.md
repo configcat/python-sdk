@@ -26,3 +26,6 @@ Use the **same version** for the git tag as in the `configcatclient/version.py`.
 
 ## Python Package
 Make sure the new version is available on [PyPI](https://pypi.org/project/configcat-client/).
+
+## Update samples
+Update and test sample apps with the new SDK version.
