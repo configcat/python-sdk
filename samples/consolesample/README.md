@@ -9,3 +9,7 @@ pip install configcat-client
 ```
 python consolesample.py
 ```
+or
+```
+python consolesample2.py
+```
