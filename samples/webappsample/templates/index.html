@@ -1,0 +1,32 @@
+<p>
+In the project there is a 'keySampleText' setting with the following rules:<br>
+1. If the User's country is Hungary, the value should be 'Dog'<br>
+2. If the User's custom property - SubscriptionType - is unlimited, the value should be 'Lion'<br>
+3. In other cases there is a percentage rollout configured with 50% 'Falcon' and 50% 'Horse' rules<br>
+4. There is also a default value configured: 'Cat'<br>
+<p/>
+<br>
+<p>
+    1. As the passed User's country is Hungary this will return 'Dog':
+    <a href="/index1">index1</a>
+</p>
+<p>
+    2. As the passed User's custom attribute - SubscriptionType - is unlimited this will return 'Lion':
+    <a href="/index1">index2</a>
+</p>
+<p>
+    3/a. As the passed User doesn't fill in any rules, this will return 'Falcon' or 'Horse':
+    <a href="/index1">index3a</a>
+</p>
+<p>
+    3/b. As this is the same user from 3/a., this will return the same value as the previous one ('Falcon' or 'Horse'):
+    <a href="/index1">index3b</a>
+</p>
+<p>
+    4. As we don't pass an User object to this call, this will return the setting's default value - 'Cat':
+    <a href="/index1">index4</a>
+</p>
+<p>
+    5. 'myKeyNotExits' setting doesn't exist in the project configuration and the client returns default value ('N/A'):
+    <a href="/index1">index5</a>
+</p>
