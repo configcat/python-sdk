@@ -43,14 +43,16 @@ class LazyLoadingCachePolicy(CachePolicy):
 
     def force_refresh(self):
         try:
-            configuration = self._config_fetcher.get_configuration_json()
+            configuration_response = self._config_fetcher.get_configuration_json()
+            if configuration_response.is_fetched:
+                configuration = configuration_response.json()
+                try:
+                    self._lock.acquire_write()
 
-            try:
-                self._lock.acquire_write()
-                self._config_cache.set(configuration)
-                self._last_updated = datetime.datetime.utcnow()
-            finally:
-                self._lock.release_write()
+                    self._config_cache.set(configuration)
+                    self._last_updated = datetime.datetime.utcnow()
+                finally:
+                    self._lock.release_write()
 
         except HTTPError as e:
             log.error('Double-check your API KEY at https://app.configcat.com/apikey.'

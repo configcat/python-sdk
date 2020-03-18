@@ -2,7 +2,7 @@ from .interfaces import ConfigCatClientException
 from .lazyloadingcachepolicy import LazyLoadingCachePolicy
 from .manualpollingcachepolicy import ManualPollingCachePolicy
 from .autopollingcachepolicy import AutoPollingCachePolicy
-from .configfetcher import CacheControlConfigFetcher
+from .configfetcher import ConfigFetcher
 from .configcache import InMemoryConfigCache
 from .rolloutevaluator import RolloutEvaluator
 import logging
@@ -36,16 +36,16 @@ class ConfigCatClient(object):
             self._config_cache = InMemoryConfigCache()
 
         if poll_interval_seconds > 0:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'p', base_url, proxies, proxy_auth)
+            self._config_fetcher = ConfigFetcher(api_key, 'p', base_url, proxies, proxy_auth)
             self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                         poll_interval_seconds, max_init_wait_time_seconds,
                                                         on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'l', base_url, proxies, proxy_auth)
+            self._config_fetcher = ConfigFetcher(api_key, 'l', base_url, proxies, proxy_auth)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
                                                         cache_time_to_live_seconds)
         else:
-            self._config_fetcher = CacheControlConfigFetcher(api_key, 'm', base_url, proxies, proxy_auth)
+            self._config_fetcher = ConfigFetcher(api_key, 'm', base_url, proxies, proxy_auth)
             self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache)
 
     def get_value(self, key, default_value, user=None):
@@ -70,4 +70,3 @@ class ConfigCatClient(object):
 
     def stop(self):
         self._cache_policy.stop()
-        self._config_fetcher.close()

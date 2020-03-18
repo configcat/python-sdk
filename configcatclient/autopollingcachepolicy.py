@@ -59,7 +59,7 @@ class AutoPollingCachePolicy(CachePolicy):
 
     def force_refresh(self):
         try:
-            configuration = self._config_fetcher.get_configuration_json()
+            configuration_response = self._config_fetcher.get_configuration_json()
 
             try:
                 self._lock.acquire_read()
@@ -67,19 +67,21 @@ class AutoPollingCachePolicy(CachePolicy):
             finally:
                 self._lock.release_read()
 
-            if configuration != old_configuration:
-                try:
-                    self._lock.acquire_write()
-                    self._config_cache.set(configuration)
-                    self._initialized = True
-                finally:
-                    self._lock.release_write()
+            if configuration_response.is_fetched():
+                configuration = configuration_response.json()
+                if configuration != old_configuration:
+                    try:
+                        self._lock.acquire_write()
+                        self._config_cache.set(configuration)
+                        self._initialized = True
+                    finally:
+                        self._lock.release_write()
 
-                try:
-                    if self._on_configuration_changed_callback is not None:
-                        self._on_configuration_changed_callback()
-                except:
-                    log.exception(sys.exc_info()[0])
+                    try:
+                        if self._on_configuration_changed_callback is not None:
+                            self._on_configuration_changed_callback()
+                    except:
+                        log.exception(sys.exc_info()[0])
 
             if not self._initialized and old_configuration is not None:
                 self._initialized = True

@@ -1,8 +1,7 @@
+import threading
 import requests
 import logging
 import sys
-from cachecontrol import CacheControl
-from .interfaces import ConfigFetcher
 from .version import CONFIGCATCLIENT_VERSION
 
 if sys.version_info < (2, 7, 9):
@@ -15,14 +14,33 @@ BASE_EXTENSION = '/config_v4.json'
 log = logging.getLogger(sys.modules[__name__].__name__)
 
 
-class CacheControlConfigFetcher(ConfigFetcher):
+class FetchResponse(object):
+
+    def __init__(self, response):
+        self._response = response
+
+    def json(self):
+        r"""Returns the json-encoded content of a response, if any.
+
+        :raises ValueError: If the response body does not contain valid json.
+        """
+        return self._response.json()
+
+    def is_fetched(self):
+        """Gets whether a new configuration value was fetched or not.
+        Returns: True if a new configuration value was fetched, otherwise false.
+        """
+        return 200 <= self._response.status_code < 300
+
+
+class ConfigFetcher(object):
 
     def __init__(self, api_key, mode, base_url=None, proxies=None, proxy_auth=None):
         self._api_key = api_key
-        self._session = requests.Session()
-        self._request_cache = CacheControl(self._session)
         self._proxies = proxies
         self._proxy_auth = proxy_auth
+        self._etag = ''
+        self._lock = threading.Lock()
         self._headers = {'User-Agent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
                          'X-ConfigCat-UserAgent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
                          'Content-Type': "application/json"}
@@ -32,14 +50,20 @@ class CacheControlConfigFetcher(ConfigFetcher):
             self._base_url = BASE_URL
 
     def get_configuration_json(self):
+        """
+        :return: Returns the FetchResponse object contains configuration json Dictionary
+        """
         uri = self._base_url + '/' + BASE_PATH + self._api_key + BASE_EXTENSION
-        response = self._request_cache.get(uri, headers=self._headers, timeout=(10, 30),
-                                           proxies=self._proxies, auth=self._proxy_auth)
-        response.raise_for_status()
-        json = response.json()
+        headers = self._headers
+        with self._lock:
+            if self._etag:
+                headers['If-None-Match'] = self._etag
 
-        return json
+            response = requests.get(uri, headers=headers, timeout=(10, 30),
+                                    proxies=self._proxies, auth=self._proxy_auth)
+            response.raise_for_status()
+            etag = response.headers.get('Etag')
+            if etag:
+                self._etag = etag
 
-    def close(self):
-        if self._session:
-            self._session.close()
+            return FetchResponse(response)

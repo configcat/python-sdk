@@ -1,7 +1,9 @@
 import json
 import time
+from unittest.mock import Mock
 
-from configcatclient.interfaces import ConfigFetcher, ConfigCache
+from configcatclient.configfetcher import FetchResponse, ConfigFetcher
+from configcatclient.interfaces import ConfigCache
 
 TEST_JSON = '{"testKey": { "v": "testValue", "t": 1, ' \
             '"p": [], "r": [] }}'
@@ -30,13 +32,13 @@ class ConfigFetcherMock(ConfigFetcher):
 
     def get_configuration_json(self):
         self._call_count = self._call_count + 1
-        return self._configuration
+        response_mock = Mock()
+        response_mock.status_code = 200
+        response_mock.json.return_value = self._configuration
+        return FetchResponse(response_mock)
 
     def set_configuration_json(self, value):
         self._configuration = value
-
-    def close(self):
-        pass
 
     @property
     def get_call_count(self):
@@ -51,9 +53,6 @@ class ConfigFetcherWithErrorMock(ConfigFetcher):
     def get_configuration_json(self):
         raise self._exception
 
-    def close(self):
-        pass
-
 
 class ConfigFetcherWaitMock(ConfigFetcher):
 
@@ -62,10 +61,10 @@ class ConfigFetcherWaitMock(ConfigFetcher):
 
     def get_configuration_json(self):
         time.sleep(self._wait_seconds)
-        return TEST_JSON
-
-    def close(self):
-        pass
+        response_mock = Mock()
+        response_mock.status_code = 200
+        response_mock.json.return_value = TEST_JSON
+        return FetchResponse(response_mock)
 
 
 class ConfigFetcherCountMock(ConfigFetcher):
@@ -75,10 +74,10 @@ class ConfigFetcherCountMock(ConfigFetcher):
 
     def get_configuration_json(self):
         self._value += 10
-        return self._value
-
-    def close(self):
-        pass
+        response_mock = Mock()
+        response_mock.status_code = 200
+        response_mock.json.return_value = self._value
+        return FetchResponse(response_mock)
 
 
 class ConfigCacheMock(ConfigCache):
