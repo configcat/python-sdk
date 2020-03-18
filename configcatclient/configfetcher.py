@@ -1,4 +1,3 @@
-import threading
 import requests
 import logging
 import sys
@@ -40,7 +39,6 @@ class ConfigFetcher(object):
         self._proxies = proxies
         self._proxy_auth = proxy_auth
         self._etag = ''
-        self._lock = threading.Lock()
         self._headers = {'User-Agent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
                          'X-ConfigCat-UserAgent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
                          'Content-Type': "application/json"}
@@ -55,15 +53,14 @@ class ConfigFetcher(object):
         """
         uri = self._base_url + '/' + BASE_PATH + self._api_key + BASE_EXTENSION
         headers = self._headers
-        with self._lock:
-            if self._etag:
-                headers['If-None-Match'] = self._etag
+        if self._etag:
+            headers['If-None-Match'] = self._etag
 
-            response = requests.get(uri, headers=headers, timeout=(10, 30),
-                                    proxies=self._proxies, auth=self._proxy_auth)
-            response.raise_for_status()
-            etag = response.headers.get('Etag')
-            if etag:
-                self._etag = etag
+        response = requests.get(uri, headers=headers, timeout=(10, 30),
+                                proxies=self._proxies, auth=self._proxy_auth)
+        response.raise_for_status()
+        etag = response.headers.get('Etag')
+        if etag:
+            self._etag = etag
 
-            return FetchResponse(response)
+        return FetchResponse(response)
