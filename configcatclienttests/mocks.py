@@ -1,6 +1,10 @@
 import json
 import time
-from unittest.mock import Mock
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
+
 
 from configcatclient.configfetcher import FetchResponse, ConfigFetcher
 from configcatclient.interfaces import ConfigCache

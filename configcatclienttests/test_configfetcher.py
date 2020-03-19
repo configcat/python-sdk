@@ -1,8 +1,11 @@
 import logging
 import unittest
-from unittest import mock
-from unittest.mock import Mock
 import requests
+from unittest import mock
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
 
 from configcatclient.configfetcher import ConfigFetcher
 
