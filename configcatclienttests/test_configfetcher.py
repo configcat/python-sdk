@@ -1,7 +1,10 @@
 import logging
 import unittest
 import requests
-from unittest import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 try:
     from unittest.mock import Mock
 except ImportError:
