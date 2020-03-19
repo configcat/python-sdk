@@ -1,11 +1,7 @@
 import logging
-import threading
 import unittest
 import multiprocessing
 from time import sleep
-
-import requests
-from cachecontrol import CacheControl
 
 import configcatclient
 from configcatclient.user import User
