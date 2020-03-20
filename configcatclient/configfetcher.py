@@ -19,17 +19,22 @@ class FetchResponse(object):
         self._response = response
 
     def json(self):
-        r"""Returns the json-encoded content of a response, if any.
-
+        """Returns the json-encoded content of a response, if any.
         :raises ValueError: If the response body does not contain valid json.
         """
         return self._response.json()
 
     def is_fetched(self):
         """Gets whether a new configuration value was fetched or not.
-        Returns: True if a new configuration value was fetched, otherwise false.
+        :return: True if a new configuration value was fetched, otherwise false.
         """
         return 200 <= self._response.status_code < 300
+
+    def is_not_modified(self):
+        """Gets whether the fetch resulted a '304 Not Modified' or not.
+        :return: True if the fetch resulted a '304 Not Modified' code, otherwise false.
+        """
+        return self._response.status_code == 304
 
 
 class ConfigFetcher(object):

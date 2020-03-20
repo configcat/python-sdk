@@ -57,3 +57,12 @@ class ConfigFetcherTests(unittest.TestCase):
             args, kwargs = request_get.call_args
             request_headers = kwargs.get('headers')
             self.assertEqual(request_headers.get('If-None-Match'), etag)
+
+    def test_server_side_etag(self):
+        fetcher = ConfigFetcher(api_key='PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA', mode='m')
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertFalse(fetch_response.is_not_modified())
+        fetch_response = fetcher.get_configuration_json()
+        self.assertFalse(fetch_response.is_fetched())
+        self.assertTrue(fetch_response.is_not_modified())
