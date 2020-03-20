@@ -64,5 +64,6 @@ class ConfigFetcherTests(unittest.TestCase):
         self.assertTrue(fetch_response.is_fetched())
         self.assertFalse(fetch_response.is_not_modified())
         fetch_response = fetcher.get_configuration_json()
+        self.assertEqual(fetch_response._response.status_code, 304)
         self.assertFalse(fetch_response.is_fetched())
         self.assertTrue(fetch_response.is_not_modified())
