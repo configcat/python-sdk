@@ -61,6 +61,7 @@ class ConfigFetcherTests(unittest.TestCase):
     def test_server_side_etag(self):
         fetcher = ConfigFetcher(api_key='PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA', mode='m')
         fetch_response = fetcher.get_configuration_json()
+        self.assertNotEqual(ConfigFetcher._etag, '')
         self.assertTrue(fetch_response.is_fetched())
         self.assertFalse(fetch_response.is_not_modified())
         fetch_response = fetcher.get_configuration_json()
