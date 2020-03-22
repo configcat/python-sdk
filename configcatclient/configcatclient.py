@@ -7,6 +7,7 @@ from .configcache import InMemoryConfigCache
 from .rolloutevaluator import RolloutEvaluator
 import logging
 import sys
+import os
 
 log = logging.getLogger(sys.modules[__name__].__name__)
 
@@ -22,7 +23,8 @@ class ConfigCatClient(object):
                  config_cache_class=None,
                  base_url=None,
                  proxies=None,
-                 proxy_auth=None):
+                 proxy_auth=None,
+                 allow_environment_override=False):
 
         if api_key is None:
             raise ConfigCatClientException('API Key is required.')
@@ -48,7 +50,14 @@ class ConfigCatClient(object):
             self._config_fetcher = ConfigFetcher(api_key, 'm', base_url, proxies, proxy_auth)
             self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache)
 
+        self.allow_environment_override = allow_environment_override
+
     def get_value(self, key, default_value, user=None):
+        if self.allow_environment_override:
+            from_env = os.environ.get('CONFIGCAT_VALUE_' + key, None)
+            if from_env is not None:
+                return from_env.lower() in ['1', 'enable', 'enabled', 'on', 'true', 'yes']
+
         config = self._cache_policy.get()
         if config is None:
             log.warning('Evaluating get_value(\'%s\') failed. Cache is empty. '

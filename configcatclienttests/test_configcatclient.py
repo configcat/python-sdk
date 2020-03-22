@@ -1,5 +1,6 @@
 import logging
 import unittest
+from mock import patch
 
 from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
@@ -53,6 +54,21 @@ class ConfigCatClientTests(unittest.TestCase):
                          set(client.get_all_keys()))
         client.stop()
 
+    @patch('configcatclient.configcatclient.os.environ', {'CONFIGCAT_VALUE_test': 'ON', 'CONFIGCAT_VALUE_F': 'FALSE'})
+    def test_env_override_with_allow(self):
+        client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock, allow_environment_override=True)
+        self.assertEqual(True, client.get_value('test', None))
+        self.assertEqual(False, client.get_value('F', None))
+        self.assertEqual('Y', client.get_value('X', 'Y'))
+        client.stop()
+
+    @patch('os.environ', {'CONFIGCAT_VALUE_test': 'ON', 'CONFIGCAT_VALUE_F': 'FALSE'})
+    def test_env_override_without_allow(self):
+        client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
+        self.assertEqual(None, client.get_value('test', None))
+        self.assertEqual(False, client.get_value('F', False))
+        self.assertEqual('Y', client.get_value('X', 'Y'))
+        client.stop()
 
 if __name__ == '__main__':
     unittest.main()
