@@ -40,7 +40,7 @@ deploy:
 notifications:
   email:
     recipients:
-      - developer@configcat.com      
+      - developer@configcat.com
     on_success: never
     on_failure: always
 
