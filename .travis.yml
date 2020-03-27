@@ -1,22 +1,13 @@
 language: python
-sudo: true
-python:
-  - "2.6"
-    dist: trusty
-  - "2.7"
-    dist: trusty
-  - "3.3"
-    dist: trusty
-  - "3.4"
-    dist: trusty
-  - "3.5"
-    dist: trusty
-  - "3.6"
-    dist: trusty
-  - "3.7"
-    dist: xenial
-  - "3.8"
-    dist: xenial
+jobs:
+  - { language: python, python: "2.6", dist: "trusty", sudo: true }
+  - { language: python, python: "2.7", dist: "trusty", sudo: true }
+  - { language: python, python: "3.3", dist: "trusty", sudo: true }
+  - { language: python, python: "3.4", dist: "trusty", sudo: true }
+  - { language: python, python: "3.5", dist: "trusty", sudo: true }
+  - { language: python, python: "3.6", dist: "trusty", sudo: true }
+  - { language: python, python: "3.7", dist: "xenial", sudo: true }
+  - { language: python, python: "3.8", dist: "xenial", sudo: true }
 # command to install dependencies
 install:
   - "virtualenv venv --no-site-packages"
