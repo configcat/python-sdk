@@ -1,13 +1,14 @@
 language: python
+sudo: true
 jobs:
-  - { language: python, python: "2.6", dist: "trusty", sudo: true }
-  - { language: python, python: "2.7", dist: "trusty", sudo: true }
-  - { language: python, python: "3.3", dist: "trusty", sudo: true }
-  - { language: python, python: "3.4", dist: "trusty", sudo: true }
-  - { language: python, python: "3.5", dist: "trusty", sudo: true }
-  - { language: python, python: "3.6", dist: "trusty", sudo: true }
-  - { language: python, python: "3.7", dist: "xenial", sudo: true }
-  - { language: python, python: "3.8", dist: "xenial", sudo: true }
+  - { python: "2.6", dist: "trusty" }
+  - { python: "2.7", dist: "trusty" }
+  - { python: "3.3", dist: "trusty" }
+  - { python: "3.4", dist: "trusty" }
+  - { python: "3.5", dist: "trusty" }
+  - { python: "3.6", dist: "trusty" }
+  - { python: "3.7", dist: "xenial" }
+  - { python: "3.8", dist: "xenial" }
 # command to install dependencies
 install:
   - "virtualenv venv --no-site-packages"
