@@ -25,7 +25,7 @@ class RolloutTests(unittest.TestCase):
     def test_matrix_sensitive(self):
         self._test_matrix('./testmatrix_sensitive.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA')
 
-    def _test_matrix(self, file_path, api_key):
+    def _test_matrix(self, file_path, sdk_key):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
 
@@ -38,7 +38,7 @@ class RolloutTests(unittest.TestCase):
         custom_key = header.split(';')[3]
         content.pop(0)
 
-        client = configcatclient.create_client(api_key)
+        client = configcatclient.create_client(sdk_key)
         errors = ''
         for line in content:
             user_descriptor = line.rstrip().split(';')
@@ -97,7 +97,7 @@ class RolloutTests(unittest.TestCase):
         self._test_create_matrix('./testmatrix_number.csv', './testmatrix_number_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw')
 
-    def _test_create_matrix(self, file_path, out_file_path, api_key):
+    def _test_create_matrix(self, file_path, out_file_path, sdk_key):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
         out_file_path = path.join(script_dir, out_file_path)
@@ -111,7 +111,7 @@ class RolloutTests(unittest.TestCase):
         custom_attribute = header.split(';')[3]
         content.pop(0)
 
-        client = configcatclient.create_client(api_key)
+        client = configcatclient.create_client(sdk_key)
         with open(out_file_path, 'w') as f:
             f.writelines(header + '\n')
 
