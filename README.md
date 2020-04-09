@@ -27,13 +27,13 @@ pip install configcat-client
 import configcatclient
 ```
 
-### 3. Go to <a href="https://app.configcat.com/connect" target="_blank">Connect your application</a> tab to get your *API Key*:
-![API-KEY](https://raw.githubusercontent.com/ConfigCat/python-sdk/master/media/readme01.png  "API-KEY")
+### 3. Go to <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your application</a> tab to get your *SDK Key*:
+![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/python-sdk/master/media/readme01.png  "SDK-KEY")
 
 ### 4. Create a *ConfigCat* client instance:
 
 ```python
-configcat_client = configcatclient.create_client('#YOUR-API-KEY#')
+configcat_client = configcatclient.create_client('#YOUR-SDK-KEY#')
 ```
 > We strongly recommend using the *ConfigCat Client* as a Singleton object in your application.
 
@@ -74,8 +74,8 @@ else:
 ## Polling Modes
 The ConfigCat SDK supports 3 different polling mechanisms to acquire the setting values from ConfigCat. After latest setting values are downloaded, they are stored in the internal cache then all requests are served from there. Read more about Polling Modes and how to use them at [ConfigCat Docs](https://configcat.com/docs/sdk-reference/python/).
 
-## Support
-If you need help how to use this SDK feel free to to contact the ConfigCat Staff on https://configcat.com. We're happy to help.
+## Need help?
+https://configcat.com/support
 
 ## Contributing
 Contributions are welcome.

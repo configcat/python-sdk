@@ -11,7 +11,7 @@ from configcatclient.user import User
 logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':
-    # Initialize the ConfigCatClient with an API Key.
+    # Initialize the ConfigCatClient with an SDK Key.
     client = configcatclient.create_client(
         'PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ')
 

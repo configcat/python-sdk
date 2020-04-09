@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 class ConfigCatClientTests(unittest.TestCase):
-    def test_without_api_key(self):
+    def test_without_sdk_key(self):
         try:
             ConfigCatClient(None)
             self.fail('Expected ConfigCatClientException')

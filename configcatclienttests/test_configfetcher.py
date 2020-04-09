@@ -24,7 +24,7 @@ class ConfigFetcherTests(unittest.TestCase):
             response_mock.json.return_value = test_json
             response_mock.status_code = 200
             response_mock.headers = {}
-            fetcher = ConfigFetcher(api_key='', mode='m')
+            fetcher = ConfigFetcher(sdk_key='', mode='m')
             fetch_response = fetcher.get_configuration_json()
             self.assertTrue(fetch_response.is_fetched())
             self.assertEqual(test_json, fetch_response.json())
@@ -33,7 +33,7 @@ class ConfigFetcherTests(unittest.TestCase):
         with mock.patch.object(requests, 'get') as request_get:
             etag = 'test'
             test_json = {"test": "json"}
-            fetcher = ConfigFetcher(api_key='', mode='m')
+            fetcher = ConfigFetcher(sdk_key='', mode='m')
 
             response_mock = Mock()
             response_mock.json.return_value = test_json
@@ -59,7 +59,7 @@ class ConfigFetcherTests(unittest.TestCase):
             self.assertEqual(request_headers.get('If-None-Match'), etag)
 
     def test_server_side_etag(self):
-        fetcher = ConfigFetcher(api_key='PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ',
+        fetcher = ConfigFetcher(sdk_key='PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ',
                                 mode='m', base_url='https://cdn-li-fra-1.configcat.com')
         fetch_response = fetcher.get_configuration_json()
         self.assertTrue(fetch_response.is_fetched())

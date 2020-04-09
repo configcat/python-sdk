@@ -39,8 +39,8 @@ class FetchResponse(object):
 
 class ConfigFetcher(object):
 
-    def __init__(self, api_key, mode, base_url=None, proxies=None, proxy_auth=None):
-        self._api_key = api_key
+    def __init__(self, sdk_key, mode, base_url=None, proxies=None, proxy_auth=None):
+        self._sdk_key = sdk_key
         self._proxies = proxies
         self._proxy_auth = proxy_auth
         self._etag = ''
@@ -56,7 +56,7 @@ class ConfigFetcher(object):
         """
         :return: Returns the FetchResponse object contains configuration json Dictionary
         """
-        uri = self._base_url + '/' + BASE_PATH + self._api_key + BASE_EXTENSION
+        uri = self._base_url + '/' + BASE_PATH + self._sdk_key + BASE_EXTENSION
         headers = self._headers
         if self._etag:
             headers['If-None-Match'] = self._etag

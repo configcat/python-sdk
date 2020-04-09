@@ -55,7 +55,7 @@ class LazyLoadingCachePolicy(CachePolicy):
                     self._lock.release_write()
 
         except HTTPError as e:
-            log.error('Double-check your API KEY at https://app.configcat.com/apikey.'
+            log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
                       ' Received unexpected response: %s' % str(e.response))
         except:
             log.exception(sys.exc_info()[0])
