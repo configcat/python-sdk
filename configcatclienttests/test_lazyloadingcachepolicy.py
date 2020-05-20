@@ -69,10 +69,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         not_modified_response = mock.MagicMock()
         not_modified_response.status_code = 304
         not_modified_response.json.side_effect = ValueError("this response contains no body")
-        config_fetcher.get_configuration_json.side_effect = {
-            FetchResponse(successful_response),
-            FetchResponse(not_modified_response)
-        }
+        config_fetcher.get_configuration_json.return_value = successful_response
         config_cache = InMemoryConfigCache()
         cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
 
@@ -80,9 +77,9 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         with mock.patch('configcatclient.lazyloadingcachepolicy.datetime') as mock_datetime:
             mock_datetime.datetime.utcnow.return_value = datetime.datetime(2020, 5, 20, 0, 0, 0)
             value = cache_policy.get()
-            self.assertEqual(value, TEST_JSON)
             self.assertEqual(mock_datetime.datetime.utcnow.call_count, 2)
-
+            self.assertEqual(value, TEST_JSON)
+            config_fetcher.get_configuration_json.return_value = not_modified_response
             cache_policy.force_refresh()
             self.assertEqual(value, TEST_JSON)
             self.assertEqual(config_fetcher.get_configuration_json.call_count, 2)
