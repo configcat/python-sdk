@@ -61,15 +61,14 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         self.assertEqual(config_fetcher.get_call_count, 2)
         cache_policy.stop()
 
-    def test_force_refresh_honours_304(self):
+    def test_force_refresh_not_modified_cnofig(self):
         config_fetcher = mock.MagicMock()
-        successful_response = mock.MagicMock()
-        successful_response.status_code = 200
-        successful_response.json.return_value = TEST_JSON
-        not_modified_response = mock.MagicMock()
-        not_modified_response.status_code = 304
-        not_modified_response.json.side_effect = ValueError("this response contains no body")
-        config_fetcher.get_configuration_json.return_value = FetchResponse(successful_response)
+        successful_fetch_response = mock.MagicMock()
+        successful_fetch_response.is_fetched.return_value = True
+        successful_fetch_response.json.return_value = TEST_JSON
+        not_modified_fetch_response = mock.MagicMock()
+        not_modified_fetch_response.is_fetched.return_value = False
+        config_fetcher.get_configuration_json.return_value = successful_fetch_response
         config_cache = InMemoryConfigCache()
         cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
 
@@ -79,14 +78,13 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
             value = cache_policy.get()
             self.assertEqual(mock_datetime.datetime.utcnow.call_count, 2)
             self.assertEqual(value, TEST_JSON)
-            self.assertEqual(successful_response.json.call_count, 1)
-            config_fetcher.get_configuration_json.return_value = FetchResponse(not_modified_response)
+            self.assertEqual(successful_fetch_response.json.call_count, 1)
+            config_fetcher.get_configuration_json.return_value = not_modified_fetch_response
             cache_policy.force_refresh()
-            self.assertEqual(value, TEST_JSON)
             self.assertEqual(config_fetcher.get_configuration_json.call_count, 2)
             # this indicates that is_fetched() was correctly called and
             # the setting of the new last updated didn't occur
-            self.assertEqual(not_modified_response.json.call_count, 0)
+            self.assertEqual(not_modified_fetch_response.json.call_count, 0)
         cache_policy.stop()
 
     def test_http_error(self):
