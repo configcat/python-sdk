@@ -44,6 +44,11 @@ class LazyLoadingCachePolicy(CachePolicy):
     def force_refresh(self):
         try:
             self._lock.acquire_write()
+            # If while waiting to acquire the write lock another
+            # thread has updated the content, then don't bother requesting
+            # to the server to minimise time.
+            if self._last_updated is not None and self._last_updated + self._cache_time_to_live >= datetime.datetime.utcnow():
+                return
             configuration_response = self._config_fetcher.get_configuration_json()
             # set _last_updated regardless of whether the cache is updated
             # or whether a 304 not modified has been sent back as the content
