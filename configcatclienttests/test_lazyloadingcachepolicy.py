@@ -80,11 +80,16 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
             self.assertEqual(value, TEST_JSON)
             self.assertEqual(successful_fetch_response.json.call_count, 1)
             config_fetcher.get_configuration_json.return_value = not_modified_fetch_response
+            new_time = datetime.datetime(2020, 5, 20, 0, 0, 0) + datetime.timedelta(seconds=161)
+            mock_datetime.datetime.utcnow.return_value = new_time
             cache_policy.force_refresh()
             self.assertEqual(config_fetcher.get_configuration_json.call_count, 2)
             # this indicates that is_fetched() was correctly called and
             # the setting of the new last updated didn't occur
             self.assertEqual(not_modified_fetch_response.json.call_count, 0)
+            self.assertEqual(mock_datetime.datetime.utcnow.call_count, 3)
+            # last updated should still be set in the case of a 304
+            self.assertEqual(cache_policy._last_updated, new_time)
         cache_policy.stop()
 
     def test_http_error(self):

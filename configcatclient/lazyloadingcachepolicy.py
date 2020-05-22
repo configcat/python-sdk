@@ -43,22 +43,24 @@ class LazyLoadingCachePolicy(CachePolicy):
 
     def force_refresh(self):
         try:
+            self._lock.acquire_write()
             configuration_response = self._config_fetcher.get_configuration_json()
+            # set _last_updated regardless of whether the cache is updated
+            # or whether a 304 not modified has been sent back as the content
+            # we have hasn't been updated on the server so not need
+            # for subsequent requests to retry this within the cache time to live
+            self._last_updated = datetime.datetime.utcnow()
             if configuration_response.is_fetched():
                 configuration = configuration_response.json()
-                try:
-                    self._lock.acquire_write()
-
-                    self._config_cache.set(configuration)
-                    self._last_updated = datetime.datetime.utcnow()
-                finally:
-                    self._lock.release_write()
-
+                self._config_cache.set(configuration)
         except HTTPError as e:
             log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
                       ' Received unexpected response: %s' % str(e.response))
         except:
             log.exception(sys.exc_info()[0])
+        finally:
+            self._lock.release_write()
+
 
     def stop(self):
         pass
