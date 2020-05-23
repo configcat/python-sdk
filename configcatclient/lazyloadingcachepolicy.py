@@ -44,7 +44,7 @@ class LazyLoadingCachePolicy(CachePolicy):
     def force_refresh(self):
         try:
             configuration_response = self._config_fetcher.get_configuration_json()
-            if configuration_response.is_fetched:
+            if configuration_response.is_fetched():
                 configuration = configuration_response.json()
                 try:
                     self._lock.acquire_write()
