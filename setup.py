@@ -1,4 +1,5 @@
 from setuptools import setup
+from configcatclient.version import CONFIGCATCLIENT_VERSION
 
 
 def parse_requirements(filename):
@@ -6,7 +7,7 @@ def parse_requirements(filename):
     return [line for line in lines if line]
 
 
-configcatclient_version = "4.0.1"
+configcatclient_version = CONFIGCATCLIENT_VERSION
 
 requirements = parse_requirements('requirements.txt')
 
