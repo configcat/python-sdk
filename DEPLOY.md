@@ -4,7 +4,6 @@
    ```bash
    py.test configcatclienttests
    ```
-2. Increase the version in `setup.py`.
 2. Increase the version in `configcatclient/version.py`.
 3. Commit & Push
 ## Publish
