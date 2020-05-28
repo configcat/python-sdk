@@ -91,12 +91,12 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
             # this indicates that is_fetched() was correctly called and
             # the setting of the new last updated didn't occur
             self.assertEqual(not_modified_fetch_response.json.call_count, 0)
-            self.assertEqual(mock_datetime.datetime.utcnow.call_count, 4)
+            self.assertEqual(mock_datetime.datetime.utcnow.call_count, 3)
             # last updated should still be set in the case of a 304
             self.assertEqual(cache_policy._last_updated, new_time)
         cache_policy.stop()
 
-    def test_force_refresh_skips_hitting_api_after_update(self):
+    def test_get_skips_hitting_api_after_update_from_different_thread(self):
         config_fetcher = mock.MagicMock()
         successful_fetch_response = mock.MagicMock()
         successful_fetch_response.is_fetched.return_value = True
@@ -110,16 +110,16 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
             now = datetime.datetime(2020, 5, 20, 0, 0, 0)
             mock_datetime.datetime.utcnow.return_value = now
             self.assertIsNone(cache_policy._last_updated)
-            cache_policy.force_refresh()
+            cache_policy.get()
             self.assertEqual(config_fetcher.get_configuration_json.call_count, 1)
             # when the cache timeout is still within the limit skip any network
             # requests, as this could be that multiple threads have attempted
             # to acquire the lock at the same time, but only really one needs to update
             cache_policy._last_updated = now - datetime.timedelta(seconds=159)
-            cache_policy.force_refresh()
+            cache_policy.get()
             self.assertEqual(config_fetcher.get_configuration_json.call_count, 1)
             cache_policy._last_updated = now - datetime.timedelta(seconds=161)
-            cache_policy.force_refresh()
+            cache_policy.get()
             self.assertEqual(config_fetcher.get_configuration_json.call_count, 2)
 
     def test_http_error(self):
