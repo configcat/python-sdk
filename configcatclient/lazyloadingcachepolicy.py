@@ -3,7 +3,7 @@ import sys
 import datetime
 from requests import HTTPError
 
-from .readwritelock import RWLock
+from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
 log = logging.getLogger(sys.modules[__name__].__name__)
@@ -17,7 +17,7 @@ class LazyLoadingCachePolicy(CachePolicy):
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
         self._cache_time_to_live = datetime.timedelta(seconds=cache_time_to_live_seconds)
-        self._lock = RWLock()
+        self._lock = ReadWriteLock()
         self._last_updated = None
 
     def get(self):
