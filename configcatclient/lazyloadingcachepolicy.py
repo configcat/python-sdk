@@ -38,7 +38,7 @@ class LazyLoadingCachePolicy(CachePolicy):
             # thread has updated the content, then don't bother requesting
             # to the server to minimise time.
             if self._last_updated is None or self._last_updated + self._cache_time_to_live <= datetime.datetime.utcnow():
-                self.force_refresh()
+                self._force_refresh()
         finally:
             self._lock.release_write()
 
@@ -50,6 +50,13 @@ class LazyLoadingCachePolicy(CachePolicy):
             self._lock.release_read()
 
     def force_refresh(self):
+        try:
+            self._lock.acquire_write()
+            self._force_refresh()
+        finally:
+            self._lock.release_write()
+
+    def _force_refresh(self):
         try:
             configuration_response = self._config_fetcher.get_configuration_json()
             # set _last_updated regardless of whether the cache is updated
