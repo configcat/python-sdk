@@ -94,7 +94,7 @@ class ConfigCatClient(object):
         config = self._cache_policy.get()
         if config is None:
             log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
-                        'Returning None for variation_id: [%s].' % variation_id)
+                        'Returning None.' % variation_id)
             return None
 
         for key, value in list(config.items()):

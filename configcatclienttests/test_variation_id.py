@@ -20,6 +20,11 @@ class VariationIdTests(unittest.TestCase):
         self.assertEqual('default_variation_id', client.get_variation_id('nonexisting', 'default_variation_id'))
         client.stop()
 
+    def test_get_variation_id_empty_config(self):
+        client = ConfigCatClient('test', 0, 0, None, 0)
+        self.assertEqual('default_variation_id', client.get_variation_id('nonexisting', 'default_variation_id'))
+        client.stop()
+
     def test_get_all_variation_ids(self):
         client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
         result = client.get_all_variation_ids()
@@ -40,6 +45,12 @@ class VariationIdTests(unittest.TestCase):
 
     def test_get_key_and_value_not_found(self):
         client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
+        result = client.get_key_and_value('nonexisting')
+        self.assertIsNone(result)
+        client.stop()
+
+    def test_get_key_and_value_empty_config(self):
+        client = ConfigCatClient('test', 0, 0, None, 0)
         result = client.get_key_and_value('nonexisting')
         self.assertIsNone(result)
         client.stop()
