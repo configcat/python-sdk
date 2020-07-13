@@ -186,10 +186,10 @@ class RolloutEvaluator(object):
                     log.info('Evaluating %% options. Returning %s' % percentage_value)
                     return percentage_value, variation_id
 
-        def_value = setting_descriptor.get(self.VALUE, default_value)
-        def_variation_id = setting_descriptor.get(self.VARIATION_ID, default_variation_id)
-        log.info('Returning %s' % def_value)
-        return def_value, def_variation_id
+        return_value = setting_descriptor.get(self.VALUE, default_value)
+        return_variation_id = setting_descriptor.get(self.VARIATION_ID, default_variation_id)
+        log.info('Returning %s' % return_value)
+        return return_value, return_variation_id
 
     def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => match, returning: %s' \
