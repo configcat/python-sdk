@@ -18,14 +18,20 @@ TEST_JSON2 = '{"testKey": { "v": "testValue", "t": 1, ' \
              '"p": [], "r": [] }}'
 
 TEST_OBJECT = json.loads(
-    '{"testBoolKey": '
-    '{"v": true,"t": 0, "p": [],"r": []},'
+    '{'
+    '"testBoolKey": '
+    '{"v": true, "t": 0, "p": [], "r": []},'
     '"testStringKey": '
-    '{"v": "testValue","t": 1, "p": [],"r": []},'
+    '{"v": "testValue", "t": 1, "p": [], "r": []},'
     '"testIntKey": '
-    '{"v": 1,"t": 2, "p": [],"r": []},'
+    '{"v": 1, "t": 2, "p": [], "r": []},'
     '"testDoubleKey": '
-    '{"v": 1.1,"t": 3,"p": [],"r": []}}')
+    '{"v": 1.1, "t": 3,"p": [], "r": []},'
+    '"key1": '
+    '{"v": true, "i": "fakeId1","p": [], "r": []},'
+    '"key2": '
+    '{"v": false, "i": "fakeId2","p": [], "r": []}'
+    '}')
 
 
 class ConfigFetcherMock(ConfigFetcher):

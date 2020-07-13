@@ -7,8 +7,11 @@ from .configcache import InMemoryConfigCache
 from .rolloutevaluator import RolloutEvaluator
 import logging
 import sys
+from collections import namedtuple
 
 log = logging.getLogger(sys.modules[__name__].__name__)
+
+KeyValue = namedtuple('KeyValue', 'key value')
 
 
 class ConfigCatClient(object):
@@ -56,7 +59,8 @@ class ConfigCatClient(object):
                         (key, str(default_value)))
             return default_value
 
-        return self._rollout_evaluator.evaluate(key, user, default_value, config)
+        value, variation_id = self._rollout_evaluator.evaluate(key, user, default_value, None, config)
+        return value
 
     def get_all_keys(self):
         config = self._cache_policy.get()
@@ -64,6 +68,51 @@ class ConfigCatClient(object):
             return []
 
         return list(config)
+
+    def get_variation_id(self, key, default_variation_id, user=None):
+        config = self._cache_policy.get()
+        if config is None:
+            log.warning('Evaluating get_variation_id(\'%s\') failed. Cache is empty. '
+                        'Returning default_variation_id in your get_variation_id call: [%s].' %
+                        (key, str(default_variation_id)))
+            return default_variation_id
+
+        value, variation_id = self._rollout_evaluator.evaluate(key, user, None, default_variation_id, config)
+        return variation_id
+
+    def get_all_variation_ids(self, user=None):
+        keys = self.get_all_keys()
+        variation_ids = []
+        for key in keys:
+            variation_id = self.get_variation_id(key, None, user)
+            if variation_id is not None:
+                variation_ids.append(variation_id)
+
+        return variation_ids
+
+    def get_key_and_value(self, variation_id):
+        config = self._cache_policy.get()
+        if config is None:
+            log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
+                        'Returning None for variation_id: [%s].' % variation_id)
+            return None
+
+        for key, value in list(config.items()):
+            if variation_id == value.get(RolloutEvaluator.VARIATION_ID):
+                return KeyValue(key, value[RolloutEvaluator.VALUE])
+
+            rollout_rules = value.get(RolloutEvaluator.ROLLOUT_RULES, [])
+            for rollout_rule in rollout_rules:
+                if variation_id == rollout_rule.get(RolloutEvaluator.VARIATION_ID):
+                    return KeyValue(key, rollout_rule[RolloutEvaluator.VALUE])
+
+            rollout_percentage_items = value.get(RolloutEvaluator.ROLLOUT_PERCENTAGE_ITEMS, [])
+            for rollout_percentage_item in rollout_percentage_items:
+                if variation_id == rollout_percentage_item.get(RolloutEvaluator.VARIATION_ID):
+                    return KeyValue(key, rollout_percentage_item[RolloutEvaluator.VALUE])
+
+        log.error('Could not find the setting for the given variation_id: ' + variation_id);
+        return None
 
     def force_refresh(self):
         self._cache_policy.force_refresh()

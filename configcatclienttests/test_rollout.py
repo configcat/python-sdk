@@ -10,22 +10,28 @@ logging.basicConfig(level=logging.INFO)
 
 class RolloutTests(unittest.TestCase):
 
+    value_test_type = "value_test"
+    variation_test_type = "variation_test"
+
     def test_matrix_text(self):
-        self._test_matrix('./testmatrix.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        self._test_matrix('./testmatrix.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A', self.value_test_type)
 
     def test_matrix_semantic(self):
-        self._test_matrix('./testmatrix_semantic.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA')
+        self._test_matrix('./testmatrix_semantic.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA', self.value_test_type)
 
     def test_matrix_semantic_2(self):
-        self._test_matrix('./testmatrix_semantic_2.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w')
+        self._test_matrix('./testmatrix_semantic_2.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w', self.value_test_type)
 
     def test_matrix_number(self):
-        self._test_matrix('./testmatrix_number.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw')
+        self._test_matrix('./testmatrix_number.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw', self.value_test_type)
 
     def test_matrix_sensitive(self):
-        self._test_matrix('./testmatrix_sensitive.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA')
+        self._test_matrix('./testmatrix_sensitive.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA', self.value_test_type)
 
-    def _test_matrix(self, file_path, sdk_key):
+    def test_matrix_variation_id(self):
+        self._test_matrix('./testmatrix_variationId.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
+
+    def _test_matrix(self, file_path, sdk_key, type):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
 
@@ -64,7 +70,8 @@ class RolloutTests(unittest.TestCase):
 
             i = 0
             for setting_key in setting_keys:
-                value = client.get_value(setting_key, None, user_object)
+                value = client.get_variation_id(setting_key, None, user_object) if type == self.variation_test_type \
+                    else client.get_value(setting_key, None, user_object)
                 if str(value) != str(user_descriptor[i + 4]):
                     errors += 'Identifier: ' + user_descriptor[0] + '. SettingKey: ' + setting_key + \
                               '. Expected: ' + str(user_descriptor[i + 4]) + '. Result: ' + str(value) + '.\n'
