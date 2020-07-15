@@ -1,5 +1,6 @@
 import json
 import time
+
 try:
     from unittest.mock import Mock
 except ImportError:
@@ -29,12 +30,11 @@ TEST_OBJECT = json.loads(
 
 
 class ConfigFetcherMock(ConfigFetcher):
-
     def __init__(self):
         self._call_count = 0
         self._configuration = TEST_JSON
 
-    def get_configuration_json(self):
+    def get_configuration_json(self, force_fetch=False):
         self._call_count = self._call_count + 1
         response_mock = Mock()
         response_mock.status_code = 200
@@ -50,20 +50,18 @@ class ConfigFetcherMock(ConfigFetcher):
 
 
 class ConfigFetcherWithErrorMock(ConfigFetcher):
-
     def __init__(self, exception):
         self._exception = exception
 
-    def get_configuration_json(self):
+    def get_configuration_json(self, force_fetch=False):
         raise self._exception
 
 
 class ConfigFetcherWaitMock(ConfigFetcher):
-
     def __init__(self, wait_seconds):
         self._wait_seconds = wait_seconds
 
-    def get_configuration_json(self):
+    def get_configuration_json(self, force_fetch=False):
         time.sleep(self._wait_seconds)
         response_mock = Mock()
         response_mock.status_code = 200
@@ -72,11 +70,10 @@ class ConfigFetcherWaitMock(ConfigFetcher):
 
 
 class ConfigFetcherCountMock(ConfigFetcher):
-
     def __init__(self):
         self._value = 0
 
-    def get_configuration_json(self):
+    def get_configuration_json(self, force_fetch=False):
         self._value += 10
         response_mock = Mock()
         response_mock.status_code = 200
@@ -85,7 +82,6 @@ class ConfigFetcherCountMock(ConfigFetcher):
 
 
 class ConfigCacheMock(ConfigCache):
-
     def get(self):
         return TEST_OBJECT
 
