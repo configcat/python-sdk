@@ -38,8 +38,9 @@ class RolloutEvaluator(object):
     ROLLOUT_PERCENTAGE_ITEMS = 'p'
     PERCENTAGE = 'p'
     ROLLOUT_RULES = 'r'
+    VARIATION_ID = "i";
 
-    def evaluate(self, key, user, default_value, config):
+    def evaluate(self, key, user, default_value, default_variation_id, config):
         log.info('Evaluating get_value(\'%s\').' % key)
 
         setting_descriptor = config.get(key, None)
@@ -48,7 +49,7 @@ class RolloutEvaluator(object):
             log.error('Evaluating get_value(\'%s\') failed. Value not found for key \'%s\' '
                       'Returning default_value: [%s]. Here are the available keys: %s' %
                       (key, key, str(default_value), ', '.join(list(config))))
-            return default_value
+            return default_value, default_variation_id
 
         rollout_rules = setting_descriptor.get(self.ROLLOUT_RULES, [])
         rollout_percentage_items = setting_descriptor.get(self.ROLLOUT_PERCENTAGE_ITEMS, [])
@@ -65,8 +66,9 @@ class RolloutEvaluator(object):
                             'Read more: https://configcat.com/docs/advanced/user-object/' %
                             key)
             return_value = setting_descriptor.get(self.VALUE, default_value)
+            return_variation_id = setting_descriptor.get(self.VARIATION_ID, default_variation_id)
             log.info('Returning [%s]' % str(return_value))
-            return return_value
+            return return_value, return_variation_id
 
         log.info('User object:\n%s' % str(user))
 
@@ -82,31 +84,32 @@ class RolloutEvaluator(object):
                 continue
 
             value = rollout_rule.get(self.VALUE)
+            variation_id = rollout_rule.get(self.VARIATION_ID, default_variation_id)
 
             # IS ONE OF
             if comparator == 0:
                 if str(user_value) in [x.strip() for x in str(comparison_value).split(',')]:
                     log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                      comparison_value, value))
-                    return value
+                    return value, variation_id
             # IS NOT ONE OF
             elif comparator == 1:
                 if str(user_value) not in [x.strip() for x in str(comparison_value).split(',')]:
                     log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                      comparison_value, value))
-                    return value
+                    return value, variation_id
             # CONTAINS
             elif comparator == 2:
                 if str(user_value).__contains__(str(comparison_value)):
                     log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                      comparison_value, value))
-                    return value
+                    return value, variation_id
             # DOES NOT CONTAIN
             elif comparator == 3:
                 if not str(user_value).__contains__(str(comparison_value)):
                     log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                      comparison_value, value))
-                    return value
+                    return value, variation_id
 
             # IS ONE OF, IS NOT ONE OF (Semantic version)
             elif 4 <= comparator <= 5:
@@ -117,7 +120,7 @@ class RolloutEvaluator(object):
                     if (match and comparator == 4) or (not match and comparator == 5):
                         log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                          comparison_value, value))
-                        return value
+                        return value, variation_id
                 except ValueError as e:
                     log.warning(self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, str(e)))
@@ -130,7 +133,7 @@ class RolloutEvaluator(object):
                                     self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()):
                         log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                          comparison_value, value))
-                        return value
+                        return value, variation_id
                 except ValueError as e:
                     log.warning(self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, str(e)))
@@ -148,7 +151,7 @@ class RolloutEvaluator(object):
                             or (comparator == 15 and user_value_float >= comparison_value_float):
                         log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                          comparison_value, value))
-                        return value
+                        return value, variation_id
                 except Exception as e:
                     log.warning(self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, str(e)))
@@ -158,13 +161,13 @@ class RolloutEvaluator(object):
                 if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [x.strip() for x in str(comparison_value).split(',')]:
                     log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                      comparison_value, value))
-                    return value
+                    return value, variation_id
             # IS NOT ONE OF (Sensitive)
             elif comparator == 17:
                 if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [x.strip() for x in str(comparison_value).split(',')]:
                     log.info(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                      comparison_value, value))
-                    return value
+                    return value, variation_id
 
             log.info(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
 
@@ -179,12 +182,14 @@ class RolloutEvaluator(object):
                 bucket += rollout_percentage_item.get(self.PERCENTAGE, 0)
                 if hash_val < bucket:
                     percentage_value = rollout_percentage_item.get(self.VALUE)
+                    variation_id = rollout_percentage_item.get(self.VARIATION_ID, default_variation_id)
                     log.info('Evaluating %% options. Returning %s' % percentage_value)
-                    return percentage_value
+                    return percentage_value, variation_id
 
-        def_value = setting_descriptor.get(self.VALUE, default_value)
-        log.info('Returning %s' % def_value)
-        return def_value
+        return_value = setting_descriptor.get(self.VALUE, default_value)
+        return_variation_id = setting_descriptor.get(self.VARIATION_ID, default_variation_id)
+        log.info('Returning %s' % return_value)
+        return return_value, return_variation_id
 
     def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => match, returning: %s' \
