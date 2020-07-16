@@ -32,10 +32,13 @@ TEST_OBJECT = json.loads(
 class ConfigFetcherMock(ConfigFetcher):
     def __init__(self):
         self._call_count = 0
+        self._force_fetch_count = 0
         self._configuration = TEST_JSON
 
     def get_configuration_json(self, force_fetch=False):
-        self._call_count = self._call_count + 1
+        self._call_count += 1
+        if force_fetch:
+            self._force_fetch_count += 1
         response_mock = Mock()
         response_mock.status_code = 200
         response_mock.json.return_value = self._configuration
@@ -47,6 +50,10 @@ class ConfigFetcherMock(ConfigFetcher):
     @property
     def get_call_count(self):
         return self._call_count
+
+    @property
+    def get_force_fetch_count(self):
+        return self._force_fetch_count
 
 
 class ConfigFetcherWithErrorMock(ConfigFetcher):

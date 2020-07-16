@@ -37,6 +37,13 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         value = cache_policy.get()
         self.assertEqual(value, TEST_JSON)
         self.assertEqual(config_fetcher.get_call_count, 1)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 1)
+
+        cache_policy.force_refresh()
+        value = cache_policy.get()
+        self.assertEqual(value, TEST_JSON)
+        self.assertEqual(config_fetcher.get_call_count, 2)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 1)
 
         try:
             # Clear the cache
@@ -45,8 +52,14 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         finally:
             cache_policy._lock.release_write()
 
+        value = cache_policy.get()
+        self.assertEqual(value, None)
+
+        cache_policy.force_refresh()
+        value = cache_policy.get()
         self.assertEqual(value, TEST_JSON)
-        self.assertEqual(config_fetcher.get_call_count, 1)
+        self.assertEqual(config_fetcher.get_call_count, 3)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 2)
         cache_policy.stop()
 
     def test_with_refresh_http_error(self):

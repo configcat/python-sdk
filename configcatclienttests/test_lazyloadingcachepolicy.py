@@ -72,12 +72,19 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_force_refresh(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 1)
 
         # Get value from Config Store, which indicates a config_fetcher call
         value = cache_policy.get()
         self.assertEqual(value, TEST_JSON)
         self.assertEqual(config_fetcher.get_call_count, 1)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 1)
+
+        time.sleep(1.2)
+        value = cache_policy.get()
+        self.assertEqual(value, TEST_JSON)
+        self.assertEqual(config_fetcher.get_call_count, 2)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 1)
 
         try:
             # Clear the cache
@@ -88,7 +95,8 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
 
         value = cache_policy.get()
         self.assertEqual(value, TEST_JSON)
-        self.assertEqual(config_fetcher.get_call_count, 2)
+        self.assertEqual(config_fetcher.get_call_count, 3)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 2)
         cache_policy.stop()
 
     def test_force_refresh_not_modified_config(self):

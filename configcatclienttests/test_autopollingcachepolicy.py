@@ -144,6 +144,14 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         time.sleep(1.5)
         config = cache_policy.get()
         self.assertEqual(config, TEST_JSON)
+        self.assertEqual(config_fetcher.get_call_count, 1)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 1)
+
+        time.sleep(1.5)
+        config = cache_policy.get()
+        self.assertEqual(config, TEST_JSON)
+        self.assertEqual(config_fetcher.get_call_count, 2)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 1)
 
         try:
             # Clear the cache
@@ -153,7 +161,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
             cache_policy._lock.release_write()
 
         time.sleep(1.5)
-        self.assertEqual(config_fetcher.get_call_count, 2)
+        self.assertEqual(config_fetcher.get_call_count, 3)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 2)
         config = cache_policy.get()
         self.assertEqual(config, TEST_JSON)
         cache_policy.stop()
