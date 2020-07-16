@@ -1,6 +1,7 @@
 import logging
 import unittest
 import requests
+
 try:
     from unittest import mock
 except ImportError:
@@ -64,6 +65,11 @@ class ConfigFetcherTests(unittest.TestCase):
         fetch_response = fetcher.get_configuration_json()
         self.assertTrue(fetch_response.is_fetched())
         self.assertFalse(fetch_response.is_not_modified())
+
         fetch_response = fetcher.get_configuration_json()
         self.assertFalse(fetch_response.is_fetched())
         self.assertTrue(fetch_response.is_not_modified())
+
+        fetch_response = fetcher.get_configuration_json(force_fetch=True)
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertFalse(fetch_response.is_not_modified())

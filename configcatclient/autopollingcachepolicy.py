@@ -59,13 +59,17 @@ class AutoPollingCachePolicy(CachePolicy):
 
     def force_refresh(self):
         try:
-            configuration_response = self._config_fetcher.get_configuration_json()
+            old_configuration = None
+            force_fetch = False
 
             try:
                 self._lock.acquire_read()
                 old_configuration = self._config_cache.get()
+                force_fetch = not bool(old_configuration)
             finally:
                 self._lock.release_read()
+
+            configuration_response = self._config_fetcher.get_configuration_json(force_fetch)
 
             if configuration_response.is_fetched():
                 configuration = configuration_response.json()
@@ -80,7 +84,7 @@ class AutoPollingCachePolicy(CachePolicy):
                     try:
                         if self._on_configuration_changed_callback is not None:
                             self._on_configuration_changed_callback()
-                    except:
+                    except Exception:
                         log.exception(sys.exc_info()[0])
 
             if not self._initialized and old_configuration is not None:
@@ -88,7 +92,7 @@ class AutoPollingCachePolicy(CachePolicy):
         except HTTPError as e:
             log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
                       ' Received unexpected response: %s' % str(e.response))
-        except:
+        except Exception:
             log.exception(sys.exc_info()[0])
 
     def stop(self):

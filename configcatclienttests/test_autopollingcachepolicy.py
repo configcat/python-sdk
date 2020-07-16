@@ -137,6 +137,36 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         self.assertEqual(call_counter.get_call_count, 2)
         cache_policy.stop()
 
+    def test_refetch_config(self):
+        config_fetcher = ConfigFetcherMock()
+        config_cache = InMemoryConfigCache()
+        cache_policy = AutoPollingCachePolicy(config_fetcher, config_cache, 2, 1, None)
+        time.sleep(1.5)
+        config = cache_policy.get()
+        self.assertEqual(config, TEST_JSON)
+        self.assertEqual(config_fetcher.get_call_count, 1)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 1)
+
+        time.sleep(1.5)
+        config = cache_policy.get()
+        self.assertEqual(config, TEST_JSON)
+        self.assertEqual(config_fetcher.get_call_count, 2)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 1)
+
+        try:
+            # Clear the cache
+            cache_policy._lock.acquire_write()
+            cache_policy._config_cache.set(None)
+        finally:
+            cache_policy._lock.release_write()
+
+        time.sleep(1.5)
+        self.assertEqual(config_fetcher.get_call_count, 3)
+        self.assertEqual(config_fetcher.get_force_fetch_count, 2)
+        config = cache_policy.get()
+        self.assertEqual(config, TEST_JSON)
+        cache_policy.stop()
+
 
 if __name__ == '__main__':
     unittest.main()
