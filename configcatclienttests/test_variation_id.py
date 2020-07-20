@@ -29,8 +29,8 @@ class VariationIdTests(unittest.TestCase):
         client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
         result = client.get_all_variation_ids()
         self.assertEqual(2, len(result))
-        self.assertEqual('fakeId1', result[0])
-        self.assertEqual('fakeId2', result[1])
+        self.assertTrue('fakeId1' in result)
+        self.assertTrue('fakeId2' in result)
         client.stop()
 
     def test_get_key_and_value(self):
