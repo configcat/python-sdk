@@ -7,7 +7,7 @@ class User(object):
     """
 
     def __init__(self, identifier, email=None, country=None, custom=None):
-        self.__identifier = identifier
+        self.__identifier = identifier if identifier is not None else ''
         self.__data = {'Identifier': identifier, 'Email': email, 'Country': country}
         self.__custom = custom
 
