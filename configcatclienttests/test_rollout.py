@@ -50,7 +50,7 @@ class RolloutTests(unittest.TestCase):
             user_descriptor = line.rstrip().split(';')
 
             user_object = None
-            if user_descriptor[0] is not None and user_descriptor[0] != '' and user_descriptor[0] != '##null##':
+            if user_descriptor[0] is not None and user_descriptor[0] != '##null##':
                 email = None
                 country = None
                 custom = None
