@@ -48,7 +48,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         try:
             # Clear the cache
             cache_policy._lock.acquire_write()
-            cache_policy._config_cache.set(None)
+            cache_policy._config_cache.set('key', None)
         finally:
             cache_policy._lock.release_write()
 

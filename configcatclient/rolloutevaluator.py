@@ -2,6 +2,7 @@ import hashlib
 import semver
 import logging
 import sys
+from .constants import *
 
 from .user import User
 
@@ -31,28 +32,26 @@ class RolloutEvaluator(object):
         'IS NOT ONE OF (Sensitive)'
     ]
 
-    VALUE = 'v'
-    COMPARATOR = 't'
-    COMPARISON_ATTRIBUTE = 'a'
-    COMPARISON_VALUE = 'c'
-    ROLLOUT_PERCENTAGE_ITEMS = 'p'
-    PERCENTAGE = 'p'
-    ROLLOUT_RULES = 'r'
-    VARIATION_ID = "i";
-
     def evaluate(self, key, user, default_value, default_variation_id, config):
         log.info('Evaluating get_value(\'%s\').' % key)
 
-        setting_descriptor = config.get(key, None)
+        feature_flags = config.get(FEATURE_FLAGS, None)
+        if feature_flags is None:
+            log.error('Evaluating get_value(\'%s\') failed. Value not found for key \'%s\' '
+                      'Returning default_value: [%s].' %
+                      (key, key, str(default_value)))
+            return default_value, default_variation_id
+
+        setting_descriptor = feature_flags.get(key, None)
 
         if setting_descriptor is None:
             log.error('Evaluating get_value(\'%s\') failed. Value not found for key \'%s\' '
                       'Returning default_value: [%s]. Here are the available keys: %s' %
-                      (key, key, str(default_value), ', '.join(list(config))))
+                      (key, key, str(default_value), ', '.join(list(feature_flags))))
             return default_value, default_variation_id
 
-        rollout_rules = setting_descriptor.get(self.ROLLOUT_RULES, [])
-        rollout_percentage_items = setting_descriptor.get(self.ROLLOUT_PERCENTAGE_ITEMS, [])
+        rollout_rules = setting_descriptor.get(ROLLOUT_RULES, [])
+        rollout_percentage_items = setting_descriptor.get(ROLLOUT_PERCENTAGE_ITEMS, [])
 
         if user is not None and type(user) is not User:
             log.warning('Evaluating get_value(\'%s\'). User Object is not an instance of User type.' % key)
@@ -65,8 +64,8 @@ class RolloutEvaluator(object):
                             'in order to make targeting work properly. '
                             'Read more: https://configcat.com/docs/advanced/user-object/' %
                             key)
-            return_value = setting_descriptor.get(self.VALUE, default_value)
-            return_variation_id = setting_descriptor.get(self.VARIATION_ID, default_variation_id)
+            return_value = setting_descriptor.get(VALUE, default_value)
+            return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
             log.info('Returning [%s]' % str(return_value))
             return return_value, return_variation_id
 
@@ -74,17 +73,17 @@ class RolloutEvaluator(object):
 
         # Evaluate targeting rules
         for rollout_rule in rollout_rules:
-            comparison_attribute = rollout_rule.get(self.COMPARISON_ATTRIBUTE)
-            comparison_value = rollout_rule.get(self.COMPARISON_VALUE)
-            comparator = rollout_rule.get(self.COMPARATOR)
+            comparison_attribute = rollout_rule.get(COMPARISON_ATTRIBUTE)
+            comparison_value = rollout_rule.get(COMPARISON_VALUE)
+            comparator = rollout_rule.get(COMPARATOR)
 
             user_value = user.get_attribute(comparison_attribute)
             if user_value is None or not user_value:
                 log.info(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
                 continue
 
-            value = rollout_rule.get(self.VALUE)
-            variation_id = rollout_rule.get(self.VARIATION_ID, default_variation_id)
+            value = rollout_rule.get(VALUE)
+            variation_id = rollout_rule.get(VARIATION_ID, default_variation_id)
 
             # IS ONE OF
             if comparator == 0:
@@ -179,15 +178,15 @@ class RolloutEvaluator(object):
 
             bucket = 0
             for rollout_percentage_item in rollout_percentage_items or []:
-                bucket += rollout_percentage_item.get(self.PERCENTAGE, 0)
+                bucket += rollout_percentage_item.get(PERCENTAGE, 0)
                 if hash_val < bucket:
-                    percentage_value = rollout_percentage_item.get(self.VALUE)
-                    variation_id = rollout_percentage_item.get(self.VARIATION_ID, default_variation_id)
+                    percentage_value = rollout_percentage_item.get(VALUE)
+                    variation_id = rollout_percentage_item.get(VARIATION_ID, default_variation_id)
                     log.info('Evaluating %% options. Returning %s' % percentage_value)
                     return percentage_value, variation_id
 
-        return_value = setting_descriptor.get(self.VALUE, default_value)
-        return_variation_id = setting_descriptor.get(self.VARIATION_ID, default_variation_id)
+        return_value = setting_descriptor.get(VALUE, default_value)
+        return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
         log.info('Returning %s' % return_value)
         return return_value, return_variation_id
 

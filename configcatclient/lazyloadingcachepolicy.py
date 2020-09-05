@@ -3,6 +3,7 @@ import sys
 import datetime
 from requests import HTTPError
 
+from .constants import CACHE_KEY
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
@@ -25,7 +26,7 @@ class LazyLoadingCachePolicy(CachePolicy):
         try:
             self._lock.acquire_read()
 
-            config = self._config_cache.get()
+            config = self._config_cache.get(CACHE_KEY)
 
             utc_now = datetime.datetime.utcnow()
             if self._last_updated is not None and self._last_updated + self._cache_time_to_live > utc_now:
@@ -47,7 +48,7 @@ class LazyLoadingCachePolicy(CachePolicy):
 
         try:
             self._lock.acquire_read()
-            config = self._config_cache.get()
+            config = self._config_cache.get(CACHE_KEY)
             return config
         finally:
             self._lock.release_read()
@@ -57,7 +58,7 @@ class LazyLoadingCachePolicy(CachePolicy):
 
         try:
             self._lock.acquire_read()
-            config = self._config_cache.get()
+            config = self._config_cache.get(CACHE_KEY)
             force_fetch = not bool(config)
         finally:
             self._lock.release_read()
@@ -78,7 +79,7 @@ class LazyLoadingCachePolicy(CachePolicy):
             self._last_updated = datetime.datetime.utcnow()
             if configuration_response.is_fetched():
                 configuration = configuration_response.json()
-                self._config_cache.set(configuration)
+                self._config_cache.set(CACHE_KEY, configuration)
         except HTTPError as e:
             log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
                       ' Received unexpected response: %s' % str(e.response))

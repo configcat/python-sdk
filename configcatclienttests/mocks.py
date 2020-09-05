@@ -95,10 +95,10 @@ class ConfigFetcherCountMock(ConfigFetcher):
 
 
 class ConfigCacheMock(ConfigCache):
-    def get(self):
+    def get(self, key):
         return TEST_OBJECT
 
-    def set(self, value):
+    def set(self, key, value):
         pass
 
 

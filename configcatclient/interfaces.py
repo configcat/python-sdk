@@ -8,13 +8,13 @@ class ConfigCache(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get(self):
+    def get(self, key):
         """
         :returns the config json object from the cache
         """
 
     @abstractmethod
-    def set(self, value):
+    def set(self, key, value):
         """
         Sets the config json cache.
         """

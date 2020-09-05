@@ -2,6 +2,7 @@ import logging
 import sys
 from requests import HTTPError
 
+from .constants import CACHE_KEY
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
@@ -18,7 +19,7 @@ class ManualPollingCachePolicy(CachePolicy):
         try:
             self._lock.acquire_read()
 
-            config = self._config_cache.get()
+            config = self._config_cache.get(CACHE_KEY)
             return config
         finally:
             self._lock.release_read()
@@ -28,7 +29,7 @@ class ManualPollingCachePolicy(CachePolicy):
 
         try:
             self._lock.acquire_read()
-            config = self._config_cache.get()
+            config = self._config_cache.get(CACHE_KEY)
             force_fetch = not bool(config)
         finally:
             self._lock.release_read()
@@ -39,7 +40,7 @@ class ManualPollingCachePolicy(CachePolicy):
                 configuration = configuration_response.json()
                 try:
                     self._lock.acquire_write()
-                    self._config_cache.set(configuration)
+                    self._config_cache.set(CACHE_KEY, configuration)
                 finally:
                     self._lock.release_write()
 

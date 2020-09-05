@@ -5,6 +5,7 @@ import time
 from threading import Thread, Event
 from requests import HTTPError
 
+from .constants import CACHE_KEY
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
@@ -53,7 +54,7 @@ class AutoPollingCachePolicy(CachePolicy):
 
         try:
             self._lock.acquire_read()
-            return self._config_cache.get()
+            return self._config_cache.get(CACHE_KEY)
         finally:
             self._lock.release_read()
 
@@ -64,7 +65,7 @@ class AutoPollingCachePolicy(CachePolicy):
 
             try:
                 self._lock.acquire_read()
-                old_configuration = self._config_cache.get()
+                old_configuration = self._config_cache.get(CACHE_KEY)
                 force_fetch = not bool(old_configuration)
             finally:
                 self._lock.release_read()
@@ -76,7 +77,7 @@ class AutoPollingCachePolicy(CachePolicy):
                 if configuration != old_configuration:
                     try:
                         self._lock.acquire_write()
-                        self._config_cache.set(configuration)
+                        self._config_cache.set(CACHE_KEY, configuration)
                         self._initialized = True
                     finally:
                         self._lock.release_write()
