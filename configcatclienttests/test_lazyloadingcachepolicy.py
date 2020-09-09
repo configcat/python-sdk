@@ -4,6 +4,8 @@ import time
 import datetime
 from requests import HTTPError
 
+from configcatclient.constants import CACHE_KEY
+
 try:
     from unittest import mock
 except ImportError:
@@ -89,7 +91,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         try:
             # Clear the cache
             cache_policy._lock.acquire_write()
-            cache_policy._config_cache.set('key', None)
+            cache_policy._config_cache.set(CACHE_KEY, None)
         finally:
             cache_policy._lock.release_write()
 

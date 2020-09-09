@@ -3,6 +3,7 @@ import unittest
 from requests import HTTPError
 
 from configcatclient.configcache import InMemoryConfigCache
+from configcatclient.constants import CACHE_KEY
 from configcatclient.manualpollingcachepolicy import ManualPollingCachePolicy
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON
 
@@ -48,7 +49,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         try:
             # Clear the cache
             cache_policy._lock.acquire_write()
-            cache_policy._config_cache.set('key', None)
+            cache_policy._config_cache.set(CACHE_KEY, None)
         finally:
             cache_policy._lock.release_write()
 

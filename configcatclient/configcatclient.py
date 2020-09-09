@@ -1,3 +1,4 @@
+from .constants import FEATURE_FLAGS, ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS
 from .interfaces import ConfigCatClientException
 from .lazyloadingcachepolicy import LazyLoadingCachePolicy
 from .manualpollingcachepolicy import ManualPollingCachePolicy
@@ -69,7 +70,11 @@ class ConfigCatClient(object):
         if config is None:
             return []
 
-        return list(config)
+        feature_flags = config.get(FEATURE_FLAGS, None)
+        if feature_flags is None:
+            return []
+
+        return list(feature_flags)
 
     def get_variation_id(self, key, default_variation_id, user=None):
         config = self._cache_policy.get()
@@ -99,21 +104,27 @@ class ConfigCatClient(object):
                         'Returning None.' % variation_id)
             return None
 
-        for key, value in list(config.items()):
-            if variation_id == value.get(RolloutEvaluator.VARIATION_ID):
-                return KeyValue(key, value[RolloutEvaluator.VALUE])
+        feature_flags = config.get(FEATURE_FLAGS, None)
+        if feature_flags is None:
+            log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
+                        'Returning None.' % variation_id)
+            return None
 
-            rollout_rules = value.get(RolloutEvaluator.ROLLOUT_RULES, [])
+        for key, value in list(feature_flags.items()):
+            if variation_id == value.get(VARIATION_ID):
+                return KeyValue(key, value[VALUE])
+
+            rollout_rules = value.get(ROLLOUT_RULES, [])
             for rollout_rule in rollout_rules:
-                if variation_id == rollout_rule.get(RolloutEvaluator.VARIATION_ID):
-                    return KeyValue(key, rollout_rule[RolloutEvaluator.VALUE])
+                if variation_id == rollout_rule.get(VARIATION_ID):
+                    return KeyValue(key, rollout_rule[VALUE])
 
-            rollout_percentage_items = value.get(RolloutEvaluator.ROLLOUT_PERCENTAGE_ITEMS, [])
+            rollout_percentage_items = value.get(ROLLOUT_PERCENTAGE_ITEMS, [])
             for rollout_percentage_item in rollout_percentage_items:
-                if variation_id == rollout_percentage_item.get(RolloutEvaluator.VARIATION_ID):
-                    return KeyValue(key, rollout_percentage_item[RolloutEvaluator.VALUE])
+                if variation_id == rollout_percentage_item.get(VARIATION_ID):
+                    return KeyValue(key, rollout_percentage_item[VALUE])
 
-        log.error('Could not find the setting for the given variation_id: ' + variation_id);
+        log.error('Could not find the setting for the given variation_id: ' + variation_id)
         return None
 
     def force_refresh(self):

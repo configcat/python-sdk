@@ -10,16 +10,34 @@ except ImportError:
 from configcatclient.configfetcher import FetchResponse, ConfigFetcher
 from configcatclient.interfaces import ConfigCache
 
-TEST_JSON = '{"testKey": { "v": "testValue", "t": 1, ' \
-            '"p": [], "r": [] }}'
+TEST_JSON = '{' \
+            '   "p": {' \
+            '       "u": "https://cdn-global.configcat.com",' \
+            '       "r": 0' \
+            '   },' \
+            '   "f": {' \
+            '       "testKey": { "v": "testValue", "t": 1, "p": [], "r": [] }' \
+            '   }' \
+            '}'
 
-TEST_JSON2 = '{"testKey": { "v": "testValue", "t": 1, ' \
-             '"p": [], "r": [] }, ' \
-             '"testKey2": { "v": "testValue2", "t": 1, ' \
-             '"p": [], "r": [] }}'
+TEST_JSON2 = '{' \
+             '  "p": {' \
+             '       "u": "https://cdn-global.configcat.com",' \
+             '       "r": 0' \
+             '  },' \
+             '  "f": {' \
+             '      "testKey": { "v": "testValue", "t": 1, "p": [], "r": [] }, ' \
+             '      "testKey2": { "v": "testValue2", "t": 1, "p": [], "r": [] }' \
+             '  }' \
+             '}'
 
 TEST_OBJECT = json.loads(
     '{'
+    '"p": {'
+    '"u": "https://cdn-global.configcat.com",'
+    '"r": 0'
+    "},"
+    '"f": {'
     '"testBoolKey": '
     '{"v": true, "t": 0, "p": [], "r": []},'
     '"testStringKey": '
@@ -32,6 +50,7 @@ TEST_OBJECT = json.loads(
     '{"v": true, "i": "fakeId1","p": [], "r": []},'
     '"key2": '
     '{"v": false, "i": "fakeId2","p": [], "r": []}'
+    '}'
     '}')
 
 

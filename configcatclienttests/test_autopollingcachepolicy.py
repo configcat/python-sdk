@@ -5,6 +5,7 @@ from requests import HTTPError
 
 from configcatclient.autopollingcachepolicy import AutoPollingCachePolicy
 from configcatclient.configcache import InMemoryConfigCache
+from configcatclient.constants import CACHE_KEY
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, ConfigFetcherWaitMock, \
     ConfigFetcherCountMock, TEST_JSON, CallCounter, TEST_JSON2
 
@@ -156,7 +157,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         try:
             # Clear the cache
             cache_policy._lock.acquire_write()
-            cache_policy._config_cache.set('key', None)
+            cache_policy._config_cache.set(CACHE_KEY, None)
         finally:
             cache_policy._lock.release_write()
 

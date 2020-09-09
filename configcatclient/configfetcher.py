@@ -79,10 +79,6 @@ class ConfigFetcher(object):
 
         fetch_response = FetchResponse(response)
 
-        # If the base_url is overridden, the SDK should not redirect the calls and it just have to return the response.
-        if self._base_url_overridden:
-            return fetch_response
-
         # If there wasn't a config change, we return the response.
         if not fetch_response.is_fetched():
             return fetch_response
@@ -97,17 +93,24 @@ class ConfigFetcher(object):
         if base_url is None or self._base_url == base_url:
             return fetch_response
 
+        redirect = preferences.get(REDIRECT)
+
+        # If the base_url is overridden, and the redirect parameter is not 2 (force),
+        # the SDK should not redirect the calls and it just have to return the response.
+        if self._base_url_overridden and redirect is not None and redirect != 2:
+            return fetch_response
+
         # The next call should use the base_url provided in the config json
         self._base_url = base_url
 
-        # If the redirect property is false, return the response
-        redirect = preferences.get(REDIRECT)
-        if redirect is None or not redirect:
-            return fetch_response
+        # If the redirect property == 1 (immediate redirect), try to download again with the new url
+        if redirect is not None and redirect == 1:
+            # To prevent loops we check if we retried at least 3 times with the new base_url
+            if retries > 3:
+                return fetch_response
 
-        # To prevent loops we check if we retried at least 3 times with the new base_url
-        if retries > 3:
-            return fetch_response
+            # Retry the config download with the new base_url
+            return self.get_configuration_json(force_fetch, retries + 1)
 
-        # Retry the config download with the new base_url
-        return self.get_configuration_json(force_fetch, retries+1)
+        # Return the response
+        return fetch_response
