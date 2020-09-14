@@ -87,10 +87,43 @@ def mocked_requests_get_eu_only(*args, **kwargs):
     return MockResponse(None, 404)
 
 
+# An organization with Global data_governance config.json representation with custom baseurl
+def mocked_requests_get_custom(*args, **kwargs):
+    if args[0] == 'https://custom.configcat.com/configuration-files//config_v5.json':
+        return MockResponse({
+            "p": {
+                "u": "https://cdn-global.configcat.com",
+                "r": 0
+            },
+            "f": test_json
+        }, 200)
+    return MockResponse(None, 404)
+
+
+# An organization with forced=2 redirection config.json representation
+def mocked_requests_get_forced_2(*args, **kwargs):
+    if args[0] == 'https://custom.configcat.com/configuration-files//config_v5.json' \
+            or args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v5.json' \
+            or args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v5.json'\
+            or args[0] == 'https://forced.configcat.com/configuration-files//config_v5.json':
+        return MockResponse({
+            "p": {
+                "u": "https://forced.configcat.com",
+                "r": 2
+            },
+            "f": test_json
+        }, 200)
+    return MockResponse(None, 404)
+
+
 call_to_global = mock.call('https://cdn-global.configcat.com/configuration-files//config_v5.json',
                            auth=ANY, headers=ANY, proxies=ANY, timeout=ANY)
 call_to_eu = mock.call('https://cdn-eu.configcat.com/configuration-files//config_v5.json',
                        auth=ANY, headers=ANY, proxies=ANY, timeout=ANY)
+call_to_custom = mock.call('https://custom.configcat.com/configuration-files//config_v5.json',
+                           auth=ANY, headers=ANY, proxies=ANY, timeout=ANY)
+call_to_forced = mock.call('https://forced.configcat.com/configuration-files//config_v5.json',
+                           auth=ANY, headers=ANY, proxies=ANY, timeout=ANY)
 
 
 class DataGovernanceTests(unittest.TestCase):
@@ -193,3 +226,148 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertEqual(len(mock_get.call_args_list), 2)
         self.assertEqual(call_to_eu, mock_get.call_args_list[0])
         self.assertEqual(call_to_eu, mock_get.call_args_list[1])
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get_custom)
+    def test_sdk_global_custom_base_url(self, mock_get):
+        # In this case
+        # the first invocation should call https://custom.configcat.com
+        # and the second should call https://custom.configcat.com
+        # without force redirects
+
+        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global,
+                                base_url='https://custom.configcat.com')
+
+        # First fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 1)
+        self.assertEqual(call_to_custom, mock_get.call_args_list[0])
+        self.assertNotIn(call_to_eu, mock_get.call_args_list)
+        self.assertNotIn(call_to_global, mock_get.call_args_list)
+
+        # Second fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 2)
+        self.assertEqual(call_to_custom, mock_get.call_args_list[0])
+        self.assertEqual(call_to_custom, mock_get.call_args_list[1])
+        self.assertNotIn(call_to_eu, mock_get.call_args_list)
+        self.assertNotIn(call_to_global, mock_get.call_args_list)
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get_custom)
+    def test_sdk_eu_custom_base_url(self, mock_get):
+        # In this case
+        # the first invocation should call https://custom.configcat.com
+        # and the second should call https://custom.configcat.com
+        # without force redirects
+
+        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.EuOnly,
+                                base_url='https://custom.configcat.com')
+
+        # First fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 1)
+        self.assertEqual(call_to_custom, mock_get.call_args_list[0])
+        self.assertNotIn(call_to_eu, mock_get.call_args_list)
+        self.assertNotIn(call_to_global, mock_get.call_args_list)
+
+        # Second fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 2)
+        self.assertEqual(call_to_custom, mock_get.call_args_list[0])
+        self.assertEqual(call_to_custom, mock_get.call_args_list[1])
+        self.assertNotIn(call_to_eu, mock_get.call_args_list)
+        self.assertNotIn(call_to_global, mock_get.call_args_list)
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get_forced_2)
+    def test_sdk_global_forced(self, mock_get):
+        # In this case
+        # the first invocation should call https://cdn-eu.configcat.com
+        # with an immediate redirect to https://forced.configcat.com
+        # and the second should call https://forced.configcat.com
+
+        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global)
+
+        # First fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 2)
+        self.assertEqual(call_to_global, mock_get.call_args_list[0])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[1])
+        self.assertNotIn(call_to_eu, mock_get.call_args_list)
+
+        # Second fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 3)
+        self.assertEqual(call_to_global, mock_get.call_args_list[0])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[1])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[2])
+        self.assertNotIn(call_to_eu, mock_get.call_args_list)
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get_forced_2)
+    def test_sdk_eu_forced(self, mock_get):
+        # In this case
+        # the first invocation should call https://cdn-eu.configcat.com
+        # with an immediate redirect to https://forced.configcat.com
+        # and the second should call https://forced.configcat.com
+
+        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.EuOnly)
+
+        # First fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 2)
+        self.assertEqual(call_to_eu, mock_get.call_args_list[0])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[1])
+        self.assertNotIn(call_to_global, mock_get.call_args_list)
+
+        # Second fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 3)
+        self.assertEqual(call_to_eu, mock_get.call_args_list[0])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[1])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[2])
+        self.assertNotIn(call_to_global, mock_get.call_args_list)
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get_forced_2)
+    def test_sdk_base_url_forced(self, mock_get):
+        # In this case
+        # the first invocation should call https://cdn-eu.configcat.com
+        # with an immediate redirect to https://forced.configcat.com
+        # and the second should call https://forced.configcat.com
+
+        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global,
+                                base_url='https://custom.configcat.com')
+
+        # First fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 2)
+        self.assertEqual(call_to_custom, mock_get.call_args_list[0])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[1])
+        self.assertNotIn(call_to_eu, mock_get.call_args_list)
+        self.assertNotIn(call_to_global, mock_get.call_args_list)
+
+        # Second fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 3)
+        self.assertEqual(call_to_custom, mock_get.call_args_list[0])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[1])
+        self.assertEqual(call_to_forced, mock_get.call_args_list[2])
+        self.assertNotIn(call_to_eu, mock_get.call_args_list)
+        self.assertNotIn(call_to_global, mock_get.call_args_list)
