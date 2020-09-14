@@ -5,7 +5,7 @@ from .manualpollingcachepolicy import ManualPollingCachePolicy
 from .autopollingcachepolicy import AutoPollingCachePolicy
 from .configfetcher import ConfigFetcher
 from .configcache import InMemoryConfigCache
-from .datalocation import DataLocation
+from .datagovernance import DataGovernance
 from .rolloutevaluator import RolloutEvaluator
 import logging
 import sys
@@ -28,7 +28,7 @@ class ConfigCatClient(object):
                  base_url=None,
                  proxies=None,
                  proxy_auth=None,
-                 data_location=DataLocation.Global):
+                 data_governance=DataGovernance.Global):
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
@@ -42,16 +42,16 @@ class ConfigCatClient(object):
             self._config_cache = InMemoryConfigCache()
 
         if poll_interval_seconds > 0:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, data_location)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, data_governance)
             self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                         poll_interval_seconds, max_init_wait_time_seconds,
                                                         on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, data_location)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, data_governance)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
                                                         cache_time_to_live_seconds)
         else:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, data_location)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, data_governance)
             self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache)
 
     def get_value(self, key, default_value, user=None):
