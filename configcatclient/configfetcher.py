@@ -41,7 +41,8 @@ class FetchResponse(object):
 
 
 class ConfigFetcher(object):
-    def __init__(self, sdk_key, mode, base_url=None, proxies=None, proxy_auth=None, data_governance=DataGovernance.Global):
+    def __init__(self, sdk_key, mode, base_url=None, proxies=None, proxy_auth=None,
+                 data_governance=DataGovernance.Global):
         self._sdk_key = sdk_key
         self._proxies = proxies
         self._proxy_auth = proxy_auth
