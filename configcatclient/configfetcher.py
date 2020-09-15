@@ -114,7 +114,7 @@ class ConfigFetcher(object):
                             'for the correct setting.')
 
             # To prevent loops we check if we retried at least 3 times with the new base_url
-            if retries > 3:
+            if retries >= 2:
                 log.error('Redirect loop during config.json fetch. Please contact support@configcat.com.')
                 return fetch_response
 

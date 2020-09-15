@@ -100,6 +100,27 @@ def mocked_requests_get_custom(*args, **kwargs):
     return MockResponse(None, 404)
 
 
+# Redirect loop in config.json
+def mocked_requests_get_redirect_loop(*args, **kwargs):
+    if args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v5.json':
+        return MockResponse({
+            "p": {
+                "u": "https://cdn-eu.configcat.com",
+                "r": 1
+            },
+            "f": test_json
+        }, 200)
+    elif args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v5.json':
+        return MockResponse({
+            "p": {
+                "u": "https://cdn-global.configcat.com",
+                "r": 1
+            },
+            "f": test_json
+        }, 200)
+    return MockResponse(None, 404)
+
+
 # An organization with forced=2 redirection config.json representation
 def mocked_requests_get_forced_2(*args, **kwargs):
     if args[0] == 'https://custom.configcat.com/configuration-files//config_v5.json' \
@@ -371,3 +392,36 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertEqual(call_to_forced, mock_get.call_args_list[2])
         self.assertNotIn(call_to_eu, mock_get.call_args_list)
         self.assertNotIn(call_to_global, mock_get.call_args_list)
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get_redirect_loop)
+    def test_sdk_redirect_loop(self, mock_get):
+        # In this case
+        # the first invocation should call https://cdn-global.configcat.com
+        # with an immediate redirect to https://cdn-eu.configcat.com
+        # with an immediate redirect to https://cdn-global.configcat.com
+        # the second invocation should call https://cdn-eu.configcat.com
+        # with an immediate redirect to https://cdn-global.configcat.com
+        # with an immediate redirect to https://cdn-eu.configcat.com
+
+        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global)
+
+        # First fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 3)
+        self.assertEqual(call_to_global, mock_get.call_args_list[0])
+        self.assertEqual(call_to_eu, mock_get.call_args_list[1])
+        self.assertEqual(call_to_global, mock_get.call_args_list[2])
+
+        # Second fetch
+        fetch_response = fetcher.get_configuration_json()
+        self.assertTrue(fetch_response.is_fetched())
+        self.assertEqual(test_json, fetch_response.json().get('f'))
+        self.assertEqual(len(mock_get.call_args_list), 6)
+        self.assertEqual(call_to_global, mock_get.call_args_list[0])
+        self.assertEqual(call_to_eu, mock_get.call_args_list[1])
+        self.assertEqual(call_to_global, mock_get.call_args_list[2])
+        self.assertEqual(call_to_eu, mock_get.call_args_list[3])
+        self.assertEqual(call_to_global, mock_get.call_args_list[4])
+        self.assertEqual(call_to_eu, mock_get.call_args_list[5])
