@@ -19,6 +19,9 @@ class ConfigCacheTests(unittest.TestCase):
         value = config_store.get('key')
         self.assertEqual(value, TEST_JSON)
 
+        value2 = config_store.get('key2')
+        self.assertEqual(value2, None)
+
 
 if __name__ == '__main__':
     unittest.main()
