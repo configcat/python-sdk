@@ -7,7 +7,7 @@ class InMemoryConfigCache(ConfigCache):
         self._value = {}
 
     def get(self, key):
-        return self._value.get(key, None)
+        return self._value.get(key)
 
     def set(self, key, value):
         self._value[key] = value

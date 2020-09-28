@@ -309,7 +309,7 @@ class DataGovernanceTests(unittest.TestCase):
     @mock.patch('requests.get', side_effect=mocked_requests_get_forced_2)
     def test_sdk_global_forced(self, mock_get):
         # In this case
-        # the first invocation should call https://cdn-eu.configcat.com
+        # the first invocation should call https://cdn-global.configcat.com
         # with an immediate redirect to https://forced.configcat.com
         # and the second should call https://forced.configcat.com
 
