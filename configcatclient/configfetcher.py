@@ -1,6 +1,7 @@
 import requests
 import logging
 import sys
+from enum import IntEnum
 
 from .datagovernance import DataGovernance
 from .version import CONFIGCATCLIENT_VERSION
@@ -10,11 +11,17 @@ if sys.version_info < (2, 7, 9):
     requests.packages.urllib3.disable_warnings()
 
 BASE_URL_GLOBAL = 'https://cdn-global.configcat.com'
-BASE_URL_EUONLY = 'https://cdn-eu.configcat.com'
+BASE_URL_EU_ONLY = 'https://cdn-eu.configcat.com'
 BASE_PATH = 'configuration-files/'
-BASE_EXTENSION = '/config_v5.json'
+BASE_EXTENSION = '/' + CONFIG_FILE_NAME + '.json'
 
 log = logging.getLogger(sys.modules[__name__].__name__)
+
+
+class RedirectMode(IntEnum):
+    NoRedirect = 0,
+    ShouldRedirect = 1,
+    ForceRedirect = 2
 
 
 class FetchResponse(object):
@@ -56,7 +63,7 @@ class ConfigFetcher(object):
         else:
             self._base_url_overridden = False
             if data_governance == DataGovernance.EuOnly:
-                self._base_url = BASE_URL_EUONLY
+                self._base_url = BASE_URL_EU_ONLY
             else:
                 self._base_url = BASE_URL_GLOBAL
 
@@ -97,29 +104,29 @@ class ConfigFetcher(object):
         redirect = preferences.get(REDIRECT)
         # If the base_url is overridden, and the redirect parameter is not 2 (force),
         # the SDK should not redirect the calls and it just have to return the response.
-        if self._base_url_overridden and redirect != 2:
+        if self._base_url_overridden and redirect != int(RedirectMode.ForceRedirect):
             return fetch_response
 
         # The next call should use the base_url provided in the config json
         self._base_url = base_url
 
-        # If the redirect property != 0 (redirect not needed), try to download again with the new url
-        if redirect != 0:
+        # If the redirect property == 0 (redirect not needed), return the response
+        if redirect == int(RedirectMode.NoRedirect):
+            # Return the response
+            return fetch_response
 
-            if redirect == 1:
-                log.warning('Please check the data_governance parameter in the ConfigCatClient initialization. '
-                            'It should match the settings provided in '
-                            'https://app.configcat.com/organization/data-governance.'
-                            'If you are not allowed to view this page, ask your Organization''s Admins '
-                            'for the correct setting.')
+        # Try to download again with the new url
 
-            # To prevent loops we check if we retried at least 3 times with the new base_url
-            if retries >= 2:
-                log.error('Redirect loop during config.json fetch. Please contact support@configcat.com.')
-                return fetch_response
+        if redirect == int(RedirectMode.ShouldRedirect):
+            log.warning('Your data_governance parameter at ConfigCatClient initialization is not in sync '
+                        'with your preferences on the ConfigCat Dashboard: '
+                        'https://app.configcat.com/organization/data-governance. '
+                        'Only Organization Admins can set this preference.')
 
-            # Retry the config download with the new base_url
-            return self.get_configuration_json(force_fetch, retries + 1)
+        # To prevent loops we check if we retried at least 3 times with the new base_url
+        if retries >= 2:
+            log.error('Redirect loop during config.json fetch. Please contact support@configcat.com.')
+            return fetch_response
 
-        # Return the response
-        return fetch_response
+        # Retry the config download with the new base_url
+        return self.get_configuration_json(force_fetch, retries + 1)

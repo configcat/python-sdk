@@ -1,4 +1,4 @@
-CACHE_KEY = 'config_v5'
+CONFIG_FILE_NAME = 'config_v5'
 
 PREFERENCES = 'p'
 BASE_URL = 'u'

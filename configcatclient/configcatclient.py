@@ -1,4 +1,4 @@
-from .constants import FEATURE_FLAGS, ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS
+from .constants import FEATURE_FLAGS, ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS, CONFIG_FILE_NAME
 from .interfaces import ConfigCatClientException
 from .lazyloadingcachepolicy import LazyLoadingCachePolicy
 from .manualpollingcachepolicy import ManualPollingCachePolicy
@@ -44,15 +44,18 @@ class ConfigCatClient(object):
         if poll_interval_seconds > 0:
             self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, data_governance)
             self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
+                                                        self.__get_cache_key(),
                                                         poll_interval_seconds, max_init_wait_time_seconds,
-                                                        on_configuration_changed_callback)
+                                                        on_configuration_changed_callback, )
         elif cache_time_to_live_seconds > 0:
             self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, data_governance)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
+                                                        self.__get_cache_key(),
                                                         cache_time_to_live_seconds)
         else:
             self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, data_governance)
-            self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache)
+            self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache,
+                                                          self.__get_cache_key())
 
     def get_value(self, key, default_value, user=None):
         config = self._cache_policy.get()
@@ -132,3 +135,6 @@ class ConfigCatClient(object):
 
     def stop(self):
         self._cache_policy.stop()
+
+    def __get_cache_key(self):
+        return 'python_' + self._sdk_key + '_' + CONFIG_FILE_NAME
