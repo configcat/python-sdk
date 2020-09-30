@@ -9,6 +9,7 @@ from .datagovernance import DataGovernance
 from .rolloutevaluator import RolloutEvaluator
 import logging
 import sys
+import hashlib
 from collections import namedtuple
 
 log = logging.getLogger(sys.modules[__name__].__name__)
@@ -137,4 +138,4 @@ class ConfigCatClient(object):
         self._cache_policy.stop()
 
     def __get_cache_key(self):
-        return 'python_' + self._sdk_key + '_' + CONFIG_FILE_NAME
+        return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8'))
