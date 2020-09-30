@@ -32,6 +32,9 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
     :param proxies: Proxy addresses. e.g. { 'https': 'your_proxy_ip:your_proxy_port' }
     :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
     :param data_governance:
+    Set this parameter to restrict the location of your feature flag and setting data within the ConfigCat CDN.
+    Default: Global, This parameter must be in sync with the preferences on:
+    https://app.configcat.com/organization/data-governance (Only Organization Admins can set this preference.)
     """
 
     if sdk_key is None:
@@ -61,6 +64,9 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
     :param proxies: Proxy addresses. e.g. { "https": "your_proxy_ip:your_proxy_port" }
     :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
     :param data_governance:
+    Set this parameter to restrict the location of your feature flag and setting data within the ConfigCat CDN.
+    Default: Global, This parameter must be in sync with the preferences on:
+    https://app.configcat.com/organization/data-governance (Only Organization Admins can set this preference.)
     """
 
     if sdk_key is None:
@@ -85,6 +91,9 @@ def create_client_with_manual_poll(sdk_key, config_cache_class=None,
     :param proxies: Proxy addresses. e.g. { "https": "your_proxy_ip:your_proxy_port" }
     :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
     :param data_governance:
+    Set this parameter to restrict the location of your feature flag and setting data within the ConfigCat CDN.
+    Default: Global, This parameter must be in sync with the preferences on:
+    https://app.configcat.com/organization/data-governance (Only Organization Admins can set this preference.)
     """
 
     if sdk_key is None:
