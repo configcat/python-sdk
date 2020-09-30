@@ -121,7 +121,7 @@ class ConfigFetcher(object):
             log.warning('Your data_governance parameter at ConfigCatClient initialization is not in sync '
                         'with your preferences on the ConfigCat Dashboard: '
                         'https://app.configcat.com/organization/data-governance. '
-                        'Only Organization Admins can set this preference.')
+                        'Only Organization Admins can access this preference.')
 
         # To prevent loops we check if we retried at least 3 times with the new base_url
         if retries >= 2:
