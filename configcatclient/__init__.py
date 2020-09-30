@@ -25,7 +25,7 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
     :param sdk_key: ConfigCat SDK Key to access your configuration.
     :param poll_interval_seconds: The client's poll interval in seconds. Default: 60 seconds.
     :param on_configuration_changed_callback: You can subscribe to configuration changes with this callback
-    :param max_init_wait_time_seconds: maximum waiting time for first configuration fetch in polling mode.
+    :param max_init_wait_time_seconds: maximum waiting time for first configuration fetch.
     :param config_cache_class: If you want to use custom caching instead of the client's default InMemoryConfigCache,
     You can provide an implementation of ConfigCache.
     :param base_url: You can set a base_url if you want to use a proxy server between your application and ConfigCat
