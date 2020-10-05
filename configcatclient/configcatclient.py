@@ -47,7 +47,7 @@ class ConfigCatClient(object):
             self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                         self.__get_cache_key(),
                                                         poll_interval_seconds, max_init_wait_time_seconds,
-                                                        on_configuration_changed_callback, )
+                                                        on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
             self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, data_governance)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
