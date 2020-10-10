@@ -11,6 +11,7 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 [![PyPI](https://img.shields.io/pypi/v/configcat-client.svg)](https://pypi.python.org/pypi/configcat-client)
 [![PyPI](https://img.shields.io/pypi/pyversions/configcat-client.svg)](https://pypi.python.org/pypi/configcat-client)
 [![Known Vulnerabilities](https://snyk.io/test/github/configcat/python-sdk/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/configcat/python-sdk?targetFile=requirements.txt)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=configcat_python-sdk&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=configcat_python-sdk)
 ![License](https://img.shields.io/github/license/configcat/python-sdk.svg)
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-orange.svg)](https://sonarcloud.io/dashboard?id=configcat_python-sdk)
