@@ -1,4 +1,9 @@
 language: python
+addons:
+  sonarcloud:
+    organization: "configcat"
+    token:
+      secure: "$SONAR_TOKEN"
 sudo: true
 jobs:
   - { python: "2.6", dist: "trusty" }
@@ -23,6 +28,7 @@ install:
 # command to run tests
 script:
   - py.test --cov=configcatclient configcatclienttests
+  - sonar-scanner
 after_success:
   - codecov
 deploy:
