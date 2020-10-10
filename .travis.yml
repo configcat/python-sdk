@@ -27,7 +27,7 @@ install:
 # command to run tests
 script:
   - py.test --cov=configcatclient configcatclienttests
-  - sonar-scanner
+  - sonar-scanner -Dsonar.login=${SONAR_TOKEN}
 after_success:
   - codecov
 deploy:
