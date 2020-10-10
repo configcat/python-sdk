@@ -5,7 +5,7 @@ from os import path
 import configcatclient
 from configcatclient.user import User
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 
 class RolloutTests(unittest.TestCase):
