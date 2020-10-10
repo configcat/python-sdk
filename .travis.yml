@@ -2,8 +2,7 @@ language: python
 addons:
   sonarcloud:
     organization: "configcat"
-    token:
-      secure: "hnElflL/OvlPpC2Y6qYTF9rUJJbCQjCcmMVzRpScAZU7XYuWmGfPQIXAWV6T2+oB2iqJDuZHVMCOkx0uelIwKqs999KzTiD7js+sj0nEi1jnABGL171ooaI+KRjiclbW8DrTSnQ5hno0HKG/0xZWct1wYIVE+6yqD/iyTK9ktM8GxzYtC+ngL3xBQGc9/0sJxosHReaPEefRnFHyjow2vonRCtf5TcptTu2Jbt4q2KEIdrnM9EDydV736j2xBEkyHLdzEWZS8YAuHrKsiUwMQ/dxF1gTGWMKXiQlKgOLNiDnZ5MoZoEbP6YYk6cJrVxhEvpomzC189AuKMfUkniCVAxgQBRluawDBtsyQ9jjuNz3AoCEwSahnsrWOqTW6bny/OtcP4DP5/r1ZsFtZMbwHwwoktQZki6UJruR+Jl3oeKQLpnu3UvyZ5lK6X84bGCFqxO3p+GKXNLi/MLMeRU9NZWK03c/Xsn910TsBUyXxEv3ZS7J9aCSZFKXJFnfr+vZdnyTBVB/eZVQuvhLRND7c74ggaBctnIU0CAgaLhtO6wHvKxloI90QL4ae/glPC02AMRvpHjOdhJ4hsTCfedrfdK8wLRuinXMMXdSgorRDIFAi+Fuck6wMhcqgpBJmt25tNRQokDz4lI1kouaAgg5GLX97f51ZHl/88OGvp2IWEg="
+    token: "$SONAR_TOKEN"
 sudo: true
 jobs:
   - { python: "2.6", dist: "trusty" }
