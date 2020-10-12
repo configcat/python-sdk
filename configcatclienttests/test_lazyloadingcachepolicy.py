@@ -4,6 +4,7 @@ import time
 import datetime
 from requests import HTTPError
 
+
 try:
     from unittest import mock
 except ImportError:
@@ -12,16 +13,16 @@ except ImportError:
 from configcatclient.configcache import InMemoryConfigCache
 from configcatclient.lazyloadingcachepolicy import LazyLoadingCachePolicy
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON
-from configcatclient.configfetcher import FetchResponse
 
 logging.basicConfig()
+cache_key = 'cache_key'
 
 
 class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_wrong_params(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 0)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, 0)
         config = cache_policy.get()
         self.assertEqual(config, TEST_JSON)
         cache_policy.stop()
@@ -29,7 +30,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_cache(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 1)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, 1)
 
         # Get value from Config Store, which indicates a config_fetcher call
         value = cache_policy.get()
@@ -51,7 +52,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_force_refresh(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, 160)
 
         # Get value from Config Store, which indicates a config_fetcher call
         value = cache_policy.get()
@@ -72,7 +73,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_force_refresh(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 1)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, 1)
 
         # Get value from Config Store, which indicates a config_fetcher call
         value = cache_policy.get()
@@ -89,7 +90,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         try:
             # Clear the cache
             cache_policy._lock.acquire_write()
-            cache_policy._config_cache.set(None)
+            cache_policy._config_cache.set(cache_key, None)
         finally:
             cache_policy._lock.release_write()
 
@@ -108,7 +109,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         not_modified_fetch_response.is_fetched.return_value = False
         config_fetcher.get_configuration_json.return_value = successful_fetch_response
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, 160)
 
         # Get value from Config Store, which indicates a config_fetcher call
         with mock.patch('configcatclient.lazyloadingcachepolicy.datetime') as mock_datetime:
@@ -137,7 +138,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         successful_fetch_response.json.return_value = TEST_JSON
         config_fetcher.get_configuration_json.return_value = successful_fetch_response
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, 160)
 
         # Get value from Config Store, which indicates a config_fetcher call
         with mock.patch('configcatclient.lazyloadingcachepolicy.datetime') as mock_datetime:
@@ -159,7 +160,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_http_error(self):
         config_fetcher = ConfigFetcherWithErrorMock(HTTPError("error"))
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, 160)
 
         # Get value from Config Store, which indicates a config_fetcher call
         value = cache_policy.get()
@@ -169,7 +170,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_exception(self):
         config_fetcher = ConfigFetcherWithErrorMock(Exception("error"))
         config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, 160)
+        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, 160)
 
         # Get value from Config Store, which indicates a config_fetcher call
         value = cache_policy.get()

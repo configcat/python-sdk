@@ -9,16 +9,17 @@ log = logging.getLogger(sys.modules[__name__].__name__)
 
 
 class ManualPollingCachePolicy(CachePolicy):
-    def __init__(self, config_fetcher, config_cache):
+    def __init__(self, config_fetcher, config_cache, cache_key):
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
+        self._cache_key = cache_key
         self._lock = ReadWriteLock()
 
     def get(self):
         try:
             self._lock.acquire_read()
 
-            config = self._config_cache.get()
+            config = self._config_cache.get(self._cache_key)
             return config
         finally:
             self._lock.release_read()
@@ -28,7 +29,7 @@ class ManualPollingCachePolicy(CachePolicy):
 
         try:
             self._lock.acquire_read()
-            config = self._config_cache.get()
+            config = self._config_cache.get(self._cache_key)
             force_fetch = not bool(config)
         finally:
             self._lock.release_read()
@@ -39,7 +40,7 @@ class ManualPollingCachePolicy(CachePolicy):
                 configuration = configuration_response.json()
                 try:
                     self._lock.acquire_write()
-                    self._config_cache.set(configuration)
+                    self._config_cache.set(self._cache_key, configuration)
                 finally:
                     self._lock.release_write()
 

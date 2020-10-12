@@ -13,7 +13,7 @@ log = logging.getLogger(sys.modules[__name__].__name__)
 
 class AutoPollingCachePolicy(CachePolicy):
 
-    def __init__(self, config_fetcher, config_cache,
+    def __init__(self, config_fetcher, config_cache, cache_key,
                  poll_interval_seconds=60, max_init_wait_time_seconds=5,
                  on_configuration_changed_callback=None):
         if poll_interval_seconds < 1:
@@ -23,6 +23,7 @@ class AutoPollingCachePolicy(CachePolicy):
 
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
+        self._cache_key = cache_key
         self._poll_interval_seconds = poll_interval_seconds
         self._max_init_wait_time_seconds = datetime.timedelta(seconds=max_init_wait_time_seconds)
         self._on_configuration_changed_callback = on_configuration_changed_callback
@@ -53,7 +54,7 @@ class AutoPollingCachePolicy(CachePolicy):
 
         try:
             self._lock.acquire_read()
-            return self._config_cache.get()
+            return self._config_cache.get(self._cache_key)
         finally:
             self._lock.release_read()
 
@@ -64,7 +65,7 @@ class AutoPollingCachePolicy(CachePolicy):
 
             try:
                 self._lock.acquire_read()
-                old_configuration = self._config_cache.get()
+                old_configuration = self._config_cache.get(self._cache_key)
                 force_fetch = not bool(old_configuration)
             finally:
                 self._lock.release_read()
@@ -76,7 +77,7 @@ class AutoPollingCachePolicy(CachePolicy):
                 if configuration != old_configuration:
                     try:
                         self._lock.acquire_write()
-                        self._config_cache.set(configuration)
+                        self._config_cache.set(self._cache_key, configuration)
                         self._initialized = True
                     finally:
                         self._lock.release_write()

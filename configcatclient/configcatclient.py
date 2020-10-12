@@ -1,12 +1,15 @@
+from .constants import FEATURE_FLAGS, ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS, CONFIG_FILE_NAME
 from .interfaces import ConfigCatClientException
 from .lazyloadingcachepolicy import LazyLoadingCachePolicy
 from .manualpollingcachepolicy import ManualPollingCachePolicy
 from .autopollingcachepolicy import AutoPollingCachePolicy
 from .configfetcher import ConfigFetcher
 from .configcache import InMemoryConfigCache
+from .datagovernance import DataGovernance
 from .rolloutevaluator import RolloutEvaluator
 import logging
 import sys
+import hashlib
 from collections import namedtuple
 
 log = logging.getLogger(sys.modules[__name__].__name__)
@@ -25,7 +28,8 @@ class ConfigCatClient(object):
                  config_cache_class=None,
                  base_url=None,
                  proxies=None,
-                 proxy_auth=None):
+                 proxy_auth=None,
+                 data_governance=DataGovernance.Global):
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
@@ -39,17 +43,20 @@ class ConfigCatClient(object):
             self._config_cache = InMemoryConfigCache()
 
         if poll_interval_seconds > 0:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, data_governance)
             self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
+                                                        self.__get_cache_key(),
                                                         poll_interval_seconds, max_init_wait_time_seconds,
                                                         on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, data_governance)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
+                                                        self.__get_cache_key(),
                                                         cache_time_to_live_seconds)
         else:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth)
-            self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, data_governance)
+            self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache,
+                                                          self.__get_cache_key())
 
     def get_value(self, key, default_value, user=None):
         config = self._cache_policy.get()
@@ -67,7 +74,11 @@ class ConfigCatClient(object):
         if config is None:
             return []
 
-        return list(config)
+        feature_flags = config.get(FEATURE_FLAGS, None)
+        if feature_flags is None:
+            return []
+
+        return list(feature_flags)
 
     def get_variation_id(self, key, default_variation_id, user=None):
         config = self._cache_policy.get()
@@ -97,21 +108,27 @@ class ConfigCatClient(object):
                         'Returning None.' % variation_id)
             return None
 
-        for key, value in list(config.items()):
-            if variation_id == value.get(RolloutEvaluator.VARIATION_ID):
-                return KeyValue(key, value[RolloutEvaluator.VALUE])
+        feature_flags = config.get(FEATURE_FLAGS, None)
+        if feature_flags is None:
+            log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
+                        'Returning None.' % variation_id)
+            return None
 
-            rollout_rules = value.get(RolloutEvaluator.ROLLOUT_RULES, [])
+        for key, value in list(feature_flags.items()):
+            if variation_id == value.get(VARIATION_ID):
+                return KeyValue(key, value[VALUE])
+
+            rollout_rules = value.get(ROLLOUT_RULES, [])
             for rollout_rule in rollout_rules:
-                if variation_id == rollout_rule.get(RolloutEvaluator.VARIATION_ID):
-                    return KeyValue(key, rollout_rule[RolloutEvaluator.VALUE])
+                if variation_id == rollout_rule.get(VARIATION_ID):
+                    return KeyValue(key, rollout_rule[VALUE])
 
-            rollout_percentage_items = value.get(RolloutEvaluator.ROLLOUT_PERCENTAGE_ITEMS, [])
+            rollout_percentage_items = value.get(ROLLOUT_PERCENTAGE_ITEMS, [])
             for rollout_percentage_item in rollout_percentage_items:
-                if variation_id == rollout_percentage_item.get(RolloutEvaluator.VARIATION_ID):
-                    return KeyValue(key, rollout_percentage_item[RolloutEvaluator.VALUE])
+                if variation_id == rollout_percentage_item.get(VARIATION_ID):
+                    return KeyValue(key, rollout_percentage_item[VALUE])
 
-        log.error('Could not find the setting for the given variation_id: ' + variation_id);
+        log.error('Could not find the setting for the given variation_id: ' + variation_id)
         return None
 
     def force_refresh(self):
@@ -119,3 +136,6 @@ class ConfigCatClient(object):
 
     def stop(self):
         self._cache_policy.stop()
+
+    def __get_cache_key(self):
+        return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8'))
