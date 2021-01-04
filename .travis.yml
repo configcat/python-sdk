@@ -11,7 +11,7 @@ jobs:
   - { python: "3.8", dist: "xenial" }
 # command to install dependencies
 install:
-  - "virtualenv venv --no-site-packages"
+  - "virtualenv venv"
   - "source venv/bin/activate"
   - pip install --upgrade pip setuptools
   - pip install mock --upgrade
