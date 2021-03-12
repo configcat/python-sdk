@@ -2,7 +2,7 @@
 ## Preparation
 1. Run tests
    ```bash
-   py.test configcatclienttests
+   pytest configcatclienttests
    ```
 2. Increase the version in `setup.py`.
 3. Increase the version in `configcatclient/version.py`.
