@@ -36,7 +36,7 @@ jobs:
         flake8 configcatclient --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Test
-      run: python py.test configcatclienttests
+      run: pytest configcatclienttests
         
   coverage:
     needs: test
@@ -56,7 +56,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Execute coverage
-      run: python py.test --cov=configcatclient configcatclienttests
+      run: pytest --cov=configcatclient configcatclienttests
 
     - name: Upload coverage report
       run: codecov
