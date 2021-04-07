@@ -11,7 +11,9 @@ The ConfigCat SDK team monitors the [issue tracker](https://github.com/configcat
 We encourage pull requests and other contributions from the community. 
 - Before submitting pull requests, ensure that all temporary or unintended code is removed.
 - Be accompanied by a complete Pull Request template (loaded automatically when a PR is created).
-- Add unit or integration tests for fixed or changed functionality
+- Add unit or integration tests for fixed or changed functionality.
+
+When you submit a pull request or otherwise seek to include your change in the repository, you waive all your intellectual property rights, including your copyright and patent claims for the submission.
 
 In general, we follow the ["fork-and-pull" Git workflow](https://github.com/susam/gitpr)
 
