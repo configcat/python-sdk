@@ -1,6 +1,6 @@
 # Contributing to the ConfigCat SDK for Python
 
-ConfigCat SDK is an open source project. Feedback and contribution are welcome. Contributions are made to this repo via Issues and Pull Requests. The information below describes how to build the project with your changes, run the tests, and send the Pull Request.
+ConfigCat SDK is an open source project. Feedback and contribution are welcome. Contributions are made to this repo via Issues and Pull Requests.
 
 ## Submitting bug reports and feature requests
 
