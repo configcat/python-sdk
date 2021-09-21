@@ -7,9 +7,13 @@ pip install configcat-client
 ```
 
 ### Start sample:
-1. Run sample app
+1. Apply migrations (Required for first time only)
+```
+python manage.py migrate
+```
+2. Run sample app
 ```
 python manage.py runserver
 ```
 
-2. Open browser at `http://127.0.0.1:8000/`
+3. Open browser at `http://127.0.0.1:8000/`
