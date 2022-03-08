@@ -6,6 +6,7 @@ from .autopollingcachepolicy import AutoPollingCachePolicy
 from .configfetcher import ConfigFetcher
 from .configcache import InMemoryConfigCache
 from .datagovernance import DataGovernance
+from .overridedatasource import OverrideBehaviour
 from .rolloutevaluator import RolloutEvaluator
 import logging
 import sys
@@ -32,6 +33,7 @@ class ConfigCatClient(object):
                  proxy_auth=None,
                  connect_timeout=10,
                  read_timeout=30,
+                 flag_overrides=None,
                  data_governance=DataGovernance.Global):
 
         if sdk_key is None:
@@ -45,6 +47,7 @@ class ConfigCatClient(object):
             ConfigCatClient.sdk_keys.append(sdk_key)
 
         self._sdk_key = sdk_key
+        self._override_data_source = flag_overrides
         self._rollout_evaluator = RolloutEvaluator()
 
         if config_cache_class:
@@ -52,27 +55,31 @@ class ConfigCatClient(object):
         else:
             self._config_cache = InMemoryConfigCache()
 
-        if poll_interval_seconds > 0:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
-            self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
-                                                        self.__get_cache_key(),
-                                                        poll_interval_seconds, max_init_wait_time_seconds,
-                                                        on_configuration_changed_callback)
-        elif cache_time_to_live_seconds > 0:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
-            self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
-                                                        self.__get_cache_key(),
-                                                        cache_time_to_live_seconds)
+        if self._override_data_source and self._override_data_source.get_behaviour() == OverrideBehaviour.LocalOnly:
+            self._config_fetcher = None
+            self._cache_policy = None
         else:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
-            self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache,
-                                                          self.__get_cache_key())
+            if poll_interval_seconds > 0:
+                self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
+                self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
+                                                            self.__get_cache_key(),
+                                                            poll_interval_seconds, max_init_wait_time_seconds,
+                                                            on_configuration_changed_callback)
+            elif cache_time_to_live_seconds > 0:
+                self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
+                self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
+                                                            self.__get_cache_key(),
+                                                            cache_time_to_live_seconds)
+            else:
+                self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
+                self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache,
+                                                              self.__get_cache_key())
 
     def __del__(self):
         ConfigCatClient.sdk_keys.remove(self._sdk_key)
 
     def get_value(self, key, default_value, user=None):
-        config = self._cache_policy.get()
+        config = self.__get_settings()
         if config is None:
             log.warning('Evaluating get_value(\'%s\') failed. Cache is empty. '
                         'Returning default_value in your get_value call: [%s].' %
@@ -83,7 +90,7 @@ class ConfigCatClient(object):
         return value
 
     def get_all_keys(self):
-        config = self._cache_policy.get()
+        config = self.__get_settings()
         if config is None:
             return []
 
@@ -94,7 +101,7 @@ class ConfigCatClient(object):
         return list(feature_flags)
 
     def get_variation_id(self, key, default_variation_id, user=None):
-        config = self._cache_policy.get()
+        config = self.__get_settings()
         if config is None:
             log.warning('Evaluating get_variation_id(\'%s\') failed. Cache is empty. '
                         'Returning default_variation_id in your get_variation_id call: [%s].' %
@@ -115,7 +122,7 @@ class ConfigCatClient(object):
         return variation_ids
 
     def get_key_and_value(self, variation_id):
-        config = self._cache_policy.get()
+        config = self.__get_settings()
         if config is None:
             log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
                         'Returning None.' % variation_id)
@@ -145,10 +152,29 @@ class ConfigCatClient(object):
         return None
 
     def force_refresh(self):
-        self._cache_policy.force_refresh()
+        if self._cache_policy:
+            self._cache_policy.force_refresh()
 
     def stop(self):
-        self._cache_policy.stop()
+        if self._cache_policy:
+            self._cache_policy.stop()
+
+    def __get_settings(self):
+        if self._override_data_source:
+            behaviour = self._override_data_source.get_behaviour()
+
+            if behaviour == OverrideBehaviour.LocalOnly:
+                return self._override_data_source.get_overrides()
+            elif behaviour == OverrideBehaviour.RemoteOverLocal:
+                remote_settings = self._cache_policy.get()
+                local_settings = self._cache_policy.get()
+                return local_settings.update(remote_settings)
+            elif behaviour == OverrideBehaviour.LocalOverRemote:
+                remote_settings = self._cache_policy.get()
+                local_settings = self._cache_policy.get()
+                return remote_settings.update(local_settings)
+
+        return self._cache_policy.get()
 
     def __get_cache_key(self):
         return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8'))

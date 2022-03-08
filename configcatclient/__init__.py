@@ -19,6 +19,7 @@ def create_client(sdk_key, data_governance=DataGovernance.Global):
 def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wait_time_seconds=5,
                                  on_configuration_changed_callback=None, config_cache_class=None,
                                  base_url=None, proxies=None, proxy_auth=None, connect_timeout=10, read_timeout=30,
+                                 flag_overrides=None,
                                  data_governance=DataGovernance.Global):
     """
     Create an instance of ConfigCatClient and setup Auto Poll mode with custom options
@@ -35,6 +36,7 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
     :param connect_timeout: How many seconds to wait for the server to make the initial connection
     (i.e. completing the TCP connection handshake). Default: 10 seconds.
     :param read_timeout: How many seconds to wait for the server to send data before giving up. Default: 30 seconds.
+    :param flag_overrides: An OverrideDataSource implementation used to override feature flags & settings.
     :param data_governance:
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
@@ -61,6 +63,7 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
                            proxy_auth=proxy_auth,
                            connect_timeout=connect_timeout,
                            read_timeout=read_timeout,
+                           flag_overrides=flag_overrides,
                            data_governance=data_governance)
 
 
