@@ -18,6 +18,7 @@ KeyValue = namedtuple('KeyValue', 'key value')
 
 
 class ConfigCatClient(object):
+    sdk_keys = []
 
     def __init__(self,
                  sdk_key,
@@ -29,10 +30,19 @@ class ConfigCatClient(object):
                  base_url=None,
                  proxies=None,
                  proxy_auth=None,
+                 connect_timeout=10,
+                 read_timeout=30,
                  data_governance=DataGovernance.Global):
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
+
+        if sdk_key in ConfigCatClient.sdk_keys:
+            log.warning('A ConfigCat Client is already initialized with sdk_key %s. '
+                        'We strongly recommend you to use the ConfigCat Client as '
+                        'a Singleton object in your application.' % sdk_key)
+        else:
+            ConfigCatClient.sdk_keys.append(sdk_key)
 
         self._sdk_key = sdk_key
         self._rollout_evaluator = RolloutEvaluator()
@@ -43,20 +53,23 @@ class ConfigCatClient(object):
             self._config_cache = InMemoryConfigCache()
 
         if poll_interval_seconds > 0:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, data_governance)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
             self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                         self.__get_cache_key(),
                                                         poll_interval_seconds, max_init_wait_time_seconds,
                                                         on_configuration_changed_callback)
         elif cache_time_to_live_seconds > 0:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, data_governance)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
             self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
                                                         self.__get_cache_key(),
                                                         cache_time_to_live_seconds)
         else:
-            self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, data_governance)
+            self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
             self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                           self.__get_cache_key())
+
+    def __del__(self):
+        ConfigCatClient.sdk_keys.remove(self._sdk_key)
 
     def get_value(self, key, default_value, user=None):
         config = self._cache_policy.get()
