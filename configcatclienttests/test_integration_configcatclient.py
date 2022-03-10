@@ -10,6 +10,7 @@ from configcatclient import ConfigCatClientException
 
 logging.basicConfig(level=logging.INFO)
 
+# Python2/Python3 support
 try:
     from unittest import mock
 except ImportError:

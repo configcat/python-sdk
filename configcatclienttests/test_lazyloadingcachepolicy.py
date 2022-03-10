@@ -5,6 +5,7 @@ import datetime
 from requests import HTTPError
 
 
+# Python2/Python3 support
 try:
     from unittest import mock
 except ImportError:

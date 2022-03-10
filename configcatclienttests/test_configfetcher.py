@@ -2,6 +2,7 @@ import logging
 import unittest
 import requests
 
+# Python2/Python3 support
 try:
     from unittest import mock
 except ImportError:

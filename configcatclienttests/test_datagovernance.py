@@ -4,6 +4,7 @@ import unittest
 from configcatclient import DataGovernance
 from configcatclienttests.mocks import MockResponse
 
+# Python2/Python3 support
 try:
     from unittest import mock
 except ImportError:

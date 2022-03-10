@@ -1,5 +1,11 @@
 import collections
 
+# Python2/Python3 support
+try:
+    collectionsAbc = collections.abc
+except AttributeError:
+    collectionsAbc = collections
+
 
 def deep_update(source, overrides):
     """
@@ -7,7 +13,7 @@ def deep_update(source, overrides):
     Modify ``source`` in place.
     """
     for key, value in list(overrides.items()):
-        if isinstance(value, collections.Mapping) and value:
+        if isinstance(value, collectionsAbc.Mapping) and value:
             returned = deep_update(source.get(key, {}), value)
             source[key] = returned
         else:
