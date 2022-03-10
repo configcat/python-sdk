@@ -12,6 +12,8 @@ import logging
 import sys
 import hashlib
 from collections import namedtuple
+import copy
+from .utils import deep_update
 
 log = logging.getLogger(sys.modules[__name__].__name__)
 
@@ -167,12 +169,16 @@ class ConfigCatClient(object):
                 return self._override_data_source.get_overrides()
             elif behaviour == OverrideBehaviour.RemoteOverLocal:
                 remote_settings = self._cache_policy.get()
-                local_settings = self._cache_policy.get()
-                return local_settings.update(remote_settings)
+                local_settings = self._override_data_source.get_overrides()
+                result = copy.deepcopy(local_settings)
+                deep_update(result, remote_settings)
+                return result
             elif behaviour == OverrideBehaviour.LocalOverRemote:
                 remote_settings = self._cache_policy.get()
-                local_settings = self._cache_policy.get()
-                return remote_settings.update(local_settings)
+                local_settings = self._override_data_source.get_overrides()
+                result = copy.deepcopy(remote_settings)
+                deep_update(result, local_settings)
+                return result
 
         return self._cache_policy.get()
 
