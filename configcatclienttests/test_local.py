@@ -24,7 +24,6 @@ def mocked_requests_get(*args, **kwargs):
 
 
 class LocalTests(unittest.TestCase):
-    TEST_JSON_FORMAT = '{ "f": { "fakeKey": { "v": {value}, "p": [], "r": [] } } }'
 
     def test_dictionary(self):
         dictionary = {

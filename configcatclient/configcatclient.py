@@ -153,6 +153,16 @@ class ConfigCatClient(object):
         log.error('Could not find the setting for the given variation_id: ' + variation_id)
         return None
 
+    def get_all_values(self, user=None):
+        keys = self.get_all_keys()
+        all_values = {}
+        for key in keys:
+            value = self.get_value(key, None, user)
+            if value is not None:
+                all_values[key] = value
+
+        return all_values
+
     def force_refresh(self):
         if self._cache_policy:
             self._cache_policy.force_refresh()
