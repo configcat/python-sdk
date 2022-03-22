@@ -33,9 +33,9 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
     :param base_url: You can set a base_url if you want to use a proxy server between your application and ConfigCat
     :param proxies: Proxy addresses. e.g. { 'https': 'your_proxy_ip:your_proxy_port' }
     :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
-    :param connect_timeout: How many seconds to wait for the server to make the initial connection
+    :param connect_timeout: The number of seconds to wait for the server to make the initial connection
     (i.e. completing the TCP connection handshake). Default: 10 seconds.
-    :param read_timeout: How many seconds to wait for the server to send data before giving up. Default: 30 seconds.
+    :param read_timeout: The number of seconds to wait for the server to respond before giving up. Default: 30 seconds.
     :param flag_overrides: An OverrideDataSource implementation used to override feature flags & settings.
     :param data_governance:
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
@@ -69,6 +69,7 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
 
 def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_cache_class=None,
                                  base_url=None, proxies=None, proxy_auth=None, connect_timeout=10, read_timeout=30,
+                                 flag_overrides=None,
                                  data_governance=DataGovernance.Global):
     """
     Create an instance of ConfigCatClient and setup Lazy Load mode with custom options
@@ -80,9 +81,10 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
     :param base_url: You can set a base_url if you want to use a proxy server between your application and ConfigCat
     :param proxies: Proxy addresses. e.g. { "https": "your_proxy_ip:your_proxy_port" }
     :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
-    :param connect_timeout: How many seconds to wait for the server to make the initial connection
+    :param connect_timeout: The number of seconds to wait for the server to make the initial connection
     (i.e. completing the TCP connection handshake). Default: 10 seconds.
-    :param read_timeout: How many seconds to wait for the server to send data before giving up. Default: 30 seconds.
+    :param read_timeout: The number of seconds to wait for the server to respond before giving up. Default: 30 seconds.
+    :param flag_overrides: An OverrideDataSource implementation used to override feature flags & settings.
     :param data_governance:
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
@@ -106,11 +108,13 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
                            proxy_auth=proxy_auth,
                            connect_timeout=connect_timeout,
                            read_timeout=read_timeout,
+                           flag_overrides=flag_overrides,
                            data_governance=data_governance)
 
 
 def create_client_with_manual_poll(sdk_key, config_cache_class=None,
                                    base_url=None, proxies=None, proxy_auth=None, connect_timeout=10, read_timeout=30,
+                                   flag_overrides=None,
                                    data_governance=DataGovernance.Global):
     """
     Create an instance of ConfigCatClient and setup Manual Poll mode with custom options
@@ -121,9 +125,10 @@ def create_client_with_manual_poll(sdk_key, config_cache_class=None,
     :param base_url: You can set a base_url if you want to use a proxy server between your application and ConfigCat
     :param proxies: Proxy addresses. e.g. { "https": "your_proxy_ip:your_proxy_port" }
     :param proxy_auth: Proxy authentication. e.g. HTTPProxyAuth('username', 'password')
-    :param connect_timeout: How many seconds to wait for the server to make the initial connection
+    :param connect_timeout: The number of seconds to wait for the server to make the initial connection
     (i.e. completing the TCP connection handshake). Default: 10 seconds.
-    :param read_timeout: How many seconds to wait for the server to send data before giving up. Default: 30 seconds.
+    :param read_timeout: The number of seconds to wait for the server to respond before giving up. Default: 30 seconds.
+    :param flag_overrides: An OverrideDataSource implementation used to override feature flags & settings.
     :param data_governance:
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
@@ -144,4 +149,5 @@ def create_client_with_manual_poll(sdk_key, config_cache_class=None,
                            proxy_auth=proxy_auth,
                            connect_timeout=connect_timeout,
                            read_timeout=read_timeout,
+                           flag_overrides=flag_overrides,
                            data_governance=data_governance)
