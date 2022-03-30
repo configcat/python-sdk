@@ -77,9 +77,6 @@ class ConfigCatClient(object):
                 self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                               self.__get_cache_key())
 
-    def __del__(self):
-        ConfigCatClient.sdk_keys.remove(self._sdk_key)
-
     def get_value(self, key, default_value, user=None):
         config = self.__get_settings()
         if config is None:
@@ -170,6 +167,7 @@ class ConfigCatClient(object):
     def stop(self):
         if self._cache_policy:
             self._cache_policy.stop()
+        ConfigCatClient.sdk_keys.remove(self._sdk_key)
 
     def __get_settings(self):
         if self._override_data_source:
