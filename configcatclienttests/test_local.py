@@ -3,6 +3,7 @@ import unittest
 
 from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryDataSource
+from configcatclient.localfiledatasource import LocalFileDataSource
 from configcatclient.overridedatasource import OverrideBehaviour
 from configcatclienttests.mocks import MockResponse
 
@@ -24,6 +25,32 @@ def mocked_requests_get(*args, **kwargs):
 
 
 class LocalTests(unittest.TestCase):
+
+    def test_file(self):
+        client = ConfigCatClient(sdk_key='test',
+                                 poll_interval_seconds=0,
+                                 max_init_wait_time_seconds=0,
+                                 flag_overrides=LocalFileDataSource(file_path='test.json',
+                                                                    override_behaviour=OverrideBehaviour.LocalOnly))
+
+        self.assertTrue(client.get_value('enabledFeature', False))
+        self.assertFalse(client.get_value('disabledFeature', True))
+        self.assertEqual(5, client.get_value('intSetting', 0))
+        self.assertEqual(3.14, client.get_value('doubleSetting', 0.0))
+        self.assertEqual('test', client.get_value('stringSetting', ''))
+
+    def test_simple_file(self):
+        client = ConfigCatClient(sdk_key='test',
+                                 poll_interval_seconds=0,
+                                 max_init_wait_time_seconds=0,
+                                 flag_overrides=LocalFileDataSource(file_path='test-simple.json',
+                                                                    override_behaviour=OverrideBehaviour.LocalOnly))
+
+        self.assertTrue(client.get_value('enabledFeature', False))
+        self.assertFalse(client.get_value('disabledFeature', True))
+        self.assertEqual(5, client.get_value('intSetting', 0))
+        self.assertEqual(3.14, client.get_value('doubleSetting', 0.0))
+        self.assertEqual('test', client.get_value('stringSetting', ''))
 
     def test_dictionary(self):
         dictionary = {
