@@ -1,5 +1,6 @@
 import logging
 import unittest
+from os import path
 
 from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryDataSource
@@ -25,12 +26,13 @@ def mocked_requests_get(*args, **kwargs):
 
 
 class LocalTests(unittest.TestCase):
+    script_dir = path.dirname(__file__)
 
     def test_file(self):
         client = ConfigCatClient(sdk_key='test',
                                  poll_interval_seconds=0,
                                  max_init_wait_time_seconds=0,
-                                 flag_overrides=LocalFileDataSource(file_path='test.json',
+                                 flag_overrides=LocalFileDataSource(file_path=path.join(LocalTests.script_dir, 'test.json'),
                                                                     override_behaviour=OverrideBehaviour.LocalOnly))
 
         self.assertTrue(client.get_value('enabledFeature', False))
@@ -38,12 +40,13 @@ class LocalTests(unittest.TestCase):
         self.assertEqual(5, client.get_value('intSetting', 0))
         self.assertEqual(3.14, client.get_value('doubleSetting', 0.0))
         self.assertEqual('test', client.get_value('stringSetting', ''))
+        client.stop()
 
     def test_simple_file(self):
         client = ConfigCatClient(sdk_key='test',
                                  poll_interval_seconds=0,
                                  max_init_wait_time_seconds=0,
-                                 flag_overrides=LocalFileDataSource(file_path='test-simple.json',
+                                 flag_overrides=LocalFileDataSource(file_path=path.join(LocalTests.script_dir, 'test-simple.json'),
                                                                     override_behaviour=OverrideBehaviour.LocalOnly))
 
         self.assertTrue(client.get_value('enabledFeature', False))
@@ -51,6 +54,7 @@ class LocalTests(unittest.TestCase):
         self.assertEqual(5, client.get_value('intSetting', 0))
         self.assertEqual(3.14, client.get_value('doubleSetting', 0.0))
         self.assertEqual('test', client.get_value('stringSetting', ''))
+        client.stop()
 
     def test_dictionary(self):
         dictionary = {
@@ -72,6 +76,7 @@ class LocalTests(unittest.TestCase):
         self.assertEqual(5, client.get_value('intSetting', 0))
         self.assertEqual(3.14, client.get_value('doubleSetting', 0.0))
         self.assertEqual('test', client.get_value('stringSetting', ''))
+        client.stop()
 
     @mock.patch('requests.get', side_effect=mocked_requests_get)
     def test_local_over_remote(self, mock_get):
@@ -89,6 +94,7 @@ class LocalTests(unittest.TestCase):
 
         self.assertTrue(client.get_value('fakeKey', False))
         self.assertTrue(client.get_value('nonexisting', False))
+        client.stop()
 
     @mock.patch('requests.get', side_effect=mocked_requests_get)
     def test_remote_over_local(self, mock_get):
@@ -106,6 +112,7 @@ class LocalTests(unittest.TestCase):
 
         self.assertFalse(client.get_value('fakeKey', True))
         self.assertTrue(client.get_value('nonexisting', False))
+        client.stop()
 
 
 if __name__ == '__main__':
