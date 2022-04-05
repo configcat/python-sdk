@@ -1,5 +1,5 @@
+from .constants import VALUE, FEATURE_FLAGS
 from .overridedatasource import OverrideDataSource
-from .constants import *
 import json
 import os
 import logging

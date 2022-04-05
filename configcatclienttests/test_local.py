@@ -56,6 +56,15 @@ class LocalTests(unittest.TestCase):
         self.assertEqual('test', client.get_value('stringSetting', ''))
         client.stop()
 
+    def test_non_existent_file(self):
+        client = ConfigCatClient(sdk_key='test',
+                                 poll_interval_seconds=0,
+                                 max_init_wait_time_seconds=0,
+                                 flag_overrides=LocalFileDataSource(file_path='non_existent.json',
+                                                                    override_behaviour=OverrideBehaviour.LocalOnly))
+        self.assertFalse(client.get_value('enabledFeature', False))
+        client.stop()
+
     def test_dictionary(self):
         dictionary = {
             'enabledFeature': True,
