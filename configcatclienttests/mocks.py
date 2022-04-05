@@ -135,3 +135,28 @@ class CallCounter(object):
     @property
     def get_call_count(self):
         return self._call_count
+
+
+class MockHeader:
+    def __init__(self, etag):
+        self.etag = etag
+
+    def get(self, name):
+        if name == 'Etag':
+            return self.etag
+        return None
+
+
+class MockResponse:
+    def __init__(self, json_data, status_code, etag=None):
+        self.json_data = json_data
+        self.status_code = status_code
+        self.headers = MockHeader(etag)
+
+    def json(self):
+        return self.json_data
+
+    def raise_for_status(self):
+        if 200 <= self.status_code < 300 or self.status_code == 304:
+            return
+        raise Exception(self.status_code)

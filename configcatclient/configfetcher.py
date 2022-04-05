@@ -49,10 +49,12 @@ class FetchResponse(object):
 
 class ConfigFetcher(object):
     def __init__(self, sdk_key, mode, base_url=None, proxies=None, proxy_auth=None,
-                 data_governance=DataGovernance.Global):
+                 connect_timeout=10, read_timeout=30, data_governance=DataGovernance.Global):
         self._sdk_key = sdk_key
         self._proxies = proxies
         self._proxy_auth = proxy_auth
+        self._connect_timeout = connect_timeout
+        self._read_timeout = read_timeout
         self._etag = ''
         self._headers = {'User-Agent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
                          'X-ConfigCat-UserAgent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
@@ -67,6 +69,12 @@ class ConfigFetcher(object):
             else:
                 self._base_url = BASE_URL_GLOBAL
 
+    def get_connect_timeout(self):
+        return self._connect_timeout
+
+    def get_read_timeout(self):
+        return self._read_timeout
+
     def get_configuration_json(self, force_fetch=False, retries=0):
         """
         :return: Returns the FetchResponse object contains configuration json Dictionary
@@ -78,7 +86,7 @@ class ConfigFetcher(object):
         else:
             headers['If-None-Match'] = None
 
-        response = requests.get(uri, headers=headers, timeout=(10, 30),
+        response = requests.get(uri, headers=headers, timeout=(self._connect_timeout, self._read_timeout),
                                 proxies=self._proxies, auth=self._proxy_auth)
         response.raise_for_status()
         etag = response.headers.get('Etag')

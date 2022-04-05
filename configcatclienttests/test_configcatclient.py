@@ -53,6 +53,19 @@ class ConfigCatClientTests(unittest.TestCase):
                          set(client.get_all_keys()))
         client.stop()
 
+    def test_get_all_values(self):
+        client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
+        all_values = client.get_all_values()
+        # Two dictionary should have exactly the same elements, order doesn't matter.
+        self.assertEqual(6, len(all_values))
+        self.assertEqual(True, all_values['testBoolKey'])
+        self.assertEqual('testValue', all_values['testStringKey'])
+        self.assertEqual(1, all_values['testIntKey'])
+        self.assertEqual(1.1, all_values['testDoubleKey'])
+        self.assertTrue(all_values['key1'])
+        self.assertFalse(all_values['key2'])
+        client.stop()
+
 
 if __name__ == '__main__':
     unittest.main()

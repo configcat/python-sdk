@@ -3,11 +3,22 @@ import unittest
 import time
 
 from requests.auth import HTTPProxyAuth
+from requests import Timeout
 
 import configcatclient
 from configcatclient import ConfigCatClientException
 
 logging.basicConfig(level=logging.INFO)
+
+# Python2/Python3 support
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+try:
+    from unittest.mock import Mock, ANY
+except ImportError:
+    from mock import Mock, ANY
 
 _SDK_KEY = 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA'
 
@@ -31,6 +42,12 @@ class DefaultTests(unittest.TestCase):
         keys = client.get_all_keys()
         self.assertEqual(5, len(keys))
         self.assertTrue('keySampleText' in keys)
+
+    def test_get_all_values(self):
+        client = configcatclient.create_client(_SDK_KEY)
+        all_values = client.get_all_values()
+        self.assertEqual(5, len(all_values))
+        self.assertEqual('This text came from ConfigCat', all_values['keySampleText'])
 
     def test_force_refresh(self):
         client = configcatclient.create_client(_SDK_KEY)
@@ -76,6 +93,12 @@ class AutoPollTests(unittest.TestCase):
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
         client.stop()
 
+    @mock.patch('requests.get', side_effect=Timeout())
+    def test_client_works_request_timeout(self, mock_get):
+        client = configcatclient.create_client_with_auto_poll(_SDK_KEY)
+        self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
+        client.stop()
+
     def test_force_refresh(self):
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
@@ -84,7 +107,9 @@ class AutoPollTests(unittest.TestCase):
         client.stop()
 
     def test_wrong_param(self):
-        client = configcatclient.create_client_with_auto_poll(_SDK_KEY, 0, -1)
+        client = configcatclient.create_client_with_auto_poll(_SDK_KEY,
+                                                              poll_interval_seconds=0,
+                                                              max_init_wait_time_seconds=-1)
         time.sleep(2)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
         client.stop()

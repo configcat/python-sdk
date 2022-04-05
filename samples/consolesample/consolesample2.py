@@ -7,7 +7,8 @@ import configcatclient
 import logging
 from configcatclient.user import User
 
-# Setting the log level to Info to show detailed feature flag evaluation.
+# Info level logging helps to inspect the feature flag evaluation process.
+# Use the default warning level to avoid too detailed logging in your application.
 logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':

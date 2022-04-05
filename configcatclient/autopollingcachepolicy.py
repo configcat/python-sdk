@@ -4,6 +4,7 @@ import datetime
 import time
 from threading import Thread, Event
 from requests import HTTPError
+from requests import Timeout
 
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
@@ -93,6 +94,9 @@ class AutoPollingCachePolicy(CachePolicy):
         except HTTPError as e:
             log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
                       ' Received unexpected response: %s' % str(e.response))
+        except Timeout:
+            log.exception('Request timed out. Timeout values: [connect: {}s, read: {}s]'.format(
+                self._config_fetcher.get_connect_timeout(), self._config_fetcher.get_read_timeout()))
         except Exception:
             log.exception(sys.exc_info()[0])
 
