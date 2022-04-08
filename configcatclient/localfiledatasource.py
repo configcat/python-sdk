@@ -25,10 +25,23 @@ class LocalFileDataSource(OverrideDataSource):
     def _reload_file_content(self):
         try:
             stamp = os.stat(self._file_path).st_mtime
+            # test
+            print('reload_file_content stamp:' + str(stamp))
+            print('self._cached_file_stamp:' + str(self._cached_file_stamp))
+            # test
             if stamp != self._cached_file_stamp:
+                # test
+                print('stamp != self._cached_file_stamp')
+                # test
                 self._cached_file_stamp = stamp
                 with open(self._file_path) as file:
+                    # test
+                    print('open')
+                    # test
                     data = json.load(file)
+                    # test
+                    print('json.load:' + str(data))
+                    # test
                     if 'flags' in data:
                         dictionary = {}
                         source = data['flags']
@@ -39,6 +52,6 @@ class LocalFileDataSource(OverrideDataSource):
                         self._settings = data
         except OSError as e:
             log.error('Could not read the content of the file %s. %s' % (self._file_path, e))
-        except json.decoder.JSONDecodeError as e:
+        except ValueError as e:
             log.error('Could not decode json from file %s. %s' % (self._file_path, e))
 

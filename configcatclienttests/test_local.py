@@ -1,6 +1,9 @@
 import logging
 import unittest
 from os import path
+import tempfile
+import json
+import shutil
 
 from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryDataSource
@@ -63,6 +66,63 @@ class LocalTests(unittest.TestCase):
                                  flag_overrides=LocalFileDataSource(file_path='non_existent.json',
                                                                     override_behaviour=OverrideBehaviour.LocalOnly))
         self.assertFalse(client.get_value('enabledFeature', False))
+        client.stop()
+
+    def test_reload_file(self):
+        temp_dir = tempfile.mkdtemp()
+        try:
+            temp_path = path.join(temp_dir, 'test-simple.json')
+            dictionary = {'flags': {
+                'enabledFeature': False
+            }}
+            with open(temp_path, 'w') as f:
+                json.dump(dictionary, f)
+
+            client = ConfigCatClient(sdk_key='test',
+                                     poll_interval_seconds=0,
+                                     max_init_wait_time_seconds=0,
+                                     flag_overrides=LocalFileDataSource(file_path=temp_path,
+                                                                        override_behaviour=OverrideBehaviour.LocalOnly))
+
+            self.assertFalse(client.get_value('enabledFeature', True))
+
+            # test
+            with open(temp_path, 'r') as f:
+                print(f.read())
+
+            import time
+            time.sleep(2)
+            # test
+
+            # change the temporary file
+            dictionary['flags']['enabledFeature'] = True
+            with open(temp_path, 'w') as f:
+                json.dump(dictionary, f)
+
+            # test
+            with open(temp_path, 'r') as f:
+                print(f.read())
+            # test
+
+            self.assertTrue(client.get_value('enabledFeature', False))
+
+            client.stop()
+        finally:
+            shutil.rmtree(temp_dir)
+
+    def test_invalid_file(self):
+        temp = tempfile.NamedTemporaryFile(mode="w")
+        temp.write('{"flags": {"enabledFeature": true}')
+        temp.flush()
+
+        client = ConfigCatClient(sdk_key='test',
+                                 poll_interval_seconds=0,
+                                 max_init_wait_time_seconds=0,
+                                 flag_overrides=LocalFileDataSource(file_path=temp.name,
+                                                                    override_behaviour=OverrideBehaviour.LocalOnly))
+
+        self.assertFalse(client.get_value('enabledFeature', False))
+
         client.stop()
 
     def test_dictionary(self):
