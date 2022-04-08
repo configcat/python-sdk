@@ -1,6 +1,9 @@
 import logging
 import unittest
 from os import path
+import tempfile
+import json
+import time
 
 from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryDataSource
@@ -63,6 +66,52 @@ class LocalTests(unittest.TestCase):
                                  flag_overrides=LocalFileDataSource(file_path='non_existent.json',
                                                                     override_behaviour=OverrideBehaviour.LocalOnly))
         self.assertFalse(client.get_value('enabledFeature', False))
+        client.stop()
+
+    def test_reload_file(self):
+        temp = tempfile.NamedTemporaryFile(mode="w")
+        dictionary = {'flags': {
+            'enabledFeature': False
+        }}
+        json.dump(dictionary, temp)
+        temp.flush()
+
+        client = ConfigCatClient(sdk_key='test',
+                                 poll_interval_seconds=0,
+                                 max_init_wait_time_seconds=0,
+                                 flag_overrides=LocalFileDataSource(file_path=temp.name,
+                                                                    override_behaviour=OverrideBehaviour.LocalOnly))
+
+        self.assertFalse(client.get_value('enabledFeature', True))
+
+        time.sleep(0.5)
+
+        # clear the content of the temp file
+        temp.seek(0)
+        temp.truncate()
+
+        # change the temporary file
+        dictionary['flags']['enabledFeature'] = True
+        json.dump(dictionary, temp)
+        temp.flush()
+
+        self.assertTrue(client.get_value('enabledFeature', False))
+
+        client.stop()
+
+    def test_invalid_file(self):
+        temp = tempfile.NamedTemporaryFile(mode="w")
+        temp.write('{"flags": {"enabledFeature": true}')
+        temp.flush()
+
+        client = ConfigCatClient(sdk_key='test',
+                                 poll_interval_seconds=0,
+                                 max_init_wait_time_seconds=0,
+                                 flag_overrides=LocalFileDataSource(file_path=temp.name,
+                                                                    override_behaviour=OverrideBehaviour.LocalOnly))
+
+        self.assertFalse(client.get_value('enabledFeature', False))
+
         client.stop()
 
     def test_dictionary(self):

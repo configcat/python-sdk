@@ -39,6 +39,6 @@ class LocalFileDataSource(OverrideDataSource):
                         self._settings = data
         except OSError as e:
             log.error('Could not read the content of the file %s. %s' % (self._file_path, e))
-        except json.decoder.JSONDecodeError as e:
+        except ValueError as e:
             log.error('Could not decode json from file %s. %s' % (self._file_path, e))
 
