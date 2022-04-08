@@ -3,7 +3,7 @@ import unittest
 from os import path
 import tempfile
 import json
-import shutil
+import time
 
 from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryDataSource
@@ -69,46 +69,35 @@ class LocalTests(unittest.TestCase):
         client.stop()
 
     def test_reload_file(self):
-        temp_dir = tempfile.mkdtemp()
-        try:
-            temp_path = path.join(temp_dir, 'test-simple.json')
-            dictionary = {'flags': {
-                'enabledFeature': False
-            }}
-            with open(temp_path, 'w') as f:
-                json.dump(dictionary, f)
+        temp = tempfile.NamedTemporaryFile(mode="w")
+        dictionary = {'flags': {
+            'enabledFeature': False
+        }}
+        json.dump(dictionary, temp)
+        temp.flush()
 
-            client = ConfigCatClient(sdk_key='test',
-                                     poll_interval_seconds=0,
-                                     max_init_wait_time_seconds=0,
-                                     flag_overrides=LocalFileDataSource(file_path=temp_path,
-                                                                        override_behaviour=OverrideBehaviour.LocalOnly))
+        client = ConfigCatClient(sdk_key='test',
+                                 poll_interval_seconds=0,
+                                 max_init_wait_time_seconds=0,
+                                 flag_overrides=LocalFileDataSource(file_path=temp.name,
+                                                                    override_behaviour=OverrideBehaviour.LocalOnly))
 
-            self.assertFalse(client.get_value('enabledFeature', True))
+        self.assertFalse(client.get_value('enabledFeature', True))
 
-            # test
-            with open(temp_path, 'r') as f:
-                print(f.read())
+        time.sleep(0.5)
 
-            import time
-            time.sleep(2)
-            # test
+        # clear the content of the temp file
+        temp.seek(0)
+        temp.truncate()
 
-            # change the temporary file
-            dictionary['flags']['enabledFeature'] = True
-            with open(temp_path, 'w') as f:
-                json.dump(dictionary, f)
+        # change the temporary file
+        dictionary['flags']['enabledFeature'] = True
+        json.dump(dictionary, temp)
+        temp.flush()
 
-            # test
-            with open(temp_path, 'r') as f:
-                print(f.read())
-            # test
+        self.assertTrue(client.get_value('enabledFeature', False))
 
-            self.assertTrue(client.get_value('enabledFeature', False))
-
-            client.stop()
-        finally:
-            shutil.rmtree(temp_dir)
+        client.stop()
 
     def test_invalid_file(self):
         temp = tempfile.NamedTemporaryFile(mode="w")
