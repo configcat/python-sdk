@@ -67,9 +67,12 @@ class ConfigCatClientTests(unittest.TestCase):
         client.stop()
 
     def test_cache_key(self):
-        client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
-        self.assertEqual("8380eddf68ede371d99ba8cb84e1cfaa12827bac", client._ConfigCatClient__get_cache_key())
-        client.stop()
+        client1 = ConfigCatClient('test1', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
+        client2 = ConfigCatClient('test2', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
+        self.assertEqual("5a9acc8437104f46206f6f273c4a5e26dd14715c", client1._ConfigCatClient__get_cache_key())
+        self.assertEqual("ade7f71ba5d52ebd3d9aeef5f5488e6ffe6323b8", client2._ConfigCatClient__get_cache_key())
+        client1.stop()
+        client2.stop()
 
 
 if __name__ == '__main__':
