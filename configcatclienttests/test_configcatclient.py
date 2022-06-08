@@ -66,6 +66,11 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertFalse(all_values['key2'])
         client.stop()
 
+    def test_cache_key(self):
+        client = ConfigCatClient('test', 0, 0, None, 0, config_cache_class=ConfigCacheMock)
+        self.assertEqual("8380eddf68ede371d99ba8cb84e1cfaa12827bac", client._ConfigCatClient__get_cache_key())
+        client.stop()
+
 
 if __name__ == '__main__':
     unittest.main()
