@@ -192,4 +192,4 @@ class ConfigCatClient(object):
         return self._cache_policy.get()
 
     def __get_cache_key(self):
-        return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8'))
+        return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8')).hexdigest()
