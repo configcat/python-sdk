@@ -61,7 +61,7 @@ class ConfigCatClient(object):
             self._cache_policy = None
         else:
             if poll_interval_seconds > 0:
-                self._config_fetcher = ConfigFetcher(sdk_key, 'p', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
+                self._config_fetcher = ConfigFetcher(sdk_key, 'a', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
                 self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                             self.__get_cache_key(),
                                                             poll_interval_seconds, max_init_wait_time_seconds,
