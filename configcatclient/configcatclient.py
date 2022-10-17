@@ -35,7 +35,8 @@ class ConfigCatClient(object):
                  connect_timeout=10,
                  read_timeout=30,
                  flag_overrides=None,
-                 data_governance=DataGovernance.Global):
+                 data_governance=DataGovernance.Global,
+                 default_user=None):
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
@@ -48,6 +49,7 @@ class ConfigCatClient(object):
             ConfigCatClient.sdk_keys.append(sdk_key)
 
         self._sdk_key = sdk_key
+        self._default_user = default_user
         self._override_data_source = flag_overrides
         self._rollout_evaluator = RolloutEvaluator()
 
@@ -84,7 +86,7 @@ class ConfigCatClient(object):
                         (key, str(default_value)))
             return default_value
 
-        value, variation_id = self._rollout_evaluator.evaluate(key, user, default_value, None, config)
+        value, variation_id = self._rollout_evaluator.evaluate(key, user if user is not None else self._default_user, default_value, None, config)
         return value
 
     def get_all_keys(self):
@@ -106,7 +108,7 @@ class ConfigCatClient(object):
                         (key, str(default_variation_id)))
             return default_variation_id
 
-        value, variation_id = self._rollout_evaluator.evaluate(key, user, None, default_variation_id, config)
+        value, variation_id = self._rollout_evaluator.evaluate(key, user if user is not None else self._default_user, None, default_variation_id, config)
         return variation_id
 
     def get_all_variation_ids(self, user=None):
@@ -162,6 +164,12 @@ class ConfigCatClient(object):
     def force_refresh(self):
         if self._cache_policy:
             self._cache_policy.force_refresh()
+
+    def set_default_user(self, user):
+        self._default_user = user
+
+    def clear_default_user(self):
+        self._default_user = None
 
     def stop(self):
         if self._cache_policy:
