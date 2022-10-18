@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 
 class ConfigCache(object):
     """
-        Config cache interface
+    Config cache interface
     """
     __metaclass__ = ABCMeta
 
@@ -22,7 +22,7 @@ class ConfigCache(object):
 
 class CachePolicy(object):
     """
-        Config cache interface
+    Config cache interface
     """
     __metaclass__ = ABCMeta
 

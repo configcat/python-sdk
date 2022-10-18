@@ -78,13 +78,13 @@ class RolloutTests(unittest.TestCase):
                 i += 1
 
         self.assertEqual('', errors)
-        client.stop()
+        client.close()
 
     def test_wrong_user_object(self):
         client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
         setting_value = client.get_value('stringContainsDogDefaultCat', 'Lion', {'Email': 'a@configcat.com'})
         self.assertEqual('Cat', setting_value)
-        client.stop()
+        client.close()
 
 
 '''

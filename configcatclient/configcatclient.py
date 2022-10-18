@@ -5,76 +5,133 @@ from .manualpollingcachepolicy import ManualPollingCachePolicy
 from .autopollingcachepolicy import AutoPollingCachePolicy
 from .configfetcher import ConfigFetcher
 from .configcache import InMemoryConfigCache
-from .datagovernance import DataGovernance
+from .configcatoptions import ConfigCatOptions
 from .overridedatasource import OverrideBehaviour
+from .pollingmode import AutoPollingMode, LazyLoadingMode
 from .rolloutevaluator import RolloutEvaluator
 import logging
 import sys
 import hashlib
 from collections import namedtuple
 import copy
+import inspect
 
 log = logging.getLogger(sys.modules[__name__].__name__)
 
 KeyValue = namedtuple('KeyValue', 'key value')
 
 
+def get_class_from_stack_frame(frame):
+    args, _, _, value_dict = inspect.getargvalues(frame)
+    # we check the first parameter for the frame function is
+    # named 'self' or 'cls'
+    if len(args):
+        if args[0] == 'self':
+            # in that case, 'self' will be referenced in value_dict
+            instance = value_dict.get(args[0], None)
+            if instance:
+                # return its class
+                return getattr(instance, '__class__', None)
+        if args[0] == 'cls':
+            # return the class
+            return value_dict.get(args[0], None)
+
+    # return None otherwise
+    return None
+
+
+def guard_call(allowed_classes, level=1):
+    """
+    Checks if the current method is being called from a method of certain classes.
+    """
+    stack_info = inspect.stack()[level + 1]
+    frame = stack_info[0]
+    calling_class = get_class_from_stack_frame(frame)
+    if calling_class:
+        for klass in allowed_classes:
+            if issubclass(calling_class, klass):
+                return True
+    return False
+
+
 class ConfigCatClient(object):
-    sdk_keys = []
+    _instances = {}
+
+    @classmethod
+    def get(cls, sdk_key, options=None):
+        client = cls._instances.get(sdk_key)
+        if client is not None:
+            if options is not None:
+                log.warning('Client for sdk_key %s is already created and will be reused; '
+                            'options passed are being ignored.' % sdk_key)
+            return client
+
+        if options is None:
+            options = ConfigCatOptions()
+
+        client = ConfigCatClient(sdk_key=sdk_key,
+                                 options=options)
+        cls._instances[sdk_key] = client
+        return client
+
+    @classmethod
+    def close_all(cls):
+        # Closes all ConfigCatClient instances.
+        for key, value in list(cls._instances.items()):
+            value.close_resources()
+        cls._instances.clear()
 
     def __init__(self,
                  sdk_key,
-                 poll_interval_seconds=60,
-                 max_init_wait_time_seconds=5,
-                 on_configuration_changed_callback=None,
-                 cache_time_to_live_seconds=60,
-                 config_cache_class=None,
-                 base_url=None,
-                 proxies=None,
-                 proxy_auth=None,
-                 connect_timeout=10,
-                 read_timeout=30,
-                 flag_overrides=None,
-                 data_governance=DataGovernance.Global,
-                 default_user=None):
+                 options=ConfigCatOptions()):
+
+        if not guard_call([ConfigCatClient]):
+            log.warning('ConfigCatClient.__init__() is deprecated. '
+                        'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead')
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
 
-        if sdk_key in ConfigCatClient.sdk_keys:
-            log.warning('A ConfigCat Client is already initialized with sdk_key %s. '
-                        'We strongly recommend you to use the ConfigCat Client as '
-                        'a Singleton object in your application.' % sdk_key)
-        else:
-            ConfigCatClient.sdk_keys.append(sdk_key)
-
         self._sdk_key = sdk_key
-        self._default_user = default_user
-        self._override_data_source = flag_overrides
+        self._default_user = options.default_user
+        self._override_data_source = options.flag_overrides
         self._rollout_evaluator = RolloutEvaluator()
 
-        if config_cache_class:
-            self._config_cache = config_cache_class()
-        else:
-            self._config_cache = InMemoryConfigCache()
+        self._config_cache = options.config_cache if options.config_cache is not None else InMemoryConfigCache()
 
         if self._override_data_source and self._override_data_source.get_behaviour() == OverrideBehaviour.LocalOnly:
             self._config_fetcher = None
             self._cache_policy = None
         else:
-            if poll_interval_seconds > 0:
-                self._config_fetcher = ConfigFetcher(sdk_key, 'a', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
+            if isinstance(options.polling_mode, AutoPollingMode):
+                self._config_fetcher = ConfigFetcher(sdk_key,
+                                                     options.polling_mode.identifier(),
+                                                     options.base_url,
+                                                     options.proxies, options.proxy_auth,
+                                                     options.connect_timeout_seconds, options.read_timeout_seconds,
+                                                     options.data_governance)
                 self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                             self.__get_cache_key(),
-                                                            poll_interval_seconds, max_init_wait_time_seconds,
-                                                            on_configuration_changed_callback)
-            elif cache_time_to_live_seconds > 0:
-                self._config_fetcher = ConfigFetcher(sdk_key, 'l', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
+                                                            options.polling_mode.auto_poll_interval_seconds,
+                                                            options.polling_mode.max_init_wait_time_seconds,
+                                                            options.polling_mode.on_config_changed)
+            elif isinstance(options.polling_mode, LazyLoadingMode):
+                self._config_fetcher = ConfigFetcher(sdk_key,
+                                                     options.polling_mode.identifier(),
+                                                     options.base_url,
+                                                     options.proxies, options.proxy_auth,
+                                                     options.connect_timeout_seconds, options.read_timeout_seconds,
+                                                     options.data_governance)
                 self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
                                                             self.__get_cache_key(),
-                                                            cache_time_to_live_seconds)
+                                                            options.polling_mode.cache_refresh_interval_seconds)
             else:
-                self._config_fetcher = ConfigFetcher(sdk_key, 'm', base_url, proxies, proxy_auth, connect_timeout, read_timeout, data_governance)
+                self._config_fetcher = ConfigFetcher(sdk_key,
+                                                     options.polling_mode.identifier(),
+                                                     options.base_url,
+                                                     options.proxies, options.proxy_auth,
+                                                     options.connect_timeout_seconds, options.read_timeout_seconds,
+                                                     options.data_governance)
                 self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache,
                                                               self.__get_cache_key())
 
@@ -171,10 +228,13 @@ class ConfigCatClient(object):
     def clear_default_user(self):
         self._default_user = None
 
-    def stop(self):
+    def close_resources(self):
         if self._cache_policy:
             self._cache_policy.stop()
-        ConfigCatClient.sdk_keys.remove(self._sdk_key)
+
+    def close(self):
+        self.close_resources()
+        ConfigCatClient._instances.pop(self._sdk_key)
 
     def __get_settings(self):
         if self._override_data_source:

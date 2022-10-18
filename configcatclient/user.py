@@ -3,7 +3,7 @@ __PREDEFINED__ = ["Identifier", 'Email', 'Country']
 
 class User(object):
     """
-     The user object for variation evaluation
+    The user object for variation evaluation
     """
 
     def __init__(self, identifier, email=None, country=None, custom=None):

@@ -24,4 +24,4 @@ if __name__ == '__main__':
         'isPOCFeatureEnabled', False, userObject)
     print("'isPOCFeatureEnabled' value from ConfigCat: " + str(value))
 
-    client.stop()
+    client.close()

@@ -46,4 +46,4 @@ if __name__ == '__main__':
     my_setting_not_exists = client.get_value('myKeyNotExists', 'N/A')
     print("'myKeyNotExists' value from ConfigCat: " + str(my_setting_not_exists))
 
-    client.stop()
+    client.close()

@@ -50,8 +50,9 @@ else:
 ```
 
 ### 6. Stop *ConfigCat* client on application exit
+
 ```python
-configcat_client.stop()
+configcat_client.close()
 ```
 
 ## Getting user specific setting values with Targeting
