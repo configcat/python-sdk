@@ -24,9 +24,11 @@ class ConfigCatClientTests(unittest.TestCase):
 
         self.assertNotEqual(client1, client2)
 
+        ConfigCatClient.close_all()
+
     def test_without_sdk_key(self):
         try:
-            ConfigCatClient(None)
+            ConfigCatClient.get(None)
             self.fail('Expected ConfigCatClientException')
         except ConfigCatClientException:
             pass

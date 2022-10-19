@@ -62,7 +62,7 @@ class ConfigCatClient(object):
         client = cls._instances.get(sdk_key)
         if client is not None:
             if options is not None:
-                log.warning('Client for sdk_key %s is already created and will be reused; '
+                log.warning('Client for sdk_key `%s` is already created and will be reused; '
                             'options passed are being ignored.' % sdk_key)
             return client
 
