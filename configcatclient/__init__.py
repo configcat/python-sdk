@@ -20,7 +20,8 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
                                  on_configuration_changed_callback=None, config_cache_class=None,
                                  base_url=None, proxies=None, proxy_auth=None, connect_timeout=10, read_timeout=30,
                                  flag_overrides=None,
-                                 data_governance=DataGovernance.Global):
+                                 data_governance=DataGovernance.Global,
+                                 default_user=None):
     """
     Create an instance of ConfigCatClient and setup Auto Poll mode with custom options
 
@@ -41,6 +42,8 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
     (Only Organization Admins have access)
+    :param default_user: The default user, used as fallback when there's no user parameter is passed to the
+    ConfigCatClient.get_value, ConfigCatClient.get_all_values, etc. methods.
     """
 
     if sdk_key is None:
@@ -64,13 +67,15 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
                            connect_timeout=connect_timeout,
                            read_timeout=read_timeout,
                            flag_overrides=flag_overrides,
-                           data_governance=data_governance)
+                           data_governance=data_governance,
+                           default_user=default_user)
 
 
 def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_cache_class=None,
                                  base_url=None, proxies=None, proxy_auth=None, connect_timeout=10, read_timeout=30,
                                  flag_overrides=None,
-                                 data_governance=DataGovernance.Global):
+                                 data_governance=DataGovernance.Global,
+                                 default_user=None):
     """
     Create an instance of ConfigCatClient and setup Lazy Load mode with custom options
 
@@ -89,6 +94,8 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
     (Only Organization Admins have access)
+    :param default_user: The default user, used as fallback when there's no user parameter is passed to the
+    ConfigCatClient.get_value, ConfigCatClient.get_all_values, etc. methods.
     """
 
     if sdk_key is None:
@@ -109,13 +116,15 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
                            connect_timeout=connect_timeout,
                            read_timeout=read_timeout,
                            flag_overrides=flag_overrides,
-                           data_governance=data_governance)
+                           data_governance=data_governance,
+                           default_user=default_user)
 
 
 def create_client_with_manual_poll(sdk_key, config_cache_class=None,
                                    base_url=None, proxies=None, proxy_auth=None, connect_timeout=10, read_timeout=30,
                                    flag_overrides=None,
-                                   data_governance=DataGovernance.Global):
+                                   data_governance=DataGovernance.Global,
+                                   default_user=None):
     """
     Create an instance of ConfigCatClient and setup Manual Poll mode with custom options
 
@@ -133,6 +142,8 @@ def create_client_with_manual_poll(sdk_key, config_cache_class=None,
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
     (Only Organization Admins have access)
+    :param default_user: The default user, used as fallback when there's no user parameter is passed to the
+    ConfigCatClient.get_value, ConfigCatClient.get_all_values, etc. methods.
     """
 
     if sdk_key is None:
@@ -150,4 +161,5 @@ def create_client_with_manual_poll(sdk_key, config_cache_class=None,
                            connect_timeout=connect_timeout,
                            read_timeout=read_timeout,
                            flag_overrides=flag_overrides,
-                           data_governance=data_governance)
+                           data_governance=data_governance,
+                           default_user=default_user)
