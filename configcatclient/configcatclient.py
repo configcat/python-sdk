@@ -14,44 +14,11 @@ import sys
 import hashlib
 from collections import namedtuple
 import copy
-import inspect
+from .utils import method_is_called_from
 
 log = logging.getLogger(sys.modules[__name__].__name__)
 
 KeyValue = namedtuple('KeyValue', 'key value')
-
-
-def get_class_from_stack_frame(frame):
-    args, _, _, value_dict = inspect.getargvalues(frame)
-    # we check the first parameter for the frame function is
-    # named 'self' or 'cls'
-    if len(args):
-        if args[0] == 'self':
-            # in that case, 'self' will be referenced in value_dict
-            instance = value_dict.get(args[0], None)
-            if instance:
-                # return its class
-                return getattr(instance, '__class__', None)
-        if args[0] == 'cls':
-            # return the class
-            return value_dict.get(args[0], None)
-
-    # return None otherwise
-    return None
-
-
-def guard_call(allowed_classes, level=1):
-    """
-    Checks if the current method is being called from a method of certain classes.
-    """
-    stack_info = inspect.stack()[level + 1]
-    frame = stack_info[0]
-    calling_class = get_class_from_stack_frame(frame)
-    if calling_class:
-        for klass in allowed_classes:
-            if issubclass(calling_class, klass):
-                return True
-    return False
 
 
 class ConfigCatClient(object):
@@ -85,7 +52,7 @@ class ConfigCatClient(object):
                  sdk_key,
                  options=ConfigCatOptions()):
 
-        if not guard_call([ConfigCatClient]):
+        if not method_is_called_from(ConfigCatClient.get):
             log.warning('ConfigCatClient.__init__() is deprecated. '
                         'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead')
 

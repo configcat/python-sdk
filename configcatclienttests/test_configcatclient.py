@@ -28,7 +28,7 @@ class ConfigCatClientTests(unittest.TestCase):
 
     def test_without_sdk_key(self):
         try:
-            ConfigCatClient.get(None)
+            ConfigCatClient(None)
             self.fail('Expected ConfigCatClientException')
         except ConfigCatClientException:
             pass
