@@ -28,4 +28,4 @@ class ConcurrencyTests(unittest.TestCase):
         p1.join()
         p2.join()
 
-        client.stop()
+        client.close()

@@ -35,7 +35,7 @@ class DefaultTests(unittest.TestCase):
     def test_client_works(self):
         client = configcatclient.create_client(_SDK_KEY)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_get_all_keys(self):
         client = configcatclient.create_client(_SDK_KEY)
@@ -54,7 +54,7 @@ class DefaultTests(unittest.TestCase):
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
         client.force_refresh()
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
 
 class AutoPollTests(unittest.TestCase):
@@ -69,42 +69,42 @@ class AutoPollTests(unittest.TestCase):
     def test_client_works(self):
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_client_works_valid_base_url(self):
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY, base_url='https://cdn.configcat.com')
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_client_works_valid_base_url_trailing_slash(self):
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY, base_url='https://cdn.configcat.com/')
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_client_works_invalid_base_url(self):
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY, base_url='https://invalidcdn.configcat.com')
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_client_works_invalid_proxy(self):
         proxies = {'https': '0.0.0.0:0'}
         proxy_auth = HTTPProxyAuth("test", "test")
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY, proxies=proxies, proxy_auth=proxy_auth)
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     @mock.patch('requests.get', side_effect=Timeout())
     def test_client_works_request_timeout(self, mock_get):
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY)
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_force_refresh(self):
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
         client.force_refresh()
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_wrong_param(self):
         client = configcatclient.create_client_with_auto_poll(_SDK_KEY,
@@ -112,7 +112,7 @@ class AutoPollTests(unittest.TestCase):
                                                               max_init_wait_time_seconds=-1)
         time.sleep(2)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
 
 class LazyLoadingTests(unittest.TestCase):
@@ -127,22 +127,22 @@ class LazyLoadingTests(unittest.TestCase):
     def test_client_works(self):
         client = configcatclient.create_client_with_lazy_load(_SDK_KEY)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_client_works_valid_base_url(self):
         client = configcatclient.create_client_with_lazy_load(_SDK_KEY, base_url='https://cdn.configcat.com')
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_client_works_invalid_base_url(self):
         client = configcatclient.create_client_with_lazy_load(_SDK_KEY, base_url='https://invalidcdn.configcat.com')
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_wrong_param(self):
         client = configcatclient.create_client_with_lazy_load(_SDK_KEY, 0)
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
 
 class ManualPollingTests(unittest.TestCase):
@@ -159,19 +159,19 @@ class ManualPollingTests(unittest.TestCase):
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
         client.force_refresh()
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_client_works_valid_base_url(self):
         client = configcatclient.create_client_with_manual_poll(_SDK_KEY, base_url='https://cdn.configcat.com')
         client.force_refresh()
         self.assertEqual('This text came from ConfigCat', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
     def test_client_works_invalid_base_url(self):
         client = configcatclient.create_client_with_manual_poll(_SDK_KEY, base_url='https://invalidcdn.configcat.com')
         client.force_refresh()
         self.assertEqual('default value', client.get_value('keySampleText', 'default value'))
-        client.stop()
+        client.close()
 
 
 if __name__ == '__main__':
