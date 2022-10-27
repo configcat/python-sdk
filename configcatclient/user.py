@@ -21,7 +21,7 @@ class User(object):
         if attribute in __PREDEFINED__:
             return self.__data[attribute]
 
-        return self.__custom.get(attribute)
+        return self.__custom and self.__custom.get(attribute)
 
     def __str__(self):
         dump = {
