@@ -1,6 +1,9 @@
 import sys
 import inspect
 from qualname import qualname
+from datetime import datetime
+
+epoch_time = datetime(1970, 1, 1)
 
 
 def get_class_from_method(method):
@@ -49,3 +52,15 @@ def method_is_called_from(method, level=1):
     if calling_class == expected_class:
         return True
     return False
+
+
+def get_utc_now():
+    return datetime.utcnow()
+
+
+def get_seconds_since_epoch(date_time):
+    return (date_time - epoch_time).total_seconds()
+
+
+def get_utc_now_seconds_since_epoch():
+    return get_seconds_since_epoch(get_utc_now())

@@ -60,17 +60,18 @@ TEST_OBJECT = json.loads(
 class ConfigFetcherMock(ConfigFetcher):
     def __init__(self):
         self._call_count = 0
-        self._force_fetch_count = 0
+        self._fetch_count = 0
         self._configuration = TEST_JSON
+        self._etag = 'test_etag'
 
-    def get_configuration_json(self, force_fetch=False):
+    def get_configuration_json(self, etag=''):
         self._call_count += 1
-        if force_fetch:
-            self._force_fetch_count += 1
+        if etag != self._etag:
+            self._fetch_count += 1
         response_mock = Mock()
         response_mock.status_code = 200
         response_mock.json.return_value = self._configuration
-        return FetchResponse(response_mock)
+        return FetchResponse(response_mock, self._etag)
 
     def set_configuration_json(self, value):
         self._configuration = value
@@ -80,15 +81,15 @@ class ConfigFetcherMock(ConfigFetcher):
         return self._call_count
 
     @property
-    def get_force_fetch_count(self):
-        return self._force_fetch_count
+    def get_fetch_count(self):
+        return self._fetch_count
 
 
 class ConfigFetcherWithErrorMock(ConfigFetcher):
     def __init__(self, exception):
         self._exception = exception
 
-    def get_configuration_json(self, force_fetch=False):
+    def get_configuration_json(self, etag=''):
         raise self._exception
 
 
@@ -96,7 +97,7 @@ class ConfigFetcherWaitMock(ConfigFetcher):
     def __init__(self, wait_seconds):
         self._wait_seconds = wait_seconds
 
-    def get_configuration_json(self, force_fetch=False):
+    def get_configuration_json(self, etag=''):
         time.sleep(self._wait_seconds)
         response_mock = Mock()
         response_mock.status_code = 200
@@ -108,7 +109,7 @@ class ConfigFetcherCountMock(ConfigFetcher):
     def __init__(self):
         self._value = 0
 
-    def get_configuration_json(self, force_fetch=False):
+    def get_configuration_json(self, etag=''):
         self._value += 10
         response_mock = Mock()
         response_mock.status_code = 200
@@ -118,7 +119,7 @@ class ConfigFetcherCountMock(ConfigFetcher):
 
 class ConfigCacheMock(ConfigCache):
     def get(self, key):
-        return TEST_OBJECT
+        return {FetchResponse.CONFIG: TEST_OBJECT}
 
     def set(self, key, value):
         pass
