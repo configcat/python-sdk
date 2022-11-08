@@ -40,7 +40,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         self.assertEqual(value, TEST_JSON)
         self.assertEqual(config_fetcher.get_call_count, 1)
 
-        # Get value from Config Store, which doesn't indicates a config_fetcher call (cache)
+        # Get value from Config Store, which doesn't indicate a config_fetcher call (cache)
         value = cache_policy.get()
         self.assertEqual(value, TEST_JSON)
         self.assertEqual(config_fetcher.get_call_count, 1)

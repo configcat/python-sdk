@@ -31,10 +31,10 @@ class FetchResponse(object):
     FETCH_TIME = 'fetch_time'
     CONFIG = 'config'
 
-    def __init__(self, response, etag='', fetch_time=get_utc_now_seconds_since_epoch()):
+    def __init__(self, response, etag='', fetch_time=None):
         self._response = response
         self._etag = etag
-        self._fetch_time = fetch_time
+        self._fetch_time = fetch_time if fetch_time is not None else get_utc_now_seconds_since_epoch()
 
     def json(self):
         """Returns the json-encoded content of a response, if any.

@@ -22,7 +22,7 @@ class ConfigCache(object):
 
 class CachePolicy(object):
     """
-    Config cache interface
+    Cache policy interface
     """
     __metaclass__ = ABCMeta
 
