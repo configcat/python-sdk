@@ -2,6 +2,46 @@ from .datagovernance import DataGovernance
 from .pollingmode import PollingMode
 
 
+class Hooks(object):
+    """
+    Events fired by [ConfigCatClient].
+    """
+
+    def __init__(self):
+        self._on_ready_callbacks = []
+        self._on_config_changed_callbacks = []
+        self._on_flag_evaluated_callbacks = []
+        self._on_error_callbacks = []
+
+    def add_on_ready(self, callback):
+        self._on_ready_callbacks.append(callback)
+
+    def add_on_config_changed(self, callback):
+        self._on_config_changed_callbacks.append(callback)
+
+    def add_on_flag_evaluated(self, callback):
+        self._on_flag_evaluated_callbacks.append(callback)
+
+    def add_on_error(self, callback):
+        self._on_error_callbacks.append(callback)
+
+    def invoke_on_ready(self):
+        for callback in self._on_ready_callbacks:
+            callback()
+
+    def invoke_on_config_changed(self, config):
+        for callback in self._on_config_changed_callbacks:
+            callback(config)
+
+    def invoke_on_flag_evaluated(self, evaluation_details):
+        for callback in self._on_flag_evaluated_callbacks:
+            callback(evaluation_details)
+
+    def invoke_on_error(self, error):
+        for callback in self._on_error_callbacks:
+            callback(error)
+
+
 class ConfigCatOptions(object):
     """
     Configuration options for ConfigCatClient.
@@ -17,7 +57,8 @@ class ConfigCatOptions(object):
                  read_timeout_seconds=30,
                  flag_overrides=None,
                  data_governance=DataGovernance.Global,
-                 default_user=None):
+                 default_user=None,
+                 hooks=None):
         """
         Default: `DataGovernance.Global`. Set this parameter to be in sync with the
         Data Governance preference on the [Dashboard](https://app.configcat.com/organization/data-governance).
@@ -51,3 +92,6 @@ class ConfigCatOptions(object):
 
         # The default user, used as fallback when there's no user parameter is passed to the getValue() method.
         self.default_user = default_user
+
+        # Hooks for events sent by ConfigCatClient.
+        self.hooks = hooks

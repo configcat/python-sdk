@@ -17,6 +17,7 @@ except ImportError:
 from configcatclient.configfetcher import ConfigFetcher, FetchResponse
 
 logging.basicConfig(level=logging.WARN)
+log = logging.getLogger()
 
 test_json = {"test": "json"}
 
@@ -131,7 +132,7 @@ class DataGovernanceTests(unittest.TestCase):
         # and the second should call https://cdn-global.configcat.com
         # without force redirects
 
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global)
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global)
 
         # First fetch
         fetch_response = fetcher.get_configuration_json()
@@ -158,7 +159,7 @@ class DataGovernanceTests(unittest.TestCase):
         # the first invocation should call https://cdn-eu.configcat.com
         # and the second should call https://cdn-global.configcat.com
         # without force redirects
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.EuOnly)
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.EuOnly)
 
         # First fetch
         fetch_response = fetcher.get_configuration_json()
@@ -185,7 +186,7 @@ class DataGovernanceTests(unittest.TestCase):
         # with an immediate redirect to https://cdn-eu.configcat.com
         # and the second should call https://cdn-eu.configcat.com
 
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global)
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global)
 
         # First fetch
         fetch_response = fetcher.get_configuration_json()
@@ -213,7 +214,7 @@ class DataGovernanceTests(unittest.TestCase):
         # and the second should call https://cdn-eu.configcat.com
         # without redirects
 
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.EuOnly)
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.EuOnly)
 
         # First fetch
         fetch_response = fetcher.get_configuration_json()
@@ -239,7 +240,7 @@ class DataGovernanceTests(unittest.TestCase):
         # and the second should call https://custom.configcat.com
         # without force redirects
 
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global,
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global,
                                 base_url='https://custom.configcat.com')
 
         # First fetch
@@ -270,7 +271,7 @@ class DataGovernanceTests(unittest.TestCase):
         # and the second should call https://custom.configcat.com
         # without force redirects
 
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.EuOnly,
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.EuOnly,
                                 base_url='https://custom.configcat.com')
 
         # First fetch
@@ -301,7 +302,7 @@ class DataGovernanceTests(unittest.TestCase):
         # with an immediate redirect to https://forced.configcat.com
         # and the second should call https://forced.configcat.com
 
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global)
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global)
 
         # First fetch
         fetch_response = fetcher.get_configuration_json()
@@ -331,7 +332,7 @@ class DataGovernanceTests(unittest.TestCase):
         # with an immediate redirect to https://forced.configcat.com
         # and the second should call https://forced.configcat.com
 
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.EuOnly)
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.EuOnly)
 
         # First fetch
         fetch_response = fetcher.get_configuration_json()
@@ -362,6 +363,7 @@ class DataGovernanceTests(unittest.TestCase):
         # and the second should call https://forced.configcat.com
 
         fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global,
+                                log=log,
                                 base_url='https://custom.configcat.com')
 
         # First fetch
@@ -397,7 +399,7 @@ class DataGovernanceTests(unittest.TestCase):
         # with an immediate redirect to https://cdn-global.configcat.com
         # with an immediate redirect to https://cdn-eu.configcat.com
 
-        fetcher = ConfigFetcher(sdk_key='', mode='m', data_governance=DataGovernance.Global)
+        fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global)
 
         # First fetch
         fetch_response = fetcher.get_configuration_json()

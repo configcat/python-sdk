@@ -29,7 +29,7 @@ class CachePolicy(object):
     @abstractmethod
     def get(self):
         """
-        :returns the config json object from the cache
+        :returns the config json object from the cache, fetch time of the config
         """
 
     @abstractmethod

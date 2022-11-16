@@ -62,5 +62,9 @@ def get_seconds_since_epoch(date_time):
     return (date_time - epoch_time).total_seconds()
 
 
+def get_date_time(seconds_since_epoch):
+    return datetime.utcfromtimestamp(seconds_since_epoch)
+
+
 def get_utc_now_seconds_since_epoch():
     return get_seconds_since_epoch(get_utc_now())

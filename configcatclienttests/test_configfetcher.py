@@ -15,6 +15,7 @@ except ImportError:
 from configcatclient.configfetcher import ConfigFetcher, FetchResponse
 
 logging.basicConfig(level=logging.WARN)
+log = logging.getLogger()
 
 
 class ConfigFetcherTests(unittest.TestCase):
@@ -26,7 +27,7 @@ class ConfigFetcherTests(unittest.TestCase):
             response_mock.json.return_value = test_json
             response_mock.status_code = 200
             response_mock.headers = {}
-            fetcher = ConfigFetcher(sdk_key='', mode='m')
+            fetcher = ConfigFetcher(sdk_key='', log=log, mode='m')
             fetch_response = fetcher.get_configuration_json()
             self.assertTrue(fetch_response.is_fetched())
             self.assertEqual(test_json, fetch_response.json()[FetchResponse.CONFIG])
@@ -35,7 +36,7 @@ class ConfigFetcherTests(unittest.TestCase):
         with mock.patch.object(requests, 'get') as request_get:
             etag = 'test'
             test_json = {"test": "json"}
-            fetcher = ConfigFetcher(sdk_key='', mode='m')
+            fetcher = ConfigFetcher(sdk_key='', log=log, mode='m')
 
             response_mock = Mock()
             response_mock.json.return_value = test_json
@@ -63,6 +64,7 @@ class ConfigFetcherTests(unittest.TestCase):
 
     def test_server_side_etag(self):
         fetcher = ConfigFetcher(sdk_key='PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ',
+                                log=log,
                                 mode='m', base_url='https://cdn-eu.configcat.com')
         fetch_response = fetcher.get_configuration_json()
         etag = fetch_response.json()[FetchResponse.ETAG]

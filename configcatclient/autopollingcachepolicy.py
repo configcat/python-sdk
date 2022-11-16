@@ -1,4 +1,3 @@
-import logging
 import sys
 import time
 from threading import Thread, Event
@@ -12,12 +11,10 @@ from .configfetcher import FetchResponse
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
-log = logging.getLogger(sys.modules[__name__].__name__)
-
 
 class AutoPollingCachePolicy(CachePolicy):
 
-    def __init__(self, config_fetcher, config_cache, cache_key,
+    def __init__(self, config_fetcher, config_cache, cache_key, log, hooks,
                  poll_interval_seconds=60, max_init_wait_time_seconds=5,
                  on_configuration_changed_callback=None):
         if poll_interval_seconds < 1:
@@ -28,6 +25,8 @@ class AutoPollingCachePolicy(CachePolicy):
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
         self._cache_key = cache_key
+        self.log = log
+        self._hooks = hooks
         self._poll_interval_seconds = poll_interval_seconds
         self._max_init_wait_time_seconds = timedelta(seconds=max_init_wait_time_seconds)
         self._on_configuration_changed_callback = on_configuration_changed_callback
@@ -59,7 +58,11 @@ class AutoPollingCachePolicy(CachePolicy):
         try:
             self._lock.acquire_read()
             configuration = self._config_cache.get(self._cache_key)
-            return configuration.get(FetchResponse.CONFIG) if configuration else None
+            if configuration is None:
+                return None, None
+
+            return configuration.get(FetchResponse.CONFIG), configuration.get(FetchResponse.FETCH_TIME)
+
         finally:
             self._lock.release_read()
 
@@ -76,7 +79,10 @@ class AutoPollingCachePolicy(CachePolicy):
                     # Cache isn't expired
                     utc_now = utils.get_utc_now()
                     if datetime.utcfromtimestamp(old_configuration.get(FetchResponse.FETCH_TIME, 0) + self._poll_interval_seconds) > utc_now:
-                        self._initialized = True
+                        if not self._initialized:
+                            self._initialized = True
+                            self._hooks.invoke_on_ready()
+
                         return
             finally:
                 self._lock.release_read()
@@ -90,26 +96,31 @@ class AutoPollingCachePolicy(CachePolicy):
                     try:
                         self._lock.acquire_write()
                         self._config_cache.set(self._cache_key, configuration)
-                        self._initialized = True
+                        if not self._initialized:
+                            self._initialized = True
+                            self._hooks.invoke_on_ready()
                     finally:
                         self._lock.release_write()
+
+                    self._hooks.invoke_on_config_changed(configuration.get(FetchResponse.CONFIG))
 
                     try:
                         if self._on_configuration_changed_callback is not None:
                             self._on_configuration_changed_callback()
                     except Exception:
-                        log.exception(sys.exc_info()[0])
+                        self.log.exception(sys.exc_info()[0])
 
             if not self._initialized and old_configuration is not None:
                 self._initialized = True
+                self._hooks.invoke_on_ready()
         except HTTPError as e:
-            log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
-                      ' Received unexpected response: %s' % str(e.response))
+            self.log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
+                           ' Received unexpected response: %s' % str(e.response))
         except Timeout:
-            log.exception('Request timed out. Timeout values: [connect: {}s, read: {}s]'.format(
+            self.log.exception('Request timed out. Timeout values: [connect: {}s, read: {}s]'.format(
                 self._config_fetcher.get_connect_timeout(), self._config_fetcher.get_read_timeout()))
         except Exception:
-            log.exception(sys.exc_info()[0])
+            self.log.exception(sys.exc_info()[0])
 
     def stop(self):
         self._is_running = False

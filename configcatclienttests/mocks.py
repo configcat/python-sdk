@@ -164,3 +164,23 @@ class MockResponse:
         if 200 <= self.status_code < 300 or self.status_code == 304:
             return
         raise Exception(self.status_code)
+
+
+class HookCallbacks(object):
+    def __init__(self):
+        self.is_ready = False
+        self.changed_config = None
+        self.evaluation_details = None
+        self.error = None
+
+    def on_ready(self):
+        self.is_ready = True
+
+    def on_config_changed(self, config):
+        self.changed_config = config
+
+    def on_flag_evaluated(self, evaluation_details):
+        self.evaluation_details = evaluation_details
+
+    def on_error(self, error):
+        self.error = error

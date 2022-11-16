@@ -1,4 +1,3 @@
-import logging
 import sys
 from datetime import datetime
 from datetime import timedelta
@@ -10,17 +9,18 @@ from .configfetcher import FetchResponse
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
-log = logging.getLogger(sys.modules[__name__].__name__)
-
 
 class LazyLoadingCachePolicy(CachePolicy):
-    def __init__(self, config_fetcher, config_cache, cache_key, cache_time_to_live_seconds=60):
+    def __init__(self, config_fetcher, config_cache, cache_key, log, hooks, cache_time_to_live_seconds=60):
         if cache_time_to_live_seconds < 1:
             cache_time_to_live_seconds = 1
         self._config_fetcher = config_fetcher
         self._config_cache = config_cache
         self._cache_key = cache_key
+        self.log = log
+        self._hooks = hooks
         self._cache_time_to_live = timedelta(seconds=cache_time_to_live_seconds)
+        self._hooks.invoke_on_ready()
         self._lock = ReadWriteLock()
 
     def get(self):
@@ -36,7 +36,7 @@ class LazyLoadingCachePolicy(CachePolicy):
 
             if configuration is not None:
                 if datetime.utcfromtimestamp(configuration.get(FetchResponse.FETCH_TIME, 0)) + self._cache_time_to_live > utc_now:
-                    return configuration.get(FetchResponse.CONFIG)
+                    return configuration.get(FetchResponse.CONFIG), configuration.get(FetchResponse.FETCH_TIME)
         finally:
             self._lock.release_read()
 
@@ -56,7 +56,10 @@ class LazyLoadingCachePolicy(CachePolicy):
         try:
             self._lock.acquire_read()
             configuration = self._config_cache.get(self._cache_key)
-            return configuration.get(FetchResponse.CONFIG) if configuration else None
+            if configuration is None:
+                return None, None
+
+            return configuration.get(FetchResponse.CONFIG), configuration.get(FetchResponse.FETCH_TIME)
         finally:
             self._lock.release_read()
 
@@ -85,11 +88,12 @@ class LazyLoadingCachePolicy(CachePolicy):
             if configuration_response.is_fetched():
                 configuration = configuration_response.json()
                 self._config_cache.set(self._cache_key, configuration)
+                self._hooks.invoke_on_config_changed(configuration.get(FetchResponse.CONFIG))
         except HTTPError as e:
-            log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
-                      ' Received unexpected response: %s' % str(e.response))
+            self.log.error('Double-check your SDK Key at https://app.configcat.com/sdkkey.'
+                           ' Received unexpected response: %s' % str(e.response))
         except Exception:
-            log.exception(sys.exc_info()[0])
+            self.log.exception(sys.exc_info()[0])
 
     def stop(self):
         pass

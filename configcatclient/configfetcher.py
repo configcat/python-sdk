@@ -1,5 +1,4 @@
 import requests
-import logging
 import sys
 from enum import IntEnum
 from platform import python_version
@@ -16,8 +15,6 @@ BASE_URL_GLOBAL = 'https://cdn-global.configcat.com'
 BASE_URL_EU_ONLY = 'https://cdn-eu.configcat.com'
 BASE_PATH = 'configuration-files/'
 BASE_EXTENSION = '/' + CONFIG_FILE_NAME + '.json'
-
-log = logging.getLogger(sys.modules[__name__].__name__)
 
 
 class RedirectMode(IntEnum):
@@ -59,9 +56,10 @@ class FetchResponse(object):
 
 
 class ConfigFetcher(object):
-    def __init__(self, sdk_key, mode, base_url=None, proxies=None, proxy_auth=None,
+    def __init__(self, sdk_key, log, mode, base_url=None, proxies=None, proxy_auth=None,
                  connect_timeout=10, read_timeout=30, data_governance=DataGovernance.Global):
         self._sdk_key = sdk_key
+        self.log = log
         self._proxies = proxies
         self._proxy_auth = proxy_auth
         self._connect_timeout = connect_timeout
@@ -137,14 +135,14 @@ class ConfigFetcher(object):
         # Try to download again with the new url
 
         if redirect == int(RedirectMode.ShouldRedirect):
-            log.warning('Your data_governance parameter at ConfigCatClient initialization is not in sync '
-                        'with your preferences on the ConfigCat Dashboard: '
-                        'https://app.configcat.com/organization/data-governance. '
-                        'Only Organization Admins can access this preference.')
+            self.log.warning('Your data_governance parameter at ConfigCatClient initialization is not in sync '
+                             'with your preferences on the ConfigCat Dashboard: '
+                             'https://app.configcat.com/organization/data-governance. '
+                             'Only Organization Admins can access this preference.')
 
         # To prevent loops we check if we retried at least 3 times with the new base_url
         if retries >= 2:
-            log.error('Redirect loop during config.json fetch. Please contact support@configcat.com.')
+            self.log.error('Redirect loop during config.json fetch. Please contact support@configcat.com.')
             return fetch_response
 
         # Retry the config download with the new base_url

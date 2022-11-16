@@ -1,18 +1,24 @@
 from .constants import VALUE, FEATURE_FLAGS
-from .overridedatasource import OverrideDataSource
+from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
 import os
-import logging
-import sys
 
-log = logging.getLogger(sys.modules[__name__].__name__)
+
+class LocalFileFlagOverrides(FlagOverrides):
+    def __init__(self, file_path, override_behaviour):
+        self.file_path = file_path
+        self.override_behaviour = override_behaviour
+
+    def create_data_source(self, log):
+        return LocalFileDataSource(self.file_path, self.override_behaviour, log)
 
 
 class LocalFileDataSource(OverrideDataSource):
-    def __init__(self, file_path, override_behaviour):
+    def __init__(self, file_path, override_behaviour, log):
         OverrideDataSource.__init__(self, override_behaviour=override_behaviour)
+        self.log = log
         if not os.path.exists(file_path):
-            log.error('The file \'%s\' does not exists.' % file_path)
+            self.log.error('The file \'%s\' does not exists.' % file_path)
 
         self._file_path = file_path
         self._settings = None
@@ -38,7 +44,7 @@ class LocalFileDataSource(OverrideDataSource):
                     else:
                         self._settings = data
         except OSError as e:
-            log.error('Could not read the content of the file %s. %s' % (self._file_path, e))
+            self.log.error('Could not read the content of the file %s. %s' % (self._file_path, e))
         except ValueError as e:
-            log.error('Could not decode json from file %s. %s' % (self._file_path, e))
+            self.log.error('Could not decode json from file %s. %s' % (self._file_path, e))
 

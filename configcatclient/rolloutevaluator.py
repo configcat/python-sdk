@@ -1,12 +1,8 @@
 import hashlib
 import semver
-import logging
-import sys
 from .constants import *
 
 from .user import User
-
-log = logging.getLogger(sys.modules[__name__].__name__)
 
 
 class RolloutEvaluator(object):
@@ -32,40 +28,49 @@ class RolloutEvaluator(object):
         'IS NOT ONE OF (Sensitive)'
     ]
 
+    def __init__(self, log):
+        self.log = log
+
     def evaluate(self, key, user, default_value, default_variation_id, config):
+        """
+        returns value, variation_id. matched_evaluation_rule, matched_evaluation_percentage_rule, error
+        """
         feature_flags = config.get(FEATURE_FLAGS, None)
         if feature_flags is None:
-            log.error('Evaluating get_value(\'%s\') failed. Value not found for key \'%s\' '
-                      'Returning default_value: [%s].' %
-                      (key, key, str(default_value)))
-            return default_value, default_variation_id
+            error = 'Evaluating get_value(\'{}\') failed. Value not found for key \'{}\'. ' \
+                    'Returning default_value: [{}].'.format(key, key, str(default_value))
+            self.log.error(error)
+            return default_value, default_variation_id, None, None, error
 
         setting_descriptor = feature_flags.get(key, None)
 
         if setting_descriptor is None:
-            log.error('Evaluating get_value(\'%s\') failed. Value not found for key \'%s\' '
-                      'Returning default_value: [%s]. Here are the available keys: %s' %
-                      (key, key, str(default_value), ', '.join(list(feature_flags))))
-            return default_value, default_variation_id
+            error = 'Evaluating get_value(\'{}\') failed. Value not found for key \'{}\' ' \
+                    'Returning default_value: [{}]. ' \
+                    'Here are the available keys: {}'.format(key, key, str(default_value),
+                                                             ', '.join(list(feature_flags)))
+
+            self.log.error(error)
+            return default_value, default_variation_id, None, None, error
 
         rollout_rules = setting_descriptor.get(ROLLOUT_RULES, [])
         rollout_percentage_items = setting_descriptor.get(ROLLOUT_PERCENTAGE_ITEMS, [])
 
         if user is not None and type(user) is not User:
-            log.warning('Evaluating get_value(\'%s\'). User Object is not an instance of User type.' % key)
+            self.log.warning('Evaluating get_value(\'%s\'). User Object is not an instance of User type.' % key)
             user = None
 
         if user is None:
             if len(rollout_rules) > 0 or len(rollout_percentage_items) > 0:
-                log.warning('Evaluating get_value(\'%s\'). UserObject missing! '
-                            'You should pass a UserObject to get_value(), '
-                            'in order to make targeting work properly. '
-                            'Read more: https://configcat.com/docs/advanced/user-object/' %
-                            key)
+                self.log.warning('Evaluating get_value(\'%s\'). UserObject missing! '
+                                 'You should pass a UserObject to get_value(), '
+                                 'in order to make targeting work properly. '
+                                 'Read more: https://configcat.com/docs/advanced/user-object/' %
+                                 key)
             return_value = setting_descriptor.get(VALUE, default_value)
             return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-            log.info('Returning [%s]' % str(return_value))
-            return return_value, return_variation_id
+            self.log.info('Returning [%s]' % str(return_value))
+            return return_value, return_variation_id, None, None, None
 
         log_entries = ['Evaluating get_value(\'%s\').' % key, 'User object:\n%s' % str(user)]
 
@@ -89,25 +94,25 @@ class RolloutEvaluator(object):
                     if str(user_value) in [x.strip() for x in str(comparison_value).split(',')]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
-                        return value, variation_id
+                        return value, variation_id, rollout_rule, None, None
                 # IS NOT ONE OF
                 elif comparator == 1:
                     if str(user_value) not in [x.strip() for x in str(comparison_value).split(',')]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
-                        return value, variation_id
+                        return value, variation_id, rollout_rule, None, None
                 # CONTAINS
                 elif comparator == 2:
                     if str(user_value).__contains__(str(comparison_value)):
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
-                        return value, variation_id
+                        return value, variation_id, rollout_rule, None, None
                 # DOES NOT CONTAIN
                 elif comparator == 3:
                     if not str(user_value).__contains__(str(comparison_value)):
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
-                        return value, variation_id
+                        return value, variation_id, rollout_rule, None, None
 
                 # IS ONE OF, IS NOT ONE OF (Semantic version)
                 elif 4 <= comparator <= 5:
@@ -118,11 +123,11 @@ class RolloutEvaluator(object):
                         if (match and comparator == 4) or (not match and comparator == 5):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                        comparison_value, value))
-                            return value, variation_id
+                            return value, variation_id, rollout_rule, None, None
                     except ValueError as e:
                         message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                      comparison_value, str(e))
-                        log.warning(message)
+                        self.log.warning(message)
                         log_entries.append(message)
                         continue
 
@@ -133,11 +138,11 @@ class RolloutEvaluator(object):
                                         self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                        comparison_value, value))
-                            return value, variation_id
+                            return value, variation_id, rollout_rule, None, None
                     except ValueError as e:
                         message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                      comparison_value, str(e))
-                        log.warning(message)
+                        self.log.warning(message)
                         log_entries.append(message)
                         continue
                 elif 10 <= comparator <= 15:
@@ -153,11 +158,11 @@ class RolloutEvaluator(object):
                                 or (comparator == 15 and user_value_float >= comparison_value_float):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                        comparison_value, value))
-                            return value, variation_id
+                            return value, variation_id, rollout_rule, None, None
                     except Exception as e:
                         message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
                                                                      comparison_value, str(e))
-                        log.warning(message)
+                        self.log.warning(message)
                         log_entries.append(message)
                         continue
                 # IS ONE OF (Sensitive)
@@ -165,13 +170,13 @@ class RolloutEvaluator(object):
                     if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [x.strip() for x in str(comparison_value).split(',')]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
-                        return value, variation_id
+                        return value, variation_id, rollout_rule, None, None
                 # IS NOT ONE OF (Sensitive)
                 elif comparator == 17:
                     if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [x.strip() for x in str(comparison_value).split(',')]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
-                        return value, variation_id
+                        return value, variation_id, rollout_rule, None, None
 
                 log_entries.append(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
 
@@ -188,14 +193,14 @@ class RolloutEvaluator(object):
                         percentage_value = rollout_percentage_item.get(VALUE)
                         variation_id = rollout_percentage_item.get(VARIATION_ID, default_variation_id)
                         log_entries.append('Evaluating %% options. Returning %s' % percentage_value)
-                        return percentage_value, variation_id
+                        return percentage_value, variation_id, None, rollout_percentage_item, None
 
             return_value = setting_descriptor.get(VALUE, default_value)
             return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
             log_entries.append('Returning %s' % return_value)
-            return return_value, return_variation_id
+            return return_value, return_variation_id, None, None, None
         finally:
-            log.info('\n'.join(log_entries))
+            self.log.info('\n'.join(log_entries))
 
     def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => match, returning: %s' \
