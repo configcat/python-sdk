@@ -12,7 +12,7 @@ try:
 except ImportError:
     from mock import Mock
 
-from configcatclient.configfetcher import ConfigFetcher
+from configcatclient.configfetcher import ConfigFetcher, FetchResponse
 
 logging.basicConfig(level=logging.WARN)
 
@@ -29,7 +29,7 @@ class ConfigFetcherTests(unittest.TestCase):
             fetcher = ConfigFetcher(sdk_key='', mode='m')
             fetch_response = fetcher.get_configuration_json()
             self.assertTrue(fetch_response.is_fetched())
-            self.assertEqual(test_json, fetch_response.json())
+            self.assertEqual(test_json, fetch_response.json()[FetchResponse.CONFIG])
 
     def test_fetch_not_modified_etag(self):
         with mock.patch.object(requests, 'get') as request_get:
@@ -45,7 +45,8 @@ class ConfigFetcherTests(unittest.TestCase):
             request_get.return_value = response_mock
             fetch_response = fetcher.get_configuration_json()
             self.assertTrue(fetch_response.is_fetched())
-            self.assertEqual(test_json, fetch_response.json())
+            self.assertEqual(test_json, fetch_response.json()[FetchResponse.CONFIG])
+            self.assertEqual(etag, fetch_response.json()[FetchResponse.ETAG])
 
             response_not_modified_mock = Mock()
             response_not_modified_mock.json.return_value = {}
@@ -53,7 +54,7 @@ class ConfigFetcherTests(unittest.TestCase):
             response_not_modified_mock.headers = {'ETag': etag}
 
             request_get.return_value = response_not_modified_mock
-            fetch_response = fetcher.get_configuration_json()
+            fetch_response = fetcher.get_configuration_json(etag)
             self.assertFalse(fetch_response.is_fetched())
 
             args, kwargs = request_get.call_args
@@ -64,13 +65,16 @@ class ConfigFetcherTests(unittest.TestCase):
         fetcher = ConfigFetcher(sdk_key='PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ',
                                 mode='m', base_url='https://cdn-eu.configcat.com')
         fetch_response = fetcher.get_configuration_json()
+        etag = fetch_response.json()[FetchResponse.ETAG]
+        self.assertIsNotNone(etag)
+        self.assertNotEqual('', etag)
         self.assertTrue(fetch_response.is_fetched())
         self.assertFalse(fetch_response.is_not_modified())
 
-        fetch_response = fetcher.get_configuration_json()
+        fetch_response = fetcher.get_configuration_json(etag)
         self.assertFalse(fetch_response.is_fetched())
         self.assertTrue(fetch_response.is_not_modified())
 
-        fetch_response = fetcher.get_configuration_json(force_fetch=True)
+        fetch_response = fetcher.get_configuration_json('')
         self.assertTrue(fetch_response.is_fetched())
         self.assertFalse(fetch_response.is_not_modified())

@@ -1,11 +1,14 @@
 import logging
 import sys
-import datetime
 import time
 from threading import Thread, Event
 from requests import HTTPError
 from requests import Timeout
+from datetime import datetime
+from datetime import timedelta
 
+from . import utils
+from .configfetcher import FetchResponse
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
@@ -26,11 +29,11 @@ class AutoPollingCachePolicy(CachePolicy):
         self._config_cache = config_cache
         self._cache_key = cache_key
         self._poll_interval_seconds = poll_interval_seconds
-        self._max_init_wait_time_seconds = datetime.timedelta(seconds=max_init_wait_time_seconds)
+        self._max_init_wait_time_seconds = timedelta(seconds=max_init_wait_time_seconds)
         self._on_configuration_changed_callback = on_configuration_changed_callback
         self._initialized = False
         self._is_running = False
-        self._start_time = datetime.datetime.utcnow()
+        self._start_time = utils.get_utc_now()
         self._lock = ReadWriteLock()
 
         self.thread = Thread(target=self._run, args=[])
@@ -50,32 +53,40 @@ class AutoPollingCachePolicy(CachePolicy):
 
     def get(self):
         while not self._initialized \
-                and datetime.datetime.utcnow() < self._start_time + self._max_init_wait_time_seconds:
+                and utils.get_utc_now() < self._start_time + self._max_init_wait_time_seconds:
             time.sleep(.500)
 
         try:
             self._lock.acquire_read()
-            return self._config_cache.get(self._cache_key)
+            configuration = self._config_cache.get(self._cache_key)
+            return configuration.get(FetchResponse.CONFIG) if configuration else None
         finally:
             self._lock.release_read()
 
     def force_refresh(self):
         try:
             old_configuration = None
-            force_fetch = False
+            etag = ''
 
             try:
                 self._lock.acquire_read()
                 old_configuration = self._config_cache.get(self._cache_key)
-                force_fetch = not bool(old_configuration)
+                if bool(old_configuration):
+                    etag = old_configuration.get(FetchResponse.ETAG, '')
+                    # Cache isn't expired
+                    utc_now = utils.get_utc_now()
+                    if datetime.utcfromtimestamp(old_configuration.get(FetchResponse.FETCH_TIME, 0) + self._poll_interval_seconds) > utc_now:
+                        self._initialized = True
+                        return
             finally:
                 self._lock.release_read()
 
-            configuration_response = self._config_fetcher.get_configuration_json(force_fetch)
+            configuration_response = self._config_fetcher.get_configuration_json(etag)
 
             if configuration_response.is_fetched():
                 configuration = configuration_response.json()
-                if configuration != old_configuration:
+                if configuration is None or old_configuration is None or \
+                        configuration.get(FetchResponse.CONFIG) != old_configuration.get(FetchResponse.CONFIG):
                     try:
                         self._lock.acquire_write()
                         self._config_cache.set(self._cache_key, configuration)

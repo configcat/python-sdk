@@ -2,8 +2,10 @@ import requests
 import logging
 import sys
 from enum import IntEnum
+from platform import python_version
 
 from .datagovernance import DataGovernance
+from .utils import get_utc_now_seconds_since_epoch
 from .version import CONFIGCATCLIENT_VERSION
 from .constants import *
 
@@ -25,14 +27,23 @@ class RedirectMode(IntEnum):
 
 
 class FetchResponse(object):
-    def __init__(self, response):
+    ETAG = 'etag'
+    FETCH_TIME = 'fetch_time'
+    CONFIG = 'config'
+
+    def __init__(self, response, etag='', fetch_time=None):
         self._response = response
+        self._etag = etag
+        self._fetch_time = fetch_time if fetch_time is not None else get_utc_now_seconds_since_epoch()
 
     def json(self):
         """Returns the json-encoded content of a response, if any.
         :raises ValueError: If the response body does not contain valid json.
         """
-        return self._response.json()
+        json = self._response.json()
+        return {FetchResponse.ETAG: self._etag,
+                FetchResponse.FETCH_TIME: self._fetch_time,
+                FetchResponse.CONFIG: json}
 
     def is_fetched(self):
         """Gets whether a new configuration value was fetched or not.
@@ -55,9 +66,9 @@ class ConfigFetcher(object):
         self._proxy_auth = proxy_auth
         self._connect_timeout = connect_timeout
         self._read_timeout = read_timeout
-        self._etag = ''
         self._headers = {'User-Agent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
                          'X-ConfigCat-UserAgent': 'ConfigCat-Python/' + mode + '-' + CONFIGCATCLIENT_VERSION,
+                         'X-ConfigCat-PythonVersion': python_version(),
                          'Content-Type': "application/json"}
         if base_url is not None:
             self._base_url_overridden = True
@@ -75,31 +86,31 @@ class ConfigFetcher(object):
     def get_read_timeout(self):
         return self._read_timeout
 
-    def get_configuration_json(self, force_fetch=False, retries=0):
+    def get_configuration_json(self, etag='', retries=0):
         """
         :return: Returns the FetchResponse object contains configuration json Dictionary
         """
         uri = self._base_url + '/' + BASE_PATH + self._sdk_key + BASE_EXTENSION
         headers = self._headers
-        if self._etag and not force_fetch:
-            headers['If-None-Match'] = self._etag
+        if etag:
+            headers['If-None-Match'] = etag
         else:
             headers['If-None-Match'] = None
 
         response = requests.get(uri, headers=headers, timeout=(self._connect_timeout, self._read_timeout),
                                 proxies=self._proxies, auth=self._proxy_auth)
         response.raise_for_status()
-        etag = response.headers.get('Etag')
-        if etag:
-            self._etag = etag
+        response_etag = response.headers.get('Etag')
+        if response_etag is None:
+            response_etag = ''
 
-        fetch_response = FetchResponse(response)
+        fetch_response = FetchResponse(response, response_etag)
 
         # If there wasn't a config change, we return the response.
         if not fetch_response.is_fetched():
             return fetch_response
 
-        preferences = fetch_response.json().get(PREFERENCES, None)
+        preferences = fetch_response.json()[FetchResponse.CONFIG].get(PREFERENCES, None)
         if preferences is None:
             return fetch_response
 
@@ -137,4 +148,4 @@ class ConfigFetcher(object):
             return fetch_response
 
         # Retry the config download with the new base_url
-        return self.get_configuration_json(force_fetch, retries + 1)
+        return self.get_configuration_json(etag, retries + 1)

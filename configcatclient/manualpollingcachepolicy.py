@@ -2,6 +2,7 @@ import logging
 import sys
 from requests import HTTPError
 
+from .configfetcher import FetchResponse
 from .readwritelock import ReadWriteLock
 from .interfaces import CachePolicy
 
@@ -19,23 +20,24 @@ class ManualPollingCachePolicy(CachePolicy):
         try:
             self._lock.acquire_read()
 
-            config = self._config_cache.get(self._cache_key)
-            return config
+            configuration = self._config_cache.get(self._cache_key)
+            return configuration.get(FetchResponse.CONFIG) if configuration else None
         finally:
             self._lock.release_read()
 
     def force_refresh(self):
-        force_fetch = False
+        etag = ''
 
         try:
             self._lock.acquire_read()
-            config = self._config_cache.get(self._cache_key)
-            force_fetch = not bool(config)
+            old_configuration = self._config_cache.get(self._cache_key)
+            if bool(old_configuration):
+                etag = old_configuration.get(FetchResponse.ETAG, '')
         finally:
             self._lock.release_read()
 
         try:
-            configuration_response = self._config_fetcher.get_configuration_json(force_fetch)
+            configuration_response = self._config_fetcher.get_configuration_json(etag)
             if configuration_response.is_fetched():
                 configuration = configuration_response.json()
                 try:
