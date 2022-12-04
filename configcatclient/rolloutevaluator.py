@@ -31,24 +31,17 @@ class RolloutEvaluator(object):
     def __init__(self, log):
         self.log = log
 
-    def evaluate(self, key, user, default_value, default_variation_id, config):
+    def evaluate(self, key, user, default_value, default_variation_id, settings):
         """
         returns value, variation_id. matched_evaluation_rule, matched_evaluation_percentage_rule, error
         """
-        feature_flags = config.get(FEATURE_FLAGS, None)
-        if feature_flags is None:
-            error = 'Evaluating get_value(\'{}\') failed. Value not found for key \'{}\'. ' \
-                    'Returning default_value: [{}].'.format(key, key, str(default_value))
-            self.log.error(error)
-            return default_value, default_variation_id, None, None, error
-
-        setting_descriptor = feature_flags.get(key, None)
+        setting_descriptor = settings.get(key)
 
         if setting_descriptor is None:
             error = 'Evaluating get_value(\'{}\') failed. Value not found for key \'{}\' ' \
                     'Returning default_value: [{}]. ' \
                     'Here are the available keys: {}'.format(key, key, str(default_value),
-                                                             ', '.join(list(feature_flags)))
+                                                             ', '.join(list(settings)))
 
             self.log.error(error)
             return default_value, default_variation_id, None, None, error

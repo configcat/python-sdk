@@ -4,6 +4,8 @@ from qualname import qualname
 from datetime import datetime
 
 epoch_time = datetime(1970, 1, 1)
+distant_future = sys.float_info.max
+distant_past = 0
 
 
 def get_class_from_method(method):

@@ -1,3 +1,4 @@
+import logging
 from .datagovernance import DataGovernance
 from .pollingmode import PollingMode
 
@@ -27,19 +28,43 @@ class Hooks(object):
 
     def invoke_on_ready(self):
         for callback in self._on_ready_callbacks:
-            callback()
+            try:
+                callback()
+            except Exception as e:
+                error = 'Exception occurred during invoke_on_ready callback: ' + str(e)
+                self.invoke_on_error(error)
+                logging.error(error)
 
     def invoke_on_config_changed(self, config):
         for callback in self._on_config_changed_callbacks:
-            callback(config)
+            try:
+                callback(config)
+            except Exception as e:
+                error = 'Exception occurred during invoke_on_config_changed callback: ' + str(e)
+                self.invoke_on_error(error)
+                logging.error(error)
 
     def invoke_on_flag_evaluated(self, evaluation_details):
         for callback in self._on_flag_evaluated_callbacks:
-            callback(evaluation_details)
+            try:
+                callback(evaluation_details)
+            except Exception as e:
+                error = 'Exception occurred during invoke_on_flag_evaluated callback: ' + str(e)
+                self.invoke_on_error(error)
+                logging.error(error)
 
     def invoke_on_error(self, error):
         for callback in self._on_error_callbacks:
-            callback(error)
+            try:
+                callback(error)
+            except Exception as e:
+                logging.error('Exception occurred during invoke_on_error callback: ' + str(e))
+
+    def clear(self):
+        self._on_ready_callbacks.clear()
+        self._on_config_changed_callbacks.clear()
+        self._on_flag_evaluated_callbacks.clear()
+        self._on_error_callbacks.clear()
 
 
 class ConfigCatOptions(object):
@@ -58,7 +83,8 @@ class ConfigCatOptions(object):
                  flag_overrides=None,
                  data_governance=DataGovernance.Global,
                  default_user=None,
-                 hooks=None):
+                 hooks=None,
+                 offline=False):
         """
         Default: `DataGovernance.Global`. Set this parameter to be in sync with the
         Data Governance preference on the [Dashboard](https://app.configcat.com/organization/data-governance).
@@ -95,3 +121,6 @@ class ConfigCatOptions(object):
 
         # Hooks for events sent by ConfigCatClient.
         self.hooks = hooks
+
+        # Indicates whether the SDK should be initialized in offline mode or not.
+        self.offline = offline

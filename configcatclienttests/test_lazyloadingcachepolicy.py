@@ -1,11 +1,16 @@
+import json
 import logging
 import unittest
 import time
 import datetime
-from requests import HTTPError
+import requests
 
+from configcatclient import PollingMode
 from configcatclient.configcatoptions import Hooks
-from configcatclient.configfetcher import FetchResponse
+from configcatclient.configentry import ConfigEntry
+from configcatclient.configfetcher import FetchResponse, ConfigFetcher
+from configcatclient.configservice import ConfigService
+from configcatclient.constants import VALUE
 from configcatclient.utils import get_seconds_since_epoch, get_utc_now_seconds_since_epoch
 
 # Python2/Python3 support
@@ -13,10 +18,14 @@ try:
     from unittest import mock
 except ImportError:
     import mock
+try:
+    from unittest.mock import Mock, ANY
+except ImportError:
+    from mock import Mock, ANY
 
-from configcatclient.configcache import InMemoryConfigCache
-from configcatclient.lazyloadingcachepolicy import LazyLoadingCachePolicy
-from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON
+from configcatclient.configcache import InMemoryConfigCache, NullConfigCache
+from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON, SingleValueConfigCache, \
+    TEST_OBJECT
 
 logging.basicConfig()
 log = logging.getLogger()
@@ -26,203 +35,198 @@ cache_key = 'cache_key'
 class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_wrong_params(self):
         config_fetcher = ConfigFetcherMock()
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 0)
-        config, _ = cache_policy.get()
-        self.assertEqual(config, TEST_JSON)
-        cache_policy.stop()
+        config_cache = NullConfigCache()
+        cache_policy = ConfigService('', PollingMode.lazy_load(0), Hooks(), config_fetcher, log, config_cache, False)
+        config, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        cache_policy.close()
 
     def test_cache(self):
         config_fetcher = ConfigFetcherMock()
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 1)
+        config_cache = NullConfigCache()
+        cache_policy = ConfigService('', PollingMode.lazy_load(1), Hooks(), config_fetcher, log, config_cache, False)
 
         # Get value from Config Store, which indicates a config_fetcher call
-        value, _ = cache_policy.get()
-        self.assertEqual(value, TEST_JSON)
+        config, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', config.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
 
         # Get value from Config Store, which doesn't indicate a config_fetcher call (cache)
-        value, _ = cache_policy.get()
-        self.assertEqual(value, TEST_JSON)
+        config, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', config.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
 
         # Get value from Config Store, which indicates a config_fetcher call - 1 sec cache TTL
         time.sleep(1)
-        value, _ = cache_policy.get()
-        self.assertEqual(value, TEST_JSON)
+        config, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', config.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 2)
-        cache_policy.stop()
+        cache_policy.close()
 
-    def test_force_refresh(self):
+    def test_refresh(self):
         config_fetcher = ConfigFetcherMock()
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 160)
+        config_cache = NullConfigCache()
+        cache_policy = ConfigService('', PollingMode.lazy_load(160), Hooks(), config_fetcher, log, config_cache, False)
 
         # Get value from Config Store, which indicates a config_fetcher call
-        value, _ = cache_policy.get()
-        self.assertEqual(value, TEST_JSON)
+        config, fetch_time = cache_policy.get_settings()
+        self.assertEqual('testValue', config.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
 
-        with mock.patch('configcatclient.utils.get_utc_now') as mock_get_utc_now:
+        with mock.patch('configcatclient.utils.get_utc_now_seconds_since_epoch') as mock_get_utc_now_since_epoch:
             # assume 160 seconds has elapsed since the last call enough to do a 
             # force refresh
-            mock_get_utc_now.return_value = cache_policy._last_updated + datetime.timedelta(seconds=161)
+            mock_get_utc_now_since_epoch.return_value = fetch_time + 161
             # Get value from Config Store, which indicates a config_fetcher call after cache invalidation
-            cache_policy.force_refresh()
-            value, _ = cache_policy.get()
-            self.assertEqual(value, TEST_JSON)
+            cache_policy.refresh()
+            config, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', config.get('testKey').get(VALUE))
             self.assertEqual(config_fetcher.get_call_count, 2)
-            cache_policy.stop()
-
-    def test_force_refresh(self):
-        config_fetcher = ConfigFetcherMock()
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 1)
-
-        # Get value from Config Store, which indicates a config_fetcher call
-        value, _ = cache_policy.get()
-        self.assertEqual(value, TEST_JSON)
-        self.assertEqual(config_fetcher.get_call_count, 1)
-        self.assertEqual(config_fetcher.get_fetch_count, 1)
-
-        time.sleep(1.2)
-        value, _ = cache_policy.get()
-        self.assertEqual(value, TEST_JSON)
-        self.assertEqual(config_fetcher.get_call_count, 2)
-        self.assertEqual(config_fetcher.get_fetch_count, 1)
-
-        try:
-            # Clear the cache
-            cache_policy._lock.acquire_write()
-            cache_policy._config_cache.set(cache_key, None)
-        finally:
-            cache_policy._lock.release_write()
-
-        value, _ = cache_policy.get()
-        self.assertEqual(value, TEST_JSON)
-        self.assertEqual(config_fetcher.get_call_count, 3)
-        self.assertEqual(config_fetcher.get_fetch_count, 2)
-        cache_policy.stop()
-
-    def test_force_refresh_not_modified_config(self):
-        config_fetcher = mock.MagicMock()
-        successful_fetch_response = mock.MagicMock()
-        successful_fetch_response.is_fetched.return_value = True
-        successful_fetch_response.json.return_value = {FetchResponse.CONFIG: TEST_JSON}
-        not_modified_fetch_response = mock.MagicMock()
-        not_modified_fetch_response.is_fetched.return_value = False
-        config_fetcher.get_configuration_json.return_value = successful_fetch_response
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 160)
-
-        # Get value from Config Store, which indicates a config_fetcher call
-        with mock.patch('configcatclient.utils.get_utc_now') as mock_get_utc_now:
-            now = datetime.datetime(2020, 5, 20, 0, 0, 0)
-            mock_get_utc_now.return_value = now
-            successful_fetch_response.json.return_value[FetchResponse.FETCH_TIME] = get_seconds_since_epoch(now)
-            value, _ = cache_policy.get()
-            self.assertEqual(mock_get_utc_now.call_count, 2)
-            self.assertEqual(value, TEST_JSON)
-            self.assertEqual(successful_fetch_response.json.call_count, 1)
-            config_fetcher.get_configuration_json.return_value = not_modified_fetch_response
-            new_time = datetime.datetime(2020, 5, 20, 0, 0, 0) + datetime.timedelta(seconds=161)
-            mock_get_utc_now.return_value = new_time
-            cache_policy.force_refresh()
-            self.assertEqual(config_fetcher.get_configuration_json.call_count, 2)
-            # this indicates that is_fetched() was correctly called and
-            # the setting of the new last updated didn't occur
-            self.assertEqual(not_modified_fetch_response.json.call_count, 0)
-        cache_policy.stop()
+            cache_policy.close()
 
     def test_get_skips_hitting_api_after_update_from_different_thread(self):
         config_fetcher = mock.MagicMock()
-        successful_fetch_response = mock.MagicMock()
-        successful_fetch_response.is_fetched.return_value = True
-        successful_fetch_response.json.return_value = {FetchResponse.CONFIG: TEST_JSON}
-        config_fetcher.get_configuration_json.return_value = successful_fetch_response
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 160)
+        successful_fetch_response = FetchResponse.success(ConfigEntry(json.loads(TEST_JSON)))
+        config_fetcher.get_configuration.return_value = successful_fetch_response
+        config_cache = NullConfigCache()
+        cache_policy = ConfigService('', PollingMode.lazy_load(160), Hooks(), config_fetcher, log, config_cache, False)
 
         # Get value from Config Store, which indicates a config_fetcher call
         with mock.patch('configcatclient.utils.get_utc_now') as mock_get_utc_now:
             now = datetime.datetime(2020, 5, 20, 0, 0, 0)
             mock_get_utc_now.return_value = now
-            successful_fetch_response.json.return_value[FetchResponse.FETCH_TIME] = get_seconds_since_epoch(now)
-            cache_policy.get()
-            self.assertEqual(config_fetcher.get_configuration_json.call_count, 1)
+            successful_fetch_response.entry.fetch_time = get_seconds_since_epoch(now)
+            cache_policy.get_settings()
+            self.assertEqual(config_fetcher.get_configuration.call_count, 1)
             # when the cache timeout is still within the limit skip any network
             # requests, as this could be that multiple threads have attempted
             # to acquire the lock at the same time, but only really one needs to update
-            successful_fetch_response.json.return_value[FetchResponse.FETCH_TIME] = get_seconds_since_epoch(
-                now - datetime.timedelta(seconds=159))
-            cache_policy.get()
-            self.assertEqual(config_fetcher.get_configuration_json.call_count, 1)
-            successful_fetch_response.json.return_value[FetchResponse.FETCH_TIME] = get_seconds_since_epoch(
-                now - datetime.timedelta(seconds=161))
-            cache_policy.get()
-            self.assertEqual(config_fetcher.get_configuration_json.call_count, 2)
+            successful_fetch_response.entry.fetch_time = get_seconds_since_epoch(now - datetime.timedelta(seconds=159))
+            cache_policy.get_settings()
+            self.assertEqual(config_fetcher.get_configuration.call_count, 1)
+            successful_fetch_response.entry.fetch_time = get_seconds_since_epoch(now - datetime.timedelta(seconds=161))
+            cache_policy.get_settings()
+            self.assertEqual(config_fetcher.get_configuration.call_count, 2)
 
-    def test_http_error(self):
-        config_fetcher = ConfigFetcherWithErrorMock(HTTPError("error"))
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 160)
+    def test_error(self):
+        config_fetcher = ConfigFetcherWithErrorMock('error')
+        config_cache = NullConfigCache()
+        cache_policy = ConfigService('', PollingMode.lazy_load(160), Hooks(), config_fetcher, log, config_cache, False)
 
         # Get value from Config Store, which indicates a config_fetcher call
-        value, _ = cache_policy.get()
+        value, _ = cache_policy.get_settings()
         self.assertEqual(value, None)
-        cache_policy.stop()
-
-    def test_exception(self):
-        config_fetcher = ConfigFetcherWithErrorMock(Exception("error"))
-        config_cache = InMemoryConfigCache()
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 160)
-
-        # Get value from Config Store, which indicates a config_fetcher call
-        value, _ = cache_policy.get()
-        self.assertEqual(value, None)
-        cache_policy.stop()
+        cache_policy.close()
 
     def test_return_cached_config_when_cache_is_not_expired(self):
         config_fetcher = ConfigFetcherMock()
-        config_cache = InMemoryConfigCache()
-        config_cache.set(cache_key, {
-            FetchResponse.CONFIG: TEST_JSON,
-            FetchResponse.FETCH_TIME: get_utc_now_seconds_since_epoch()
-        })
+        config_cache = SingleValueConfigCache(json.dumps({
+            ConfigEntry.CONFIG: json.loads(TEST_JSON),
+            ConfigEntry.ETAG: 'test-etag',
+            ConfigEntry.FETCH_TIME: get_utc_now_seconds_since_epoch()
+        }))
 
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), 1)
+        cache_policy = ConfigService('', PollingMode.lazy_load(1), Hooks(), config_fetcher, log, config_cache, False)
 
-        value, _ = cache_policy.get()
+        config, _ = cache_policy.get_settings()
 
-        self.assertEqual(value, TEST_JSON)
+        self.assertEqual('testValue', config.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 0)
         self.assertEqual(config_fetcher.get_fetch_count, 0)
 
         time.sleep(1)
 
-        value, _ = cache_policy.get()
+        config, _ = cache_policy.get_settings()
 
-        self.assertEqual(value, TEST_JSON)
+        self.assertEqual('testValue', config.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(config_fetcher.get_fetch_count, 1)
 
     def test_fetch_config_when_cache_is_expired(self):
         config_fetcher = ConfigFetcherMock()
-        config_cache = InMemoryConfigCache()
         cache_time_to_live_seconds = 1
-        config_cache.set(cache_key, {
-            FetchResponse.CONFIG: TEST_JSON,
-            FetchResponse.FETCH_TIME: get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds
-        })
+        config_cache = SingleValueConfigCache(json.dumps({
+            ConfigEntry.CONFIG: json.loads(TEST_JSON),
+            ConfigEntry.ETAG: 'test-etag',
+            ConfigEntry.FETCH_TIME: get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds
+        }))
 
-        cache_policy = LazyLoadingCachePolicy(config_fetcher, config_cache, cache_key, log, Hooks(), cache_time_to_live_seconds)
+        cache_policy = ConfigService('', PollingMode.lazy_load(cache_time_to_live_seconds), Hooks(), config_fetcher, log, config_cache, False)
 
-        value, _ = cache_policy.get()
+        config, _ = cache_policy.get_settings()
 
-        self.assertEqual(value, TEST_JSON)
+        self.assertEqual('testValue', config.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(config_fetcher.get_fetch_count, 1)
+
+    def test_online_offline(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            polling_mode = PollingMode.lazy_load(cache_refresh_interval_seconds=1)
+            config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
+            cache_policy = ConfigService('', polling_mode,
+                                         Hooks(), config_fetcher, log, NullConfigCache(), False)
+
+            self.assertFalse(cache_policy.is_offline())
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+            self.assertEqual(1, request_get.call_count)
+
+            cache_policy.set_offline()
+            self.assertTrue(cache_policy.is_offline())
+
+            time.sleep(1.5)
+
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+            self.assertEqual(1, request_get.call_count)
+
+            cache_policy.set_online()
+            self.assertFalse(cache_policy.is_offline())
+
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+            self.assertEqual(2, request_get.call_count)
+
+            cache_policy.close()
+
+    def test_init_offline(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            polling_mode = PollingMode.lazy_load(cache_refresh_interval_seconds=1)
+            config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
+            cache_policy = ConfigService('', polling_mode,
+                                         Hooks(), config_fetcher, log, NullConfigCache(), True)
+
+            self.assertTrue(cache_policy.is_offline())
+            settings, _ = cache_policy.get_settings()
+            self.assertIsNone(settings)
+            self.assertEqual(0, request_get.call_count)
+
+            time.sleep(1.5)
+
+            settings, _ = cache_policy.get_settings()
+            self.assertIsNone(settings)
+            self.assertEqual(0, request_get.call_count)
+
+            cache_policy.set_online()
+            self.assertFalse(cache_policy.is_offline())
+
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+            self.assertEqual(1, request_get.call_count)
+
+            cache_policy.close()
 
 
 if __name__ == '__main__':

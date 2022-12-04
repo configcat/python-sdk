@@ -28,7 +28,7 @@ class HooksTests(unittest.TestCase):
 
         self.assertEqual('testValue', value)
         self.assertTrue(hook_callbacks.is_ready)
-        # self.assertTrue(hook_callbacks.changed_config)
+        self.assertTrue(hook_callbacks.changed_config)
         self.assertTrue(hook_callbacks.evaluation_details)
         self.assertIsNone(hook_callbacks.error)
 

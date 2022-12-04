@@ -15,10 +15,9 @@ class LocalDictionaryDataSource(OverrideDataSource):
     def __init__(self, source, override_behaviour, log):
         OverrideDataSource.__init__(self, override_behaviour=override_behaviour)
         self.log = log
-        dictionary = {}
+        self._settings = {}
         for key, value in source.items():
-            dictionary[key] = {VALUE: value}
-        self._settings = {FEATURE_FLAGS: dictionary}
+            self._settings[key] = {VALUE: value}
 
     def get_overrides(self):
         return self._settings

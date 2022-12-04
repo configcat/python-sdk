@@ -1,15 +1,14 @@
+from . import utils
+from .configservice import ConfigService
 from .constants import FEATURE_FLAGS, ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS, CONFIG_FILE_NAME
 from .evaluationdetails import EvaluationDetails
 from .interfaces import ConfigCatClientException
-from .lazyloadingcachepolicy import LazyLoadingCachePolicy
 from .logger import Logger
-from .manualpollingcachepolicy import ManualPollingCachePolicy
-from .autopollingcachepolicy import AutoPollingCachePolicy
 from .configfetcher import ConfigFetcher
-from .configcache import InMemoryConfigCache
+from .configcache import NullConfigCache
 from .configcatoptions import ConfigCatOptions, Hooks
 from .overridedatasource import OverrideBehaviour
-from .pollingmode import AutoPollingMode, LazyLoadingMode
+from .refreshresult import RefreshResult
 from .rolloutevaluator import RolloutEvaluator
 import hashlib
 from collections import namedtuple
@@ -68,11 +67,11 @@ class ConfigCatClient(object):
         else:
             self._override_data_source = None
 
-        self._config_cache = options.config_cache if options.config_cache is not None else InMemoryConfigCache()
+        self._config_cache = options.config_cache if options.config_cache is not None else NullConfigCache()
 
         if self._override_data_source and self._override_data_source.get_behaviour() == OverrideBehaviour.LocalOnly:
             self._config_fetcher = None
-            self._cache_policy = None
+            self._config_service = None
         else:
             self._config_fetcher = ConfigFetcher(self._sdk_key,
                                                  self.log,
@@ -81,23 +80,17 @@ class ConfigCatClient(object):
                                                  options.proxies, options.proxy_auth,
                                                  options.connect_timeout_seconds, options.read_timeout_seconds,
                                                  options.data_governance)
-            if isinstance(options.polling_mode, AutoPollingMode):
-                self._cache_policy = AutoPollingCachePolicy(self._config_fetcher, self._config_cache,
-                                                            self.__get_cache_key(), self.log, self._hooks,
-                                                            options.polling_mode.auto_poll_interval_seconds,
-                                                            options.polling_mode.max_init_wait_time_seconds,
-                                                            options.polling_mode.on_config_changed)
-            elif isinstance(options.polling_mode, LazyLoadingMode):
-                self._cache_policy = LazyLoadingCachePolicy(self._config_fetcher, self._config_cache,
-                                                            self.__get_cache_key(), self.log, self._hooks,
-                                                            options.polling_mode.cache_refresh_interval_seconds)
-            else:
-                self._cache_policy = ManualPollingCachePolicy(self._config_fetcher, self._config_cache,
-                                                              self.__get_cache_key(), self.log, self._hooks)
+            self._config_service = ConfigService(self._sdk_key,
+                                                 options.polling_mode,
+                                                 self._hooks,
+                                                 self._config_fetcher,
+                                                 self.log,
+                                                 self._config_cache,
+                                                 options.offline)
 
     def get_value(self, key, default_value, user=None):
-        config, fetch_time = self.__get_settings()
-        if config is None:
+        settings, fetch_time = self.__get_settings()
+        if settings is None:
             message = 'Evaluating get_value(\'{}\') failed. Cache is empty. ' \
                       'Returning default_value in your get_value call: [{}].'.format(key, str(default_value))
             self.log.error(message)
@@ -108,14 +101,14 @@ class ConfigCatClient(object):
                                   user=user,
                                   default_value=default_value,
                                   default_variation_id=None,
-                                  config=config,
+                                  settings=settings,
                                   fetch_time=fetch_time)
 
         return details.value
 
     def get_value_details(self, key, default_value, user=None):
-        config, fetch_time = self.__get_settings()
-        if config is None:
+        settings, fetch_time = self.__get_settings()
+        if settings is None:
             message = 'Evaluating get_value(\'{}\') failed. Cache is empty. ' \
                       'Returning default_value in your get_value call: [{}].'.format(key, str(default_value))
             self.log.error(message)
@@ -127,25 +120,21 @@ class ConfigCatClient(object):
                                   user=user,
                                   default_value=default_value,
                                   default_variation_id=None,
-                                  config=config,
+                                  settings=settings,
                                   fetch_time=fetch_time)
 
         return details
 
     def get_all_keys(self):
-        config, _ = self.__get_settings()
-        if config is None:
+        settings, _ = self.__get_settings()
+        if settings is None:
             return []
 
-        feature_flags = config.get(FEATURE_FLAGS, None)
-        if feature_flags is None:
-            return []
-
-        return list(feature_flags)
+        return list(settings)
 
     def get_variation_id(self, key, default_variation_id, user=None):
-        config, fetch_time = self.__get_settings()
-        if config is None:
+        settings, fetch_time = self.__get_settings()
+        if settings is None:
             message = 'Evaluating get_variation_id(\'{}\') failed. Cache is empty. ' \
                       'Returning default_variation_id in your get_variation_id call: ' \
                       '[{}].'.format(key, str(default_variation_id))
@@ -157,7 +146,7 @@ class ConfigCatClient(object):
                                   user=user,
                                   default_value=None,
                                   default_variation_id=default_variation_id,
-                                  config=config,
+                                  settings=settings,
                                   fetch_time=fetch_time)
         return details.variation_id
 
@@ -172,19 +161,13 @@ class ConfigCatClient(object):
         return variation_ids
 
     def get_key_and_value(self, variation_id):
-        config, _ = self.__get_settings()
-        if config is None:
+        settings, _ = self.__get_settings()
+        if settings is None:
             self.log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
                              'Returning None.' % variation_id)
             return None
 
-        feature_flags = config.get(FEATURE_FLAGS, None)
-        if feature_flags is None:
-            self.log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
-                             'Returning None.' % variation_id)
-            return None
-
-        for key, value in list(feature_flags.items()):
+        for key, value in list(settings.items()):
             if variation_id == value.get(VARIATION_ID):
                 return KeyValue(key, value[VALUE])
 
@@ -212,8 +195,11 @@ class ConfigCatClient(object):
         return all_values
 
     def force_refresh(self):
-        if self._cache_policy:
-            self._cache_policy.force_refresh()
+        if self._config_service:
+            return self._config_service.refresh()
+
+        return RefreshResult(False,
+                             'The SDK uses the LocalOnly flag override behavior which prevents making HTTP requests.')
 
     def set_default_user(self, user):
         self._default_user = user
@@ -221,9 +207,31 @@ class ConfigCatClient(object):
     def clear_default_user(self):
         self._default_user = None
 
+    def set_online(self):
+        # Configures the SDK to allow HTTP requests.
+        if self._config_service:
+            self._config_service.set_online()
+
+        self.log.debug('Switched to ONLINE mode.')
+
+    def set_offline(self):
+        # Configures the SDK to not initiate HTTP requests and work only from its cache.
+        if self._config_service:
+            self._config_service.set_offline()
+
+        self.log.debug('Switched to OFFLINE mode.')
+
+    def is_offline(self):
+        # True when the SDK is configured not to initiate HTTP requests, otherwise false.
+        if self._config_service:
+            return self._config_service.is_offline()
+
+        return True
+
     def close_resources(self):
-        if self._cache_policy:
-            self._cache_policy.stop()
+        if self._config_service:
+            self._config_service.close()
+        self._hooks.clear()
 
     def close(self):
         self.close_resources()
@@ -234,35 +242,42 @@ class ConfigCatClient(object):
             behaviour = self._override_data_source.get_behaviour()
 
             if behaviour == OverrideBehaviour.LocalOnly:
-                return self._override_data_source.get_overrides(), None
+                return self._override_data_source.get_overrides(), utils.distant_past
             elif behaviour == OverrideBehaviour.RemoteOverLocal:
-                remote_settings, fetch_time = self._cache_policy.get()
+                remote_settings, fetch_time = self._config_service.get_settings()
                 local_settings = self._override_data_source.get_overrides()
+                if not remote_settings:
+                    remote_settings = {}
+                if not local_settings:
+                    local_settings = {}
                 result = copy.deepcopy(local_settings)
-                if FEATURE_FLAGS in remote_settings and FEATURE_FLAGS in local_settings:
-                    result[FEATURE_FLAGS].update(remote_settings[FEATURE_FLAGS])
+                if result:
+                    result.update(remote_settings)
                 return result, fetch_time
             elif behaviour == OverrideBehaviour.LocalOverRemote:
-                remote_settings, fetch_time = self._cache_policy.get()
+                remote_settings, fetch_time = self._config_service.get_settings()
                 local_settings = self._override_data_source.get_overrides()
+                if not remote_settings:
+                    remote_settings = {}
+                if not local_settings:
+                    local_settings = {}
                 result = copy.deepcopy(remote_settings)
-                if FEATURE_FLAGS in remote_settings and FEATURE_FLAGS in local_settings:
-                    result[FEATURE_FLAGS].update(local_settings[FEATURE_FLAGS])
+                result.update(local_settings)
                 return result, fetch_time
 
-        return self._cache_policy.get()
+        return self._config_service.get_settings()
 
     def __get_cache_key(self):
         return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8')).hexdigest()
 
-    def __evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
+    def __evaluate(self, key, user, default_value, default_variation_id, settings, fetch_time):
         user = user if user is not None else self._default_user
         value, variation_id, rule, percentage_rule, error = self._rollout_evaluator.evaluate(
             key=key,
             user=user,
             default_value=default_value,
             default_variation_id=default_variation_id,
-            config=config)
+            settings=settings)
 
         details = EvaluationDetails(key=key,
                                     value=value,

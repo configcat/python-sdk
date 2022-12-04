@@ -135,8 +135,8 @@ class DataGovernanceTests(unittest.TestCase):
         fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global)
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 1)
@@ -144,8 +144,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertNotIn(call_to_eu, mock_get.call_args_list)
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -162,8 +162,8 @@ class DataGovernanceTests(unittest.TestCase):
         fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.EuOnly)
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 1)
@@ -171,8 +171,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertNotIn(call_to_global, mock_get.call_args_list)
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -189,8 +189,8 @@ class DataGovernanceTests(unittest.TestCase):
         fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global)
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -198,8 +198,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertEqual(call_to_eu, mock_get.call_args_list[1])
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 3)
@@ -217,16 +217,16 @@ class DataGovernanceTests(unittest.TestCase):
         fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.EuOnly)
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 1)
         self.assertEqual(call_to_eu, mock_get.call_args_list[0])
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -244,8 +244,8 @@ class DataGovernanceTests(unittest.TestCase):
                                 base_url='https://custom.configcat.com')
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 1)
@@ -254,8 +254,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertNotIn(call_to_global, mock_get.call_args_list)
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -275,8 +275,8 @@ class DataGovernanceTests(unittest.TestCase):
                                 base_url='https://custom.configcat.com')
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 1)
@@ -285,8 +285,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertNotIn(call_to_global, mock_get.call_args_list)
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -305,8 +305,8 @@ class DataGovernanceTests(unittest.TestCase):
         fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global)
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -315,8 +315,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertNotIn(call_to_eu, mock_get.call_args_list)
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 3)
@@ -335,8 +335,8 @@ class DataGovernanceTests(unittest.TestCase):
         fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.EuOnly)
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -345,8 +345,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertNotIn(call_to_global, mock_get.call_args_list)
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 3)
@@ -367,8 +367,8 @@ class DataGovernanceTests(unittest.TestCase):
                                 base_url='https://custom.configcat.com')
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 2)
@@ -378,8 +378,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertNotIn(call_to_global, mock_get.call_args_list)
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 3)
@@ -402,8 +402,8 @@ class DataGovernanceTests(unittest.TestCase):
         fetcher = ConfigFetcher(sdk_key='', log=log, mode='m', data_governance=DataGovernance.Global)
 
         # First fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 3)
@@ -412,8 +412,8 @@ class DataGovernanceTests(unittest.TestCase):
         self.assertEqual(call_to_global, mock_get.call_args_list[2])
 
         # Second fetch
-        fetch_response = fetcher.get_configuration_json()
-        config = fetch_response.json()[FetchResponse.CONFIG]
+        fetch_response = fetcher.get_configuration()
+        config = fetch_response.entry.config
         self.assertTrue(fetch_response.is_fetched())
         self.assertEqual(test_json, config.get('f'))
         self.assertEqual(len(mock_get.call_args_list), 6)
