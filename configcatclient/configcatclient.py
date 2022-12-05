@@ -42,7 +42,7 @@ class ConfigCatClient(object):
     def close_all(cls):
         # Closes all ConfigCatClient instances.
         for key, value in list(cls._instances.items()):
-            value.close_resources()
+            value.__close_resources()
         cls._instances.clear()
 
     def __init__(self,
@@ -228,14 +228,17 @@ class ConfigCatClient(object):
 
         return True
 
-    def close_resources(self):
+    def get_hooks(self):
+        return self._hooks
+
+    def close(self):
+        self.__close_resources()
+        ConfigCatClient._instances.pop(self._sdk_key)
+
+    def __close_resources(self):
         if self._config_service:
             self._config_service.close()
         self._hooks.clear()
-
-    def close(self):
-        self.close_resources()
-        ConfigCatClient._instances.pop(self._sdk_key)
 
     def __get_settings(self):
         if self._override_data_source:

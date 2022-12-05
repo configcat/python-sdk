@@ -8,11 +8,12 @@ class Hooks(object):
     Events fired by [ConfigCatClient].
     """
 
-    def __init__(self):
-        self._on_ready_callbacks = []
-        self._on_config_changed_callbacks = []
-        self._on_flag_evaluated_callbacks = []
-        self._on_error_callbacks = []
+    def __init__(self, on_ready_callback=None, on_config_changed_callback=None,
+                 on_flag_evaluated_callback=None, on_error_callback=None):
+        self._on_ready_callbacks = [on_ready_callback] if on_ready_callback else []
+        self._on_config_changed_callbacks = [on_config_changed_callback] if on_config_changed_callback else []
+        self._on_flag_evaluated_callbacks = [on_flag_evaluated_callback] if on_flag_evaluated_callback else []
+        self._on_error_callbacks = [on_error_callback] if on_error_callback else []
 
     def add_on_ready(self, callback):
         self._on_ready_callbacks.append(callback)
