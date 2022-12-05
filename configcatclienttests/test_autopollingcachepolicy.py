@@ -38,8 +38,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                                                max_init_wait_time_seconds=-1),
                                      Hooks(), config_fetcher, log, config_cache, False)
         time.sleep(2)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         cache_policy.close()
 
     def test_init_wait_time_ok(self):
@@ -48,8 +48,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=60,
                                                                max_init_wait_time_seconds=5),
                                      Hooks(), config_fetcher, log, config_cache, False)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         cache_policy.close()
 
     def test_init_wait_time_timeout(self):
@@ -59,10 +59,10 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=60,
                                                                max_init_wait_time_seconds=1),
                                      Hooks(), config_fetcher, log, config_cache, False)
-        config, _ = cache_policy.get_settings()
+        settings, _ = cache_policy.get_settings()
         end_time = time.time()
         elapsed_time = end_time - start_time
-        self.assertEqual(config, None)
+        self.assertEqual(settings, None)
         self.assertTrue(elapsed_time > 1)
         self.assertTrue(elapsed_time < 2)
         cache_policy.close()
@@ -75,8 +75,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                      Hooks(), config_fetcher, log, config_cache, False)
         time.sleep(3)
         self.assertEqual(config_fetcher.get_call_count, 2)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         cache_policy.close()
 
     def test_updated_values(self):
@@ -85,11 +85,11 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=5),
                                      Hooks(), config_fetcher, log, config_cache, False)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual(1, config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual(1, settings.get('testKey').get(VALUE))
         time.sleep(2.200)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual(2, config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual(2, settings.get('testKey').get(VALUE))
         cache_policy.close()
 
     def test_error(self):
@@ -100,8 +100,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                      Hooks(), config_fetcher, log, config_cache, False)
 
         # Get value from Config Store, which indicates a config_fetcher call
-        value, _ = cache_policy.get_settings()
-        self.assertEqual(value, None)
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual(settings, None)
         cache_policy.close()
 
     def test_close(self):
@@ -111,11 +111,11 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                                                max_init_wait_time_seconds=5),
                                      Hooks(), config_fetcher, log, config_cache, False)
         cache_policy.close()
-        config, _ = cache_policy.get_settings()
-        self.assertEqual(1, config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual(1, settings.get('testKey').get(VALUE))
         time.sleep(2.200)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual(1, config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual(1, settings.get('testKey').get(VALUE))
         cache_policy.close()
 
     def test_rerun(self):
@@ -172,6 +172,35 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         self.assertEqual(hook_callbacks.callback_exception_call_count, 2)
         cache_policy.close()
 
+    def test_with_failed_refresh(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            polling_mode = PollingMode.auto_poll(auto_poll_interval_seconds=1)
+            config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
+            cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, NullConfigCache(), False)
+
+            # first call
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+
+            response_mock.json.return_value = {}
+            response_mock.status_code = 500
+            response_mock.headers = {}
+
+            # wait for cache invalidation
+            time.sleep(1.5)
+
+            # previous value returned because of the refresh failure
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+
+            cache_policy.close()
+
     def test_return_cached_config_when_cache_is_not_expired(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = SingleValueConfigCache(json.dumps({
@@ -187,13 +216,13 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                                                max_init_wait_time_seconds),
                                      Hooks(), config_fetcher, log, config_cache, False)
 
-        config, _ = cache_policy.get_settings()
+        settings, _ = cache_policy.get_settings()
         elapsed_time = time.time() - start_time
 
         # max init wait time should be ignored when cache is not expired
         self.assertLessEqual(elapsed_time, max_init_wait_time_seconds)
 
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 0)
         self.assertEqual(config_fetcher.get_fetch_count, 0)
 
@@ -216,9 +245,9 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                                                max_init_wait_time_seconds),
                                      Hooks(), config_fetcher, log, config_cache, False)
 
-        config, _ = cache_policy.get_settings()
+        settings, _ = cache_policy.get_settings()
 
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(config_fetcher.get_fetch_count, 1)
         cache_policy.close()
@@ -238,13 +267,13 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                                                max_init_wait_time_seconds),
                                      Hooks(), config_fetcher, log, config_cache, False)
 
-        config, _ = cache_policy.get_settings()
+        settings, _ = cache_policy.get_settings()
         elapsed_time = time.time() - start_time
 
         self.assertGreater(elapsed_time, max_init_wait_time_seconds)
         self.assertLess(elapsed_time, max_init_wait_time_seconds + 1)
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
-        self.assertEqual('testValue2', config.get('testKey2').get(VALUE))
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
+        self.assertEqual('testValue2', settings.get('testKey2').get(VALUE))
         cache_policy.close()
 
     def test_online_offline(self):

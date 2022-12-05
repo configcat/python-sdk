@@ -37,29 +37,29 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherMock()
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.lazy_load(0), Hooks(), config_fetcher, log, config_cache, False)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         cache_policy.close()
 
-    def test_cache(self):
+    def test_get(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.lazy_load(1), Hooks(), config_fetcher, log, config_cache, False)
 
         # Get value from Config Store, which indicates a config_fetcher call
-        config, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
 
         # Get value from Config Store, which doesn't indicate a config_fetcher call (cache)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
 
         # Get value from Config Store, which indicates a config_fetcher call - 1 sec cache TTL
         time.sleep(1)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 2)
         cache_policy.close()
 
@@ -69,8 +69,8 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.lazy_load(160), Hooks(), config_fetcher, log, config_cache, False)
 
         # Get value from Config Store, which indicates a config_fetcher call
-        config, fetch_time = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, fetch_time = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
 
         with mock.patch('configcatclient.utils.get_utc_now_seconds_since_epoch') as mock_get_utc_now_since_epoch:
@@ -79,8 +79,8 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
             mock_get_utc_now_since_epoch.return_value = fetch_time + 161
             # Get value from Config Store, which indicates a config_fetcher call after cache invalidation
             cache_policy.refresh()
-            config, _ = cache_policy.get_settings()
-            self.assertEqual('testValue', config.get('testKey').get(VALUE))
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testKey').get(VALUE))
             self.assertEqual(config_fetcher.get_call_count, 2)
             cache_policy.close()
 
@@ -114,8 +114,8 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.lazy_load(160), Hooks(), config_fetcher, log, config_cache, False)
 
         # Get value from Config Store, which indicates a config_fetcher call
-        value, _ = cache_policy.get_settings()
-        self.assertEqual(value, None)
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual(settings, None)
         cache_policy.close()
 
     def test_return_cached_config_when_cache_is_not_expired(self):
@@ -128,17 +128,17 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
 
         cache_policy = ConfigService('', PollingMode.lazy_load(1), Hooks(), config_fetcher, log, config_cache, False)
 
-        config, _ = cache_policy.get_settings()
+        settings, _ = cache_policy.get_settings()
 
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 0)
         self.assertEqual(config_fetcher.get_fetch_count, 0)
 
         time.sleep(1)
 
-        config, _ = cache_policy.get_settings()
+        settings, _ = cache_policy.get_settings()
 
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(config_fetcher.get_fetch_count, 1)
 
@@ -153,9 +153,9 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
 
         cache_policy = ConfigService('', PollingMode.lazy_load(cache_time_to_live_seconds), Hooks(), config_fetcher, log, config_cache, False)
 
-        config, _ = cache_policy.get_settings()
+        settings, _ = cache_policy.get_settings()
 
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(config_fetcher.get_fetch_count, 1)
 

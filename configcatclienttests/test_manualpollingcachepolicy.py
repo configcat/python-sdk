@@ -1,14 +1,15 @@
+import json
 import logging
 import unittest
 import requests
 
 from configcatclient import PollingMode
-from configcatclient.configcache import NullConfigCache
+from configcatclient.configcache import NullConfigCache, InMemoryConfigCache
 from configcatclient.configcatoptions import Hooks
 from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE
-from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT
+from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT, TEST_JSON_FORMAT
 
 # Python2/Python3 support
 try:
@@ -30,8 +31,8 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherMock()
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.manual_poll(), Hooks(), config_fetcher, log, config_cache, False)
-        config, _ = cache_policy.get_settings()
-        self.assertEqual(config, None)
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual(settings, None)
         self.assertEqual(config_fetcher.get_call_count, 0)
         cache_policy.close()
 
@@ -40,8 +41,8 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.manual_poll(), Hooks(), config_fetcher, log, config_cache, False)
         cache_policy.refresh()
-        config, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', config.get('testKey').get(VALUE))
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         cache_policy.close()
 
@@ -50,9 +51,64 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.manual_poll(), Hooks(), config_fetcher, log, config_cache, False)
         cache_policy.refresh()
-        config, _ = cache_policy.get_settings()
-        self.assertEqual(config, None)
+        settings, _ = cache_policy.get_settings()
+        self.assertEqual(settings, None)
         cache_policy.close()
+
+    def test_with_failed_refresh(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            polling_mode = PollingMode.manual_poll()
+            config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
+            cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, NullConfigCache(), False)
+
+            cache_policy.refresh()
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+
+            response_mock.json.return_value = {}
+            response_mock.status_code = 500
+            response_mock.headers = {}
+
+            cache_policy.refresh()
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+
+            cache_policy.close()
+
+    def test_cache(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='"test"'))
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            polling_mode = PollingMode.manual_poll()
+            config_cache = InMemoryConfigCache()
+            config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
+            cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, config_cache, False)
+
+            cache_policy.refresh()
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('test', settings.get('testKey').get(VALUE))
+            self.assertEqual(1, request_get.call_count)
+            self.assertEqual(1, len(config_cache._value))
+
+            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='"test2"'))
+
+            cache_policy.refresh()
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('test2', settings.get('testKey').get(VALUE))
+            self.assertEqual(2, request_get.call_count)
+            self.assertEqual(1, len(config_cache._value))
+
+            cache_policy.close()
 
     def test_online_offline(self):
         with mock.patch.object(requests, 'get') as request_get:
@@ -64,8 +120,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
 
             polling_mode = PollingMode.manual_poll()
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
-            cache_policy = ConfigService('', polling_mode,
-                                         Hooks(), config_fetcher, log, NullConfigCache(), False)
+            cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, NullConfigCache(), False)
 
             self.assertFalse(cache_policy.is_offline())
             self.assertTrue(cache_policy.refresh().is_success)
@@ -97,8 +152,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
 
             polling_mode = PollingMode.manual_poll()
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
-            cache_policy = ConfigService('', polling_mode,
-                                         Hooks(), config_fetcher, log, NullConfigCache(), True)
+            cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, NullConfigCache(), True)
 
             self.assertTrue(cache_policy.is_offline())
             self.assertFalse(cache_policy.refresh().is_success)
