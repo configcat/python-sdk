@@ -58,7 +58,7 @@ class ConfigService(object):
 
     def refresh(self):
         """
-        :return: Returns the RefreshResult object
+        :return: RefreshResult object
         """
         _, error = self._fetch_if_older(utils.distant_future)
         return RefreshResult(is_success=error is None, error=error)
@@ -84,12 +84,9 @@ class ConfigService(object):
 
             self._is_offline = True
             if isinstance(self._polling_mode, AutoPollingMode):
-                start = time.perf_counter()
                 self._stopped.set()
                 self._thread.join()
-                end = time.perf_counter()
-                ms = (end - start)
-                print(f"Elapsed {ms:.03f} secs.")
+
             self.log.debug('Switched to OFFLINE mode.')
         finally:
             self._lock.release()
@@ -146,7 +143,11 @@ class ConfigService(object):
                 self._response_future = self._executor.submit(self._config_fetcher.get_configuration,
                                                               self._cached_entry.etag)
 
+            self._lock.release()
+
             response = self._response_future.result()
+
+            self._lock.acquire()
 
             if response.is_fetched():
                 self._cached_entry = response.entry
