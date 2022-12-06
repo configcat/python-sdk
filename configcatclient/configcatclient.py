@@ -23,6 +23,13 @@ class ConfigCatClient(object):
 
     @classmethod
     def get(cls, sdk_key, options=None):
+        """
+        Creates a new or gets an already existing `ConfigCatClient` for the given `sdk_key`.
+
+        :param sdk_key: ConfigCat SDK Key to access your configuration.
+        :param options: Configuration `ConfigCatOptions` for `ConfigCatClient`.
+        :return: the `ConfigCatClient` instance.
+        """
         client = cls._instances.get(sdk_key)
         if client is not None:
             if options is not None:
@@ -40,7 +47,9 @@ class ConfigCatClient(object):
 
     @classmethod
     def close_all(cls):
-        # Closes all ConfigCatClient instances.
+        """
+        Closes all ConfigCatClient instances.
+        """
         for key, value in list(cls._instances.items()):
             value.__close_resources()
         cls._instances.clear()
@@ -89,6 +98,14 @@ class ConfigCatClient(object):
                                                  options.offline)
 
     def get_value(self, key, default_value, user=None):
+        """
+        Gets the value of a feature flag or setting identified by the given `key`.
+
+        :param key: the identifier of the feature flag or setting.
+        :param default_value: in case of any failure, this value will be returned.
+        :param user: the user object to identify the caller.
+        :return: the value.
+        """
         settings, fetch_time = self.__get_settings()
         if settings is None:
             message = 'Evaluating get_value(\'{}\') failed. Cache is empty. ' \
@@ -107,6 +124,14 @@ class ConfigCatClient(object):
         return details.value
 
     def get_value_details(self, key, default_value, user=None):
+        """
+        Gets the value and evaluation details of a feature flag or setting identified by the given `key`.
+
+        :param key: the identifier of the feature flag or setting.
+        :param default_value: in case of any failure, this value will be returned.
+        :param user: the user object to identify the caller.
+        :return: the evaluation details.
+        """
         settings, fetch_time = self.__get_settings()
         if settings is None:
             message = 'Evaluating get_value(\'{}\') failed. Cache is empty. ' \
@@ -126,6 +151,11 @@ class ConfigCatClient(object):
         return details
 
     def get_all_keys(self):
+        """
+        Gets all setting keys.
+
+        :return: list of keys.
+        """
         settings, _ = self.__get_settings()
         if settings is None:
             return []
@@ -133,6 +163,14 @@ class ConfigCatClient(object):
         return list(settings)
 
     def get_variation_id(self, key, default_variation_id, user=None):
+        """
+        Gets the Variation ID (analytics) of a feature flag or setting based on it's key.
+
+        :param key: the identifier of the feature flag or setting.
+        :param default_variation_id: in case of any failure, this value will be returned.
+        :param user: the user object to identify the caller.
+        :return: the variation ID.
+        """
         settings, fetch_time = self.__get_settings()
         if settings is None:
             message = 'Evaluating get_variation_id(\'{}\') failed. Cache is empty. ' \
@@ -151,6 +189,12 @@ class ConfigCatClient(object):
         return details.variation_id
 
     def get_all_variation_ids(self, user=None):
+        """
+        Gets the Variation IDs (analytics) of all feature flags or settings.
+
+        :param user: the user object to identify the caller.
+        :return: list of variation IDs
+        """
         keys = self.get_all_keys()
         variation_ids = []
         for key in keys:
@@ -161,6 +205,12 @@ class ConfigCatClient(object):
         return variation_ids
 
     def get_key_and_value(self, variation_id):
+        """
+        Gets the key of a setting, and it's value identified by the given Variation ID (analytics)
+
+        :param variation_id: variation ID
+        :return: key and value
+        """
         settings, _ = self.__get_settings()
         if settings is None:
             self.log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
@@ -185,6 +235,12 @@ class ConfigCatClient(object):
         return None
 
     def get_all_values(self, user=None):
+        """
+        Evaluates and returns the values of all feature flags and settings.
+
+        :param user: the user object to identify the caller.
+        :return: dictionary of values
+        """
         keys = self.get_all_keys()
         all_values = {}
         for key in keys:
@@ -195,6 +251,11 @@ class ConfigCatClient(object):
         return all_values
 
     def force_refresh(self):
+        """
+        Initiates a force refresh on the cached configuration.
+
+        :return: RefreshResult object
+        """
         if self._config_service:
             return self._config_service.refresh()
 
@@ -202,36 +263,58 @@ class ConfigCatClient(object):
                              'The SDK uses the LocalOnly flag override behavior which prevents making HTTP requests.')
 
     def set_default_user(self, user):
+        """
+        Sets the default user.
+
+        :param user: the user object to identify the caller.
+        """
         self._default_user = user
 
     def clear_default_user(self):
+        """
+        Sets the default user to None.
+        """
         self._default_user = None
 
     def set_online(self):
-        # Configures the SDK to allow HTTP requests.
+        """
+        Configures the SDK to allow HTTP requests.
+        """
         if self._config_service:
             self._config_service.set_online()
 
         self.log.debug('Switched to ONLINE mode.')
 
     def set_offline(self):
-        # Configures the SDK to not initiate HTTP requests and work only from its cache.
+        """
+        Configures the SDK to not initiate HTTP requests and work only from its cache.
+        """
         if self._config_service:
             self._config_service.set_offline()
 
         self.log.debug('Switched to OFFLINE mode.')
 
     def is_offline(self):
-        # True when the SDK is configured not to initiate HTTP requests, otherwise false.
+        """
+        True when the SDK is configured not to initiate HTTP requests, otherwise false.
+        """
         if self._config_service:
             return self._config_service.is_offline()
 
         return True
 
     def get_hooks(self):
+        """
+        Gets the Hooks object for subscribing events.
+
+        :return: Hooks object
+        """
         return self._hooks
 
     def close(self):
+        """
+        Closes the underlying resources.
+        """
         self.__close_resources()
         ConfigCatClient._instances.pop(self._sdk_key)
 
