@@ -305,7 +305,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
 
             time.sleep(1)
 
-            self.assertEqual(3, request_get.call_count)
+            self.assertGreaterEqual(request_get.call_count, 3)
             cache_policy.close()
 
     def test_init_offline(self):
