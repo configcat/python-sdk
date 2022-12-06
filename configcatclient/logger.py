@@ -22,5 +22,5 @@ class Logger(object):
         self._hooks.invoke_on_error(msg)
         self._logger.error(msg, *args, **kwargs)
 
-    def exception(self, msg, *args, exc_info=True, **kwargs):
-        self.error(msg, *args, exc_info=exc_info, **kwargs)
+    def exception(self, msg, *args, **kwargs):
+        self.error(msg, *args, **kwargs)

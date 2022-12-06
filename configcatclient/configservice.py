@@ -1,18 +1,14 @@
 import concurrent
 import hashlib
-import time
 import json
 from concurrent.futures import ThreadPoolExecutor
 from threading import Thread, Event, Lock
 
-from configcatclient import utils
-from configcatclient.configentry import ConfigEntry
-from configcatclient.configfetcher import ConfigFetcher
-from configcatclient.constants import CONFIG_FILE_NAME, FEATURE_FLAGS
-from configcatclient.pollingmode import AutoPollingMode, LazyLoadingMode
-from configcatclient.refreshresult import RefreshResult
-from configcatclient.utils import get_seconds_since_epoch
-import time
+from . import utils
+from .configentry import ConfigEntry
+from .constants import CONFIG_FILE_NAME, FEATURE_FLAGS
+from .pollingmode import AutoPollingMode, LazyLoadingMode
+from .refreshresult import RefreshResult
 
 
 class ConfigService(object):

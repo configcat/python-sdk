@@ -62,10 +62,10 @@ class Hooks(object):
                 logging.error('Exception occurred during invoke_on_error callback: ' + str(e))
 
     def clear(self):
-        self._on_ready_callbacks.clear()
-        self._on_config_changed_callbacks.clear()
-        self._on_flag_evaluated_callbacks.clear()
-        self._on_error_callbacks.clear()
+        self._on_ready_callbacks[:] = []
+        self._on_config_changed_callbacks[:] = []
+        self._on_flag_evaluated_callbacks[:] = []
+        self._on_error_callbacks[:] = []
 
 
 class ConfigCatOptions(object):

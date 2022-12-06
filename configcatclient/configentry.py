@@ -1,4 +1,4 @@
-from configcatclient import utils
+from . import utils
 
 
 class ConfigEntry(object):
