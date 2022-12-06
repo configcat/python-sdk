@@ -19,18 +19,19 @@ def create_client(sdk_key, data_governance=DataGovernance.Global):
 
 
 def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wait_time_seconds=5,
+                                 on_configuration_changed_callback=None,
                                  config_cache=None,
                                  base_url=None, proxies=None, proxy_auth=None,
                                  connect_timeout_seconds=10, read_timeout_seconds=30,
                                  flag_overrides=None,
-                                 data_governance=DataGovernance.Global,
-                                 default_user=None):
+                                 data_governance=DataGovernance.Global):
     """
     Create an instance of ConfigCatClient and setup Auto Poll mode with custom options
 
     :param sdk_key: ConfigCat SDK Key to access your configuration.
     :param poll_interval_seconds: The client's poll interval in seconds. Default: 60 seconds.
     :param max_init_wait_time_seconds: maximum waiting time for first configuration fetch.
+    :param on_configuration_changed_callback: You can subscribe to configuration changes with this callback
     :param config_cache: If you want to use custom caching instead of the client's default,
     You can provide an implementation of ConfigCache.
     :param base_url: You can set a base_url if you want to use a proxy server between your application and ConfigCat
@@ -44,8 +45,6 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
     (Only Organization Admins have access)
-    :param default_user: The default user, used as fallback when there's no user parameter is passed to the
-    ConfigCatClient.get_value, ConfigCatClient.get_all_values, etc. methods.
     """
 
     options = ConfigCatOptions(
@@ -58,17 +57,22 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
         connect_timeout_seconds=connect_timeout_seconds,
         read_timeout_seconds=read_timeout_seconds,
         flag_overrides=flag_overrides,
-        data_governance=data_governance,
-        default_user=default_user)
-    return ConfigCatClient.get(sdk_key=sdk_key, options=options)
+        data_governance=data_governance)
+    client = ConfigCatClient.get(sdk_key=sdk_key, options=options)
+
+    if on_configuration_changed_callback is not None:
+        client.get_hooks().add_on_config_changed(on_configuration_changed_callback)
+
+    client.log.warning('create_client_with_auto_poll is deprecated. '
+                       'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead')
+    return client
 
 
 def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_cache=None,
                                  base_url=None, proxies=None, proxy_auth=None,
                                  connect_timeout_seconds=10, read_timeout_seconds=30,
                                  flag_overrides=None,
-                                 data_governance=DataGovernance.Global,
-                                 default_user=None):
+                                 data_governance=DataGovernance.Global):
     """
     Create an instance of ConfigCatClient and setup Lazy Load mode with custom options
 
@@ -87,8 +91,6 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
     (Only Organization Admins have access)
-    :param default_user: The default user, used as fallback when there's no user parameter is passed to the
-    ConfigCatClient.get_value, ConfigCatClient.get_all_values, etc. methods.
     """
 
     options = ConfigCatOptions(
@@ -100,17 +102,18 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
         connect_timeout_seconds=connect_timeout_seconds,
         read_timeout_seconds=read_timeout_seconds,
         flag_overrides=flag_overrides,
-        data_governance=data_governance,
-        default_user=default_user)
-    return ConfigCatClient.get(sdk_key=sdk_key, options=options)
+        data_governance=data_governance)
+    client = ConfigCatClient.get(sdk_key=sdk_key, options=options)
+    client.log.warning('create_client_with_lazy_load is deprecated. '
+                       'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead')
+    return client
 
 
 def create_client_with_manual_poll(sdk_key, config_cache=None,
                                    base_url=None, proxies=None, proxy_auth=None,
                                    connect_timeout_seconds=10, read_timeout_seconds=30,
                                    flag_overrides=None,
-                                   data_governance=DataGovernance.Global,
-                                   default_user=None):
+                                   data_governance=DataGovernance.Global):
     """
     Create an instance of ConfigCatClient and setup Manual Poll mode with custom options
 
@@ -128,8 +131,6 @@ def create_client_with_manual_poll(sdk_key, config_cache=None,
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
     (Only Organization Admins have access)
-    :param default_user: The default user, used as fallback when there's no user parameter is passed to the
-    ConfigCatClient.get_value, ConfigCatClient.get_all_values, etc. methods.
     """
 
     options = ConfigCatOptions(
@@ -141,6 +142,9 @@ def create_client_with_manual_poll(sdk_key, config_cache=None,
         connect_timeout_seconds=connect_timeout_seconds,
         read_timeout_seconds=read_timeout_seconds,
         flag_overrides=flag_overrides,
-        data_governance=data_governance,
-        default_user=default_user)
-    return ConfigCatClient.get(sdk_key=sdk_key, options=options)
+        data_governance=data_governance)
+    client = ConfigCatClient.get(sdk_key=sdk_key, options=options)
+    client.log.warning('create_client_with_manual_poll is deprecated. '
+                       'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead')
+    return client
+
