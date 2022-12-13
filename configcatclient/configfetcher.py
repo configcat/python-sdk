@@ -148,9 +148,6 @@ class ConfigFetcher(object):
         # Retry the config download with the new base_url
         return self.get_configuration(etag, retries + 1)
 
-    def close(self):
-        requests.session().close()
-
     def _fetch(self, etag):
         uri = self._base_url + '/' + BASE_PATH + self._sdk_key + BASE_EXTENSION
         headers = self._headers

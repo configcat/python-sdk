@@ -5,6 +5,17 @@ from .configcatoptions import ConfigCatOptions
 from .pollingmode import PollingMode
 
 
+def get(sdk_key, options=None):
+    """
+    Creates a new or gets an already existing `ConfigCatClient` for the given `sdk_key`.
+
+    :param sdk_key: ConfigCat SDK Key to access your configuration.
+    :param options: Configuration `ConfigCatOptions` for `ConfigCatClient`.
+    :return: the `ConfigCatClient` instance.
+    """
+    return ConfigCatClient.get(sdk_key=sdk_key, options=options)
+
+
 def create_client(sdk_key, data_governance=DataGovernance.Global):
     """
     Create an instance of ConfigCatClient and setup Auto Poll mode with default options
