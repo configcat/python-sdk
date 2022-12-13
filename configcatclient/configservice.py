@@ -1,7 +1,5 @@
-import concurrent
 import hashlib
 import json
-from concurrent.futures import ThreadPoolExecutor
 from threading import Thread, Event, Lock
 
 from . import utils
@@ -23,10 +21,11 @@ class ConfigService(object):
         self._cache_key = hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8')).hexdigest()
         self._config_fetcher = config_fetcher
         self._is_offline = is_offline
-        self._executor = ThreadPoolExecutor(max_workers=1)
         self._response_future = None
         self._initialized = Event()
         self._lock = Lock()
+        self._ongoing_fetch = False
+        self._fetch_finished = Event()
         self._start_time = utils.get_utc_now()
 
         if isinstance(self._polling_mode, AutoPollingMode):
@@ -60,8 +59,7 @@ class ConfigService(object):
         return RefreshResult(is_success=error is None, error=error)
 
     def set_online(self):
-        self._lock.acquire()
-        try:
+        with self._lock:
             if not self._is_offline:
                 return
 
@@ -69,12 +67,9 @@ class ConfigService(object):
             if isinstance(self._polling_mode, AutoPollingMode):
                 self._start_poll()
             self.log.debug('Switched to ONLINE mode.')
-        finally:
-            self._lock.release()
 
     def set_offline(self):
-        self._lock.acquire()
-        try:
+        with self._lock:
             if self._is_offline:
                 return
 
@@ -84,20 +79,11 @@ class ConfigService(object):
                 self._thread.join()
 
             self.log.debug('Switched to OFFLINE mode.')
-        finally:
-            self._lock.release()
 
     def is_offline(self):
         return self._is_offline  # atomic operation in python (lock is not needed)
 
     def close(self):
-        # Without this the Python interpreter cannot stop when the user writes an infinite loop
-        # Even though all threads in ThreadPoolExecutor are created as daemon threads
-        # They are not stopped on Python's shutdown but Python waits for them to stop on their own
-        # See https://stackoverflow.com/a/49992422/13160001
-        if len(concurrent.futures.thread._threads_queues) and len(self._executor._threads):
-            del concurrent.futures.thread._threads_queues[list(self._executor._threads)[0]]
-        self._executor.shutdown(wait=False)
         if isinstance(self._polling_mode, AutoPollingMode):
             self._stopped.set()
 
@@ -106,8 +92,7 @@ class ConfigService(object):
         :return: Returns the ConfigEntry object and error message in case of any error.
         """
 
-        self._lock.acquire()
-        try:
+        with self._lock:
             # Sync up with the cache and use it when it's not expired.
             if self._cached_entry.is_empty() or self._cached_entry.fetch_time > time:
                 entry = self._read_cache()
@@ -132,31 +117,31 @@ class ConfigService(object):
                 self.log.warning(offline_warning)
                 return self._cached_entry, offline_warning
 
-            # No fetch is running, initiate a new one.
-            # Ensure only one fetch request is running at a time.
-            # If there's an ongoing fetch running, we will wait for the ongoing fetch future and use its response.
-            if self._response_future is None or self._response_future.done():
-                self._response_future = self._executor.submit(self._config_fetcher.get_configuration,
-                                                              self._cached_entry.etag)
+        # No fetch is running, initiate a new one.
+        # Ensure only one fetch request is running at a time.
+        # If there's an ongoing fetch running, we will wait for the ongoing fetch.
+        if self._ongoing_fetch:
+            self._fetch_finished.wait()
+        else:
+            self._ongoing_fetch = True
+            self._fetch_finished.clear()
+            response = self._config_fetcher.get_configuration(self._cached_entry.etag)
 
-            self._lock.release()
+            with self._lock:
+                if response.is_fetched():
+                    self._cached_entry = response.entry
+                    self._write_cache(response.entry)
+                    self._hooks.invoke_on_config_changed(response.entry.config.get(FEATURE_FLAGS))
+                elif response.is_not_modified():
+                    self._cached_entry.fetch_time = utils.get_utc_now_seconds_since_epoch()
+                    self._write_cache(self._cached_entry)
 
-            response = self._response_future.result()
+                self._set_initialized()
 
-            self._lock.acquire()
+            self._ongoing_fetch = False
+            self._fetch_finished.set()
 
-            if response.is_fetched():
-                self._cached_entry = response.entry
-                self._write_cache(response.entry)
-                self._hooks.invoke_on_config_changed(response.entry.config.get(FEATURE_FLAGS))
-            elif response.is_not_modified():
-                self._cached_entry.fetch_time = utils.get_utc_now_seconds_since_epoch()
-                self._write_cache(self._cached_entry)
-
-            self._set_initialized()
-            return self._cached_entry, None
-        finally:
-            self._lock.release()
+        return self._cached_entry, None
 
     def _start_poll(self):
         self._started = Event()
