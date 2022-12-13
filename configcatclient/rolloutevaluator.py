@@ -1,7 +1,8 @@
 import hashlib
 import semver
-from .constants import *
 
+from .constants import ROLLOUT_RULES, ROLLOUT_PERCENTAGE_ITEMS, VALUE, VARIATION_ID, COMPARISON_ATTRIBUTE, \
+    COMPARISON_VALUE, COMPARATOR, PERCENTAGE
 from .user import User
 
 

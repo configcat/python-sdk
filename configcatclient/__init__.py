@@ -147,4 +147,3 @@ def create_client_with_manual_poll(sdk_key, config_cache=None,
     client.log.warning('create_client_with_manual_poll is deprecated. '
                        'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead')
     return client
-
