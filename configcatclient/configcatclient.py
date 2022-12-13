@@ -1,6 +1,8 @@
+from threading import Lock
+
 from . import utils
 from .configservice import ConfigService
-from .constants import FEATURE_FLAGS, ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS, CONFIG_FILE_NAME
+from .constants import ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS, CONFIG_FILE_NAME
 from .evaluationdetails import EvaluationDetails
 from .interfaces import ConfigCatClientException
 from .logger import Logger
@@ -19,6 +21,7 @@ KeyValue = namedtuple('KeyValue', 'key value')
 
 
 class ConfigCatClient(object):
+    _lock = Lock()
     _instances = {}
 
     @classmethod
@@ -30,29 +33,31 @@ class ConfigCatClient(object):
         :param options: Configuration `ConfigCatOptions` for `ConfigCatClient`.
         :return: the `ConfigCatClient` instance.
         """
-        client = cls._instances.get(sdk_key)
-        if client is not None:
-            if options is not None:
-                client.log.warning('Client for sdk_key `%s` is already created and will be reused; '
-                                   'options passed are being ignored.' % sdk_key)
+        with cls._lock:
+            client = cls._instances.get(sdk_key)
+            if client is not None:
+                if options is not None:
+                    client.log.warning('Client for sdk_key `%s` is already created and will be reused; '
+                                       'options passed are being ignored.' % sdk_key)
+                return client
+
+            if options is None:
+                options = ConfigCatOptions()
+
+            client = ConfigCatClient(sdk_key=sdk_key,
+                                     options=options)
+            cls._instances[sdk_key] = client
             return client
-
-        if options is None:
-            options = ConfigCatOptions()
-
-        client = ConfigCatClient(sdk_key=sdk_key,
-                                 options=options)
-        cls._instances[sdk_key] = client
-        return client
 
     @classmethod
     def close_all(cls):
         """
         Closes all ConfigCatClient instances.
         """
-        for key, value in list(cls._instances.items()):
-            value.__close_resources()
-        cls._instances.clear()
+        with cls._lock:
+            for key, value in list(cls._instances.items()):
+                value.__close_resources()
+            cls._instances.clear()
 
     def __init__(self,
                  sdk_key,
@@ -315,8 +320,9 @@ class ConfigCatClient(object):
         """
         Closes the underlying resources.
         """
-        self.__close_resources()
-        ConfigCatClient._instances.pop(self._sdk_key)
+        with ConfigCatClient._lock:
+            self.__close_resources()
+            ConfigCatClient._instances.pop(self._sdk_key)
 
     def __close_resources(self):
         if self._config_service:

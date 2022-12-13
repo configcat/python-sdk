@@ -6,10 +6,10 @@ from requests import HTTPError
 from requests import Timeout
 
 from .configentry import ConfigEntry
+from .constants import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
 from .utils import get_utc_now_seconds_since_epoch
 from .version import CONFIGCATCLIENT_VERSION
-from .constants import *
 
 if sys.version_info < (2, 7, 9):
     requests.packages.urllib3.disable_warnings()
@@ -148,9 +148,6 @@ class ConfigFetcher(object):
         # Retry the config download with the new base_url
         return self.get_configuration(etag, retries + 1)
 
-    def close(self):
-        requests.session().close()
-
     def _fetch(self, etag):
         uri = self._base_url + '/' + BASE_PATH + self._sdk_key + BASE_EXTENSION
         headers = self._headers
@@ -179,7 +176,7 @@ class ConfigFetcher(object):
                     'Received unexpected response: %s' % str(e.response)
             self.log.error(error)
             return FetchResponse.failure(error)
-        except Timeout as e:
+        except Timeout:
             error = 'Request timed out. Timeout values: [connect: {}s, read: {}s]'.format(
                 self._config_fetcher.get_connect_timeout(), self._config_fetcher.get_read_timeout())
             self.log.error(error)
@@ -188,4 +185,3 @@ class ConfigFetcher(object):
             error = 'Exception occurred during fetching: ' + str(e)
             self.log.error(error)
             return FetchResponse.failure(error)
-

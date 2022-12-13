@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':
     # Initialize the ConfigCatClient with an SDK Key.
-    client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+    client = configcatclient.get('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
 
     # In the project there is a 'keySampleText' setting with the following rules:
     # 1. If the User's country is Hungary, the value should be 'Dog'

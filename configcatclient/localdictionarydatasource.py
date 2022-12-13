@@ -1,4 +1,4 @@
-from .constants import VALUE, FEATURE_FLAGS
+from .constants import VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 
 
