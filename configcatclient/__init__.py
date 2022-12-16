@@ -16,6 +16,13 @@ def get(sdk_key, options=None):
     return ConfigCatClient.get(sdk_key=sdk_key, options=options)
 
 
+def close_all():
+    """
+    Closes all ConfigCatClient instances.
+    """
+    ConfigCatClient.close_all()
+
+
 def create_client(sdk_key, data_governance=DataGovernance.Global):
     """
     Create an instance of ConfigCatClient and setup Auto Poll mode with default options
@@ -60,7 +67,7 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
 
     options = ConfigCatOptions(
         base_url=base_url,
-        polling_mode=PollingMode.auto_poll(auto_poll_interval_seconds=poll_interval_seconds,
+        polling_mode=PollingMode.auto_poll(poll_interval_seconds=poll_interval_seconds,
                                            max_init_wait_time_seconds=max_init_wait_time_seconds),
         config_cache=config_cache,
         proxies=proxies,

@@ -34,7 +34,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherMock()
         config_cache = NullConfigCache()
 
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=0,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=0,
                                                                max_init_wait_time_seconds=-1),
                                      Hooks(), config_fetcher, log, config_cache, False)
         time.sleep(2)
@@ -45,7 +45,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
     def test_init_wait_time_ok(self):
         config_fetcher = ConfigFetcherWaitMock(0)
         config_cache = NullConfigCache()
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=60,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=60,
                                                                max_init_wait_time_seconds=5),
                                      Hooks(), config_fetcher, log, config_cache, False)
         settings, _ = cache_policy.get_settings()
@@ -56,7 +56,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherWaitMock(5)
         config_cache = NullConfigCache()
         start_time = time.time()
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=60,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=60,
                                                                max_init_wait_time_seconds=1),
                                      Hooks(), config_fetcher, log, config_cache, False)
         settings, _ = cache_policy.get_settings()
@@ -70,7 +70,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
     def test_fetch_call_count(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = NullConfigCache()
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=2,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=1),
                                      Hooks(), config_fetcher, log, config_cache, False)
         time.sleep(3)
@@ -82,7 +82,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
     def test_updated_values(self):
         config_fetcher = ConfigFetcherCountMock()
         config_cache = NullConfigCache()
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=2,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=5),
                                      Hooks(), config_fetcher, log, config_cache, False)
         settings, _ = cache_policy.get_settings()
@@ -95,7 +95,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
     def test_error(self):
         config_fetcher = ConfigFetcherWithErrorMock('error')
         config_cache = NullConfigCache()
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=60,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=60,
                                                                max_init_wait_time_seconds=1),
                                      Hooks(), config_fetcher, log, config_cache, False)
 
@@ -107,7 +107,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
     def test_close(self):
         config_fetcher = ConfigFetcherCountMock()
         config_cache = NullConfigCache()
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=2,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=5),
                                      Hooks(), config_fetcher, log, config_cache, False)
         cache_policy.close()
@@ -121,7 +121,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
     def test_rerun(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = NullConfigCache()
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=2,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=5),
                                      Hooks(), config_fetcher, log, config_cache, False)
         time.sleep(2.200)
@@ -135,7 +135,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         hooks = Hooks()
         hooks.add_on_config_changed(hook_callbacks.on_config_changed)
 
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=2,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=5),
                                      hooks, config_fetcher, log, config_cache, False)
         time.sleep(1)
@@ -157,7 +157,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         hooks = Hooks()
         hooks.add_on_config_changed(hook_callbacks.callback_exception)
 
-        cache_policy = ConfigService('', PollingMode.auto_poll(auto_poll_interval_seconds=2,
+        cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=5),
                                      hooks, config_fetcher, log, config_cache, False)
         time.sleep(1)
@@ -180,7 +180,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
             response_mock.status_code = 200
             response_mock.headers = {}
 
-            polling_mode = PollingMode.auto_poll(auto_poll_interval_seconds=1)
+            polling_mode = PollingMode.auto_poll(poll_interval_seconds=1)
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
             cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, NullConfigCache(), False)
 
@@ -284,7 +284,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
             response_mock.status_code = 200
             response_mock.headers = {'Etag': 'test-etag'}
 
-            polling_mode = PollingMode.auto_poll(auto_poll_interval_seconds=1)
+            polling_mode = PollingMode.auto_poll(poll_interval_seconds=1)
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
             cache_policy = ConfigService('', polling_mode,
                                          Hooks(), config_fetcher, log, NullConfigCache(), False)
@@ -316,7 +316,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
             response_mock.status_code = 200
             response_mock.headers = {'Etag': 'test-etag'}
 
-            polling_mode = PollingMode.auto_poll(auto_poll_interval_seconds=1)
+            polling_mode = PollingMode.auto_poll(poll_interval_seconds=1)
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
 
             cache_policy = ConfigService('', polling_mode,

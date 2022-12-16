@@ -14,21 +14,21 @@ class PollingMode(object):
         """
 
     @staticmethod
-    def auto_poll(auto_poll_interval_seconds=60, max_init_wait_time_seconds=5):
+    def auto_poll(poll_interval_seconds=60, max_init_wait_time_seconds=5):
         """
         Creates a configured auto polling configuration.
 
-        :param auto_poll_interval_seconds: sets at least how often this policy should fetch the latest configuration and refresh the cache.
+        :param poll_interval_seconds: sets at least how often this policy should fetch the latest configuration and refresh the cache.
         :param max_init_wait_time_seconds: sets the maximum waiting time between initialization and the first config acquisition in seconds.
         """
 
-        if auto_poll_interval_seconds < 1:
-            auto_poll_interval_seconds = 1
+        if poll_interval_seconds < 1:
+            poll_interval_seconds = 1
 
         if max_init_wait_time_seconds < 0:
             max_init_wait_time_seconds = 0
 
-        return AutoPollingMode(auto_poll_interval_seconds=auto_poll_interval_seconds,
+        return AutoPollingMode(poll_interval_seconds=poll_interval_seconds,
                                max_init_wait_time_seconds=max_init_wait_time_seconds)
 
     @staticmethod
@@ -53,8 +53,8 @@ class PollingMode(object):
 
 
 class AutoPollingMode(PollingMode):
-    def __init__(self, auto_poll_interval_seconds, max_init_wait_time_seconds):
-        self.auto_poll_interval_seconds = auto_poll_interval_seconds
+    def __init__(self, poll_interval_seconds, max_init_wait_time_seconds):
+        self.poll_interval_seconds = poll_interval_seconds
         self.max_init_wait_time_seconds = max_init_wait_time_seconds
 
     def identifier(self):

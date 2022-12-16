@@ -154,15 +154,15 @@ class ConfigService(object):
         self._stopped = Event()
         self._started.set()
         while True:
-            self._fetch_if_older(utils.get_utc_now_seconds_since_epoch() - self._polling_mode.auto_poll_interval_seconds)
-            self._stopped.wait(timeout=self._polling_mode.auto_poll_interval_seconds)
+            self._fetch_if_older(utils.get_utc_now_seconds_since_epoch() - self._polling_mode.poll_interval_seconds)
+            self._stopped.wait(timeout=self._polling_mode.poll_interval_seconds)
             if self._stopped.is_set():
                 break
 
     def _set_initialized(self):
         if not self._initialized.is_set():
             self._initialized.set()
-            self._hooks.invoke_on_ready()
+            self._hooks.invoke_on_client_ready()
 
     def _read_cache(self):
         try:

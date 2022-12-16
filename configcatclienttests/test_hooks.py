@@ -30,10 +30,10 @@ class HooksTests(unittest.TestCase):
     def test_init(self):
         hook_callbacks = HookCallbacks()
         hooks = Hooks(
-            on_ready_callback=hook_callbacks.on_ready,
-            on_config_changed_callback=hook_callbacks.on_config_changed,
-            on_flag_evaluated_callback=hook_callbacks.on_flag_evaluated,
-            on_error_callback=hook_callbacks.on_error
+            on_client_ready=hook_callbacks.on_client_ready,
+            on_config_changed=hook_callbacks.on_config_changed,
+            on_flag_evaluated=hook_callbacks.on_flag_evaluated,
+            on_error=hook_callbacks.on_error
         )
 
         config_cache = ConfigCacheMock()
@@ -58,7 +58,7 @@ class HooksTests(unittest.TestCase):
     def test_subscribe(self):
         hook_callbacks = HookCallbacks()
         hooks = Hooks()
-        hooks.add_on_ready(hook_callbacks.on_ready)
+        hooks.add_on_client_ready(hook_callbacks.on_client_ready)
         hooks.add_on_config_changed(hook_callbacks.on_config_changed)
         hooks.add_on_flag_evaluated(hook_callbacks.on_flag_evaluated)
         hooks.add_on_error(hook_callbacks.on_error)

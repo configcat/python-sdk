@@ -177,7 +177,7 @@ class HookCallbacks(object):
         self.error_call_count = 0
         self.callback_exception_call_count = 0
 
-    def on_ready(self):
+    def on_client_ready(self):
         self.is_ready = True
         self.is_ready_call_count += 1
 
