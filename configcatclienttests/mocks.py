@@ -2,7 +2,6 @@ import json
 import time
 
 from configcatclient.configentry import ConfigEntry
-from configcatclient.constants import FEATURE_FLAGS
 from configcatclient.utils import get_utc_now_seconds_since_epoch
 
 try:
@@ -196,4 +195,3 @@ class HookCallbacks(object):
     def callback_exception(self, *args, **kwargs):
         self.callback_exception_call_count += 1
         raise Exception("error")
-

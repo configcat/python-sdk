@@ -14,7 +14,7 @@ try:
 except ImportError:
     from mock import Mock, ANY
 
-from configcatclient.configfetcher import ConfigFetcher, FetchResponse
+from configcatclient.configfetcher import ConfigFetcher
 
 logging.basicConfig(level=logging.WARN)
 log = logging.getLogger()

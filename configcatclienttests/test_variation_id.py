@@ -1,7 +1,6 @@
 import logging
 import unittest
 
-from configcatclient.configcache import InMemoryConfigCache
 from configcatclient.configcatclient import ConfigCatClient
 from configcatclienttests.mocks import ConfigCacheMock
 from configcatclient.configcatoptions import ConfigCatOptions

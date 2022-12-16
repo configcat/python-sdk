@@ -23,7 +23,7 @@ try:
 except ImportError:
     from mock import Mock, ANY
 
-from configcatclient.configcache import InMemoryConfigCache, NullConfigCache
+from configcatclient.configcache import NullConfigCache
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON, SingleValueConfigCache, \
     TEST_OBJECT
 
@@ -74,7 +74,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         self.assertEqual(config_fetcher.get_call_count, 1)
 
         with mock.patch('configcatclient.utils.get_utc_now_seconds_since_epoch') as mock_get_utc_now_since_epoch:
-            # assume 160 seconds has elapsed since the last call enough to do a 
+            # assume 160 seconds has elapsed since the last call enough to do a
             # force refresh
             mock_get_utc_now_since_epoch.return_value = fetch_time + 161
             # Get value from Config Store, which indicates a config_fetcher call after cache invalidation

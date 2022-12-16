@@ -5,10 +5,10 @@ import time
 import requests
 
 from configcatclient import PollingMode
-from configcatclient.configcache import InMemoryConfigCache, NullConfigCache
+from configcatclient.configcache import NullConfigCache
 from configcatclient.configcatoptions import Hooks
 from configcatclient.configentry import ConfigEntry
-from configcatclient.configfetcher import FetchResponse, ConfigFetcher
+from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE
 from configcatclient.utils import get_utc_now_seconds_since_epoch

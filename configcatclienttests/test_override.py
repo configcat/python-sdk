@@ -6,8 +6,8 @@ import json
 import time
 
 from configcatclient import ConfigCatClient
-from configcatclient.localdictionarydatasource import LocalDictionaryDataSource, LocalDictionaryFlagOverrides
-from configcatclient.localfiledatasource import LocalFileDataSource, LocalFileFlagOverrides
+from configcatclient.localdictionarydatasource import LocalDictionaryFlagOverrides
+from configcatclient.localfiledatasource import LocalFileFlagOverrides
 from configcatclient.overridedatasource import OverrideBehaviour
 from configcatclienttests.mocks import MockResponse
 from configcatclient.configcatoptions import ConfigCatOptions
@@ -37,7 +37,7 @@ class OverrideTests(unittest.TestCase):
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=path.join(OverrideTests.script_dir, 'test.json'),
-                                       override_behaviour = OverrideBehaviour.LocalOnly))
+                                       override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key='test', options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
