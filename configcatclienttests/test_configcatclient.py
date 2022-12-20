@@ -102,6 +102,34 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertFalse(all_values['key2'])
         client.close()
 
+    def test_get_all_value_details(self):
+        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                              config_cache=ConfigCacheMock()))
+        details = client.get_all_value_details()
+        self.assertEqual(6, len(details))
+        self.assertEqual('testBoolKey', details[0].key)
+        self.assertEqual(True, details[0].value)
+
+        self.assertEqual('testStringKey', details[1].key)
+        self.assertEqual('testValue', details[1].value)
+        self.assertEqual('id', details[1].variation_id)
+
+        self.assertEqual('testIntKey', details[2].key)
+        self.assertEqual(1, details[2].value)
+
+        self.assertEqual('testDoubleKey', details[3].key)
+        self.assertEqual(1.1, details[3].value)
+
+        self.assertEqual('key1', details[4].key)
+        self.assertEqual(True, details[4].value)
+        self.assertEqual('fakeId1', details[4].variation_id)
+
+        self.assertEqual('key2', details[5].key)
+        self.assertEqual(False, details[5].value)
+        self.assertEqual('fakeId2', details[5].variation_id)
+
+        client.close()
+
     def test_cache_key(self):
         client1 = ConfigCatClient.get('test1', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                                 config_cache=ConfigCacheMock()))
