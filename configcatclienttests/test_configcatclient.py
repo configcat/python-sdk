@@ -105,28 +105,41 @@ class ConfigCatClientTests(unittest.TestCase):
     def test_get_all_value_details(self):
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                               config_cache=ConfigCacheMock()))
-        details = client.get_all_value_details()
-        self.assertEqual(6, len(details))
-        self.assertEqual('testBoolKey', details[0].key)
-        self.assertEqual(True, details[0].value)
+        all_details = client.get_all_value_details()
 
-        self.assertEqual('testStringKey', details[1].key)
-        self.assertEqual('testValue', details[1].value)
-        self.assertEqual('id', details[1].variation_id)
+        def details_by_key(all_details, key):
+            for details in all_details:
+                if details.key == key:
+                    return details
+            return None
 
-        self.assertEqual('testIntKey', details[2].key)
-        self.assertEqual(1, details[2].value)
+        self.assertEqual(6, len(all_details))
+        details = details_by_key(all_details, 'testBoolKey')
+        self.assertEqual('testBoolKey', details.key)
+        self.assertEqual(True, details.value)
 
-        self.assertEqual('testDoubleKey', details[3].key)
-        self.assertEqual(1.1, details[3].value)
+        details = details_by_key(all_details, 'testStringKey')
+        self.assertEqual('testStringKey', details.key)
+        self.assertEqual('testValue', details.value)
+        self.assertEqual('id', details.variation_id)
 
-        self.assertEqual('key1', details[4].key)
-        self.assertEqual(True, details[4].value)
-        self.assertEqual('fakeId1', details[4].variation_id)
+        details = details_by_key(all_details, 'testIntKey')
+        self.assertEqual('testIntKey', details.key)
+        self.assertEqual(1, details.value)
 
-        self.assertEqual('key2', details[5].key)
-        self.assertEqual(False, details[5].value)
-        self.assertEqual('fakeId2', details[5].variation_id)
+        details = details_by_key(all_details, 'testDoubleKey')
+        self.assertEqual('testDoubleKey', details.key)
+        self.assertEqual(1.1, details.value)
+
+        details = details_by_key(all_details, 'key1')
+        self.assertEqual('key1', details.key)
+        self.assertEqual(True, details.value)
+        self.assertEqual('fakeId1', details.variation_id)
+
+        details = details_by_key(all_details, 'key2')
+        self.assertEqual('key2', details.key)
+        self.assertEqual(False, details.value)
+        self.assertEqual('fakeId2', details.variation_id)
 
         client.close()
 
