@@ -1,6 +1,9 @@
 import json
 import time
 
+from configcatclient.configentry import ConfigEntry
+from configcatclient.utils import get_utc_now_seconds_since_epoch
+
 try:
     from unittest.mock import Mock
 except ImportError:
@@ -19,6 +22,8 @@ TEST_JSON = '{' \
             '       "testKey": { "v": "testValue", "t": 1, "p": [], "r": [] }' \
             '   }' \
             '}'
+
+TEST_JSON_FORMAT = '{{ "f": {{ "testKey": {{ "v": {value}, "p": [], "r": [] }} }} }}'
 
 TEST_JSON2 = '{' \
              '  "p": {' \
@@ -64,17 +69,19 @@ class ConfigFetcherMock(ConfigFetcher):
         self._configuration = TEST_JSON
         self._etag = 'test_etag'
 
-    def get_configuration_json(self, etag=''):
+    def get_configuration(self, etag=''):
         self._call_count += 1
         if etag != self._etag:
             self._fetch_count += 1
-        response_mock = Mock()
-        response_mock.status_code = 200
-        response_mock.json.return_value = self._configuration
-        return FetchResponse(response_mock, self._etag)
+            return FetchResponse.success(
+                ConfigEntry(json.loads(self._configuration), self._etag, get_utc_now_seconds_since_epoch())
+            )
+        return FetchResponse.not_modified()
 
     def set_configuration_json(self, value):
-        self._configuration = value
+        if self._configuration != value:
+            self._configuration = value
+            self._etag += '_etag'
 
     @property
     def get_call_count(self):
@@ -86,59 +93,50 @@ class ConfigFetcherMock(ConfigFetcher):
 
 
 class ConfigFetcherWithErrorMock(ConfigFetcher):
-    def __init__(self, exception):
-        self._exception = exception
+    def __init__(self, error):
+        self._error = error
 
-    def get_configuration_json(self, etag=''):
-        raise self._exception
+    def get_configuration(self, etag=''):
+        return FetchResponse.failure(self._error)
 
 
 class ConfigFetcherWaitMock(ConfigFetcher):
     def __init__(self, wait_seconds):
         self._wait_seconds = wait_seconds
 
-    def get_configuration_json(self, etag=''):
+    def get_configuration(self, etag=''):
         time.sleep(self._wait_seconds)
-        response_mock = Mock()
-        response_mock.status_code = 200
-        response_mock.json.return_value = TEST_JSON
-        return FetchResponse(response_mock)
+        return FetchResponse.success(ConfigEntry(json.loads(TEST_JSON)))
 
 
 class ConfigFetcherCountMock(ConfigFetcher):
     def __init__(self):
         self._value = 0
 
-    def get_configuration_json(self, etag=''):
-        self._value += 10
-        response_mock = Mock()
-        response_mock.status_code = 200
-        response_mock.json.return_value = self._value
-        return FetchResponse(response_mock)
+    def get_configuration(self, etag=''):
+        self._value += 1
+        config = json.loads(TEST_JSON_FORMAT.format(value=self._value))
+        return FetchResponse.success(ConfigEntry(config))
 
 
 class ConfigCacheMock(ConfigCache):
     def get(self, key):
-        return {FetchResponse.CONFIG: TEST_OBJECT}
+        return json.dumps({ConfigEntry.CONFIG: TEST_OBJECT, ConfigEntry.ETAG: 'test-etag'})
 
     def set(self, key, value):
         pass
 
 
-class CallCounter(object):
-    def __init__(self):
-        self._call_count = 0
+class SingleValueConfigCache(ConfigCache):
 
-    def callback(self):
-        self._call_count += 1
+    def __init__(self, value):
+        self._value = value
 
-    def callback_exception(self):
-        self._call_count += 1
-        raise Exception("error")
+    def get(self, key):
+        return self._value
 
-    @property
-    def get_call_count(self):
-        return self._call_count
+    def set(self, key, value):
+        self._value = value
 
 
 class MockHeader:
@@ -164,3 +162,36 @@ class MockResponse:
         if 200 <= self.status_code < 300 or self.status_code == 304:
             return
         raise Exception(self.status_code)
+
+
+class HookCallbacks(object):
+    def __init__(self):
+        self.is_ready = False
+        self.is_ready_call_count = 0
+        self.changed_config = None
+        self.changed_config_call_count = 0
+        self.evaluation_details = None
+        self.evaluation_details_call_count = 0
+        self.error = None
+        self.error_call_count = 0
+        self.callback_exception_call_count = 0
+
+    def on_client_ready(self):
+        self.is_ready = True
+        self.is_ready_call_count += 1
+
+    def on_config_changed(self, config):
+        self.changed_config = config
+        self.changed_config_call_count += 1
+
+    def on_flag_evaluated(self, evaluation_details):
+        self.evaluation_details = evaluation_details
+        self.evaluation_details_call_count += 1
+
+    def on_error(self, error):
+        self.error = error
+        self.error_call_count += 1
+
+    def callback_exception(self, *args, **kwargs):
+        self.callback_exception_call_count += 1
+        raise Exception("error")

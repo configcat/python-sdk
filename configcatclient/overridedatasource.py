@@ -18,6 +18,16 @@ class OverrideBehaviour(IntEnum):
     RemoteOverLocal = 2
 
 
+class FlagOverrides(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def create_data_source(self, log):
+        """
+        :returns the created OverrideDataSource
+        """
+
+
 class OverrideDataSource(object):
     __metaclass__ = ABCMeta
 

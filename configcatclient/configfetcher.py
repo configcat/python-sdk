@@ -1,13 +1,15 @@
 import requests
-import logging
 import sys
 from enum import IntEnum
 from platform import python_version
+from requests import HTTPError
+from requests import Timeout
 
+from .configentry import ConfigEntry
+from .constants import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
 from .utils import get_utc_now_seconds_since_epoch
 from .version import CONFIGCATCLIENT_VERSION
-from .constants import *
 
 if sys.version_info < (2, 7, 9):
     requests.packages.urllib3.disable_warnings()
@@ -17,8 +19,6 @@ BASE_URL_EU_ONLY = 'https://cdn-eu.configcat.com'
 BASE_PATH = 'configuration-files/'
 BASE_EXTENSION = '/' + CONFIG_FILE_NAME + '.json'
 
-log = logging.getLogger(sys.modules[__name__].__name__)
-
 
 class RedirectMode(IntEnum):
     NoRedirect = 0,
@@ -26,42 +26,54 @@ class RedirectMode(IntEnum):
     ForceRedirect = 2
 
 
+class Status(IntEnum):
+    Fetched = 0,
+    NotModified = 1,
+    Failure = 2
+
+
 class FetchResponse(object):
-    ETAG = 'etag'
-    FETCH_TIME = 'fetch_time'
-    CONFIG = 'config'
-
-    def __init__(self, response, etag='', fetch_time=None):
-        self._response = response
-        self._etag = etag
-        self._fetch_time = fetch_time if fetch_time is not None else get_utc_now_seconds_since_epoch()
-
-    def json(self):
-        """Returns the json-encoded content of a response, if any.
-        :raises ValueError: If the response body does not contain valid json.
-        """
-        json = self._response.json()
-        return {FetchResponse.ETAG: self._etag,
-                FetchResponse.FETCH_TIME: self._fetch_time,
-                FetchResponse.CONFIG: json}
+    def __init__(self, status, entry, error=None):
+        self._status = status
+        self.entry = entry
+        self.error = error
 
     def is_fetched(self):
         """Gets whether a new configuration value was fetched or not.
         :return: True if a new configuration value was fetched, otherwise false.
         """
-        return 200 <= self._response.status_code < 300
+        return self._status == Status.Fetched
 
     def is_not_modified(self):
         """Gets whether the fetch resulted a '304 Not Modified' or not.
         :return: True if the fetch resulted a '304 Not Modified' code, otherwise false.
         """
-        return self._response.status_code == 304
+        return self._status == Status.NotModified
+
+    def is_failed(self):
+        """Gets whether the fetch failed or not.
+        :return: True if the fetch failed, otherwise false.
+        """
+        return self._status == Status.Failure
+
+    @classmethod
+    def success(cls, entry):
+        return FetchResponse(Status.Fetched, entry)
+
+    @classmethod
+    def not_modified(cls):
+        return FetchResponse(Status.NotModified, ConfigEntry.empty)
+
+    @classmethod
+    def failure(cls, error):
+        return FetchResponse(Status.Failure, ConfigEntry.empty, error)
 
 
 class ConfigFetcher(object):
-    def __init__(self, sdk_key, mode, base_url=None, proxies=None, proxy_auth=None,
+    def __init__(self, sdk_key, log, mode, base_url=None, proxies=None, proxy_auth=None,
                  connect_timeout=10, read_timeout=30, data_governance=DataGovernance.Global):
         self._sdk_key = sdk_key
+        self.log = log
         self._proxies = proxies
         self._proxy_auth = proxy_auth
         self._connect_timeout = connect_timeout
@@ -86,31 +98,17 @@ class ConfigFetcher(object):
     def get_read_timeout(self):
         return self._read_timeout
 
-    def get_configuration_json(self, etag='', retries=0):
+    def get_configuration(self, etag='', retries=0):
         """
-        :return: Returns the FetchResponse object contains configuration json Dictionary
+        :return: Returns the FetchResponse object contains configuration entry
         """
-        uri = self._base_url + '/' + BASE_PATH + self._sdk_key + BASE_EXTENSION
-        headers = self._headers
-        if etag:
-            headers['If-None-Match'] = etag
-        else:
-            headers['If-None-Match'] = None
-
-        response = requests.get(uri, headers=headers, timeout=(self._connect_timeout, self._read_timeout),
-                                proxies=self._proxies, auth=self._proxy_auth)
-        response.raise_for_status()
-        response_etag = response.headers.get('Etag')
-        if response_etag is None:
-            response_etag = ''
-
-        fetch_response = FetchResponse(response, response_etag)
+        fetch_response = self._fetch(etag)
 
         # If there wasn't a config change, we return the response.
         if not fetch_response.is_fetched():
             return fetch_response
 
-        preferences = fetch_response.json()[FetchResponse.CONFIG].get(PREFERENCES, None)
+        preferences = fetch_response.entry.config.get(PREFERENCES, None)
         if preferences is None:
             return fetch_response
 
@@ -122,7 +120,7 @@ class ConfigFetcher(object):
 
         redirect = preferences.get(REDIRECT)
         # If the base_url is overridden, and the redirect parameter is not 2 (force),
-        # the SDK should not redirect the calls and it just have to return the response.
+        # the SDK should not redirect the calls, and it just has to return the response.
         if self._base_url_overridden and redirect != int(RedirectMode.ForceRedirect):
             return fetch_response
 
@@ -137,15 +135,53 @@ class ConfigFetcher(object):
         # Try to download again with the new url
 
         if redirect == int(RedirectMode.ShouldRedirect):
-            log.warning('Your data_governance parameter at ConfigCatClient initialization is not in sync '
-                        'with your preferences on the ConfigCat Dashboard: '
-                        'https://app.configcat.com/organization/data-governance. '
-                        'Only Organization Admins can access this preference.')
+            self.log.warning('Your data_governance parameter at ConfigCatClient initialization is not in sync '
+                             'with your preferences on the ConfigCat Dashboard: '
+                             'https://app.configcat.com/organization/data-governance. '
+                             'Only Organization Admins can access this preference.')
 
         # To prevent loops we check if we retried at least 3 times with the new base_url
         if retries >= 2:
-            log.error('Redirect loop during config.json fetch. Please contact support@configcat.com.')
+            self.log.error('Redirect loop during config.json fetch. Please contact support@configcat.com.')
             return fetch_response
 
         # Retry the config download with the new base_url
-        return self.get_configuration_json(etag, retries + 1)
+        return self.get_configuration(etag, retries + 1)
+
+    def _fetch(self, etag):
+        uri = self._base_url + '/' + BASE_PATH + self._sdk_key + BASE_EXTENSION
+        headers = self._headers
+        if etag:
+            headers['If-None-Match'] = etag
+        else:
+            headers['If-None-Match'] = None
+
+        try:
+            response = requests.get(uri, headers=headers, timeout=(self._connect_timeout, self._read_timeout),
+                                    proxies=self._proxies, auth=self._proxy_auth)
+            response.raise_for_status()
+
+            if response.status_code in [200, 201, 202, 203, 204]:
+                response_etag = response.headers.get('Etag')
+                if response_etag is None:
+                    response_etag = ''
+                config = response.json()
+                return FetchResponse.success(ConfigEntry(config, response_etag, get_utc_now_seconds_since_epoch()))
+            elif response.status_code == 304:
+                return FetchResponse.not_modified()
+            else:
+                raise (requests.HTTPError(response))
+        except HTTPError as e:
+            error = 'Double-check your SDK Key at https://app.configcat.com/sdkkey. ' \
+                    'Received unexpected response: %s' % str(e.response)
+            self.log.error(error)
+            return FetchResponse.failure(error)
+        except Timeout:
+            error = 'Request timed out. Timeout values: [connect: {}s, read: {}s]'.format(
+                self._config_fetcher.get_connect_timeout(), self._config_fetcher.get_read_timeout())
+            self.log.error(error)
+            return FetchResponse.failure(error)
+        except Exception as e:
+            error = 'Exception occurred during fetching: ' + str(e)
+            self.log.error(error)
+            return FetchResponse.failure(error)

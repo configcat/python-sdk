@@ -1,12 +1,23 @@
 import logging
 import unittest
+import requests
 
 from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
 from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions
 from configcatclient.pollingmode import PollingMode
-from configcatclienttests.mocks import ConfigCacheMock
+from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT
+
+# Python2/Python3 support
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+try:
+    from unittest.mock import Mock, ANY
+except ImportError:
+    from mock import Mock, ANY
 
 logging.basicConfig(level=logging.INFO)
 
@@ -89,6 +100,47 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertEqual(1.1, all_values['testDoubleKey'])
         self.assertTrue(all_values['key1'])
         self.assertFalse(all_values['key2'])
+        client.close()
+
+    def test_get_all_value_details(self):
+        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                              config_cache=ConfigCacheMock()))
+        all_details = client.get_all_value_details()
+
+        def details_by_key(all_details, key):
+            for details in all_details:
+                if details.key == key:
+                    return details
+            return None
+
+        self.assertEqual(6, len(all_details))
+        details = details_by_key(all_details, 'testBoolKey')
+        self.assertEqual('testBoolKey', details.key)
+        self.assertEqual(True, details.value)
+
+        details = details_by_key(all_details, 'testStringKey')
+        self.assertEqual('testStringKey', details.key)
+        self.assertEqual('testValue', details.value)
+        self.assertEqual('id', details.variation_id)
+
+        details = details_by_key(all_details, 'testIntKey')
+        self.assertEqual('testIntKey', details.key)
+        self.assertEqual(1, details.value)
+
+        details = details_by_key(all_details, 'testDoubleKey')
+        self.assertEqual('testDoubleKey', details.key)
+        self.assertEqual(1.1, details.value)
+
+        details = details_by_key(all_details, 'key1')
+        self.assertEqual('key1', details.key)
+        self.assertEqual(True, details.value)
+        self.assertEqual('fakeId1', details.variation_id)
+
+        details = details_by_key(all_details, 'key2')
+        self.assertEqual('key2', details.key)
+        self.assertEqual(False, details.value)
+        self.assertEqual('fakeId2', details.variation_id)
+
         client.close()
 
     def test_cache_key(self):
@@ -197,6 +249,64 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertTrue('fakeId2' in result)
 
         client.close()
+
+    def test_online_offline(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
+
+            self.assertFalse(client.is_offline())
+
+            client.force_refresh()
+
+            self.assertEqual(1, request_get.call_count)
+
+            client.set_offline()
+            self.assertTrue(client.is_offline())
+
+            client.force_refresh()
+
+            self.assertEqual(1, request_get.call_count)
+
+            client.set_online()
+            self.assertFalse(client.is_offline())
+
+            client.force_refresh()
+
+            self.assertEqual(2, request_get.call_count)
+
+            client.close()
+
+    def test_init_offline(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                  offline=True))
+
+            self.assertTrue(client.is_offline())
+
+            client.force_refresh()
+
+            self.assertEqual(0, request_get.call_count)
+
+            client.set_online()
+            self.assertFalse(client.is_offline())
+
+            client.force_refresh()
+
+            self.assertEqual(1, request_get.call_count)
+
+            client.close()
 
 
 if __name__ == '__main__':

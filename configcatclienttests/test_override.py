@@ -6,8 +6,8 @@ import json
 import time
 
 from configcatclient import ConfigCatClient
-from configcatclient.localdictionarydatasource import LocalDictionaryDataSource
-from configcatclient.localfiledatasource import LocalFileDataSource
+from configcatclient.localdictionarydatasource import LocalDictionaryFlagOverrides
+from configcatclient.localfiledatasource import LocalFileFlagOverrides
 from configcatclient.overridedatasource import OverrideBehaviour
 from configcatclienttests.mocks import MockResponse
 from configcatclient.configcatoptions import ConfigCatOptions
@@ -30,13 +30,14 @@ def mocked_requests_get(*args, **kwargs):
     return MockResponse({"f": {"fakeKey": {"v": False}}}, 200)
 
 
-class LocalTests(unittest.TestCase):
+class OverrideTests(unittest.TestCase):
     script_dir = path.dirname(__file__)
 
     def test_file(self):
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                   flag_overrides=LocalFileDataSource(file_path=path.join(LocalTests.script_dir, 'test.json'),
-                                                                      override_behaviour=OverrideBehaviour.LocalOnly))
+                                   flag_overrides=LocalFileFlagOverrides(
+                                       file_path=path.join(OverrideTests.script_dir, 'test.json'),
+                                       override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key='test', options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
@@ -48,8 +49,9 @@ class LocalTests(unittest.TestCase):
 
     def test_simple_file(self):
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                   flag_overrides=LocalFileDataSource(file_path=path.join(LocalTests.script_dir, 'test-simple.json'),
-                                                                      override_behaviour=OverrideBehaviour.LocalOnly))
+                                   flag_overrides=LocalFileFlagOverrides(
+                                       file_path=path.join(OverrideTests.script_dir, 'test-simple.json'),
+                                       override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key='test', options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
@@ -61,8 +63,9 @@ class LocalTests(unittest.TestCase):
 
     def test_non_existent_file(self):
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                   flag_overrides=LocalFileDataSource(file_path='non_existent.json',
-                                                                      override_behaviour=OverrideBehaviour.LocalOnly))
+                                   flag_overrides=LocalFileFlagOverrides(
+                                       file_path='non_existent.json',
+                                       override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key='test', options=options)
         self.assertFalse(client.get_value('enabledFeature', False))
         client.close()
@@ -76,8 +79,9 @@ class LocalTests(unittest.TestCase):
         temp.flush()
 
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                   flag_overrides=LocalFileDataSource(file_path=temp.name,
-                                                                      override_behaviour=OverrideBehaviour.LocalOnly))
+                                   flag_overrides=LocalFileFlagOverrides(
+                                       file_path=temp.name,
+                                       override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key='test', options=options)
 
         self.assertFalse(client.get_value('enabledFeature', True))
@@ -103,8 +107,9 @@ class LocalTests(unittest.TestCase):
         temp.flush()
 
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                   flag_overrides=LocalFileDataSource(file_path=temp.name,
-                                                                      override_behaviour=OverrideBehaviour.LocalOnly))
+                                   flag_overrides=LocalFileFlagOverrides(
+                                       file_path=temp.name,
+                                       override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key='test', options=options)
 
         self.assertFalse(client.get_value('enabledFeature', False))
@@ -121,8 +126,9 @@ class LocalTests(unittest.TestCase):
         }
 
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                   flag_overrides=LocalDictionaryDataSource(source=dictionary,
-                                                                            override_behaviour=OverrideBehaviour.LocalOnly))
+                                   flag_overrides=LocalDictionaryFlagOverrides(
+                                       source=dictionary,
+                                       override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key='test', options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
@@ -140,8 +146,9 @@ class LocalTests(unittest.TestCase):
         }
 
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                   flag_overrides=LocalDictionaryDataSource(source=dictionary,
-                                                                            override_behaviour=OverrideBehaviour.LocalOverRemote))
+                                   flag_overrides=LocalDictionaryFlagOverrides(
+                                       source=dictionary,
+                                       override_behaviour=OverrideBehaviour.LocalOverRemote))
         client = ConfigCatClient.get(sdk_key='test', options=options)
         client.force_refresh()
 
@@ -157,8 +164,9 @@ class LocalTests(unittest.TestCase):
         }
 
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                   flag_overrides=LocalDictionaryDataSource(source=dictionary,
-                                                                            override_behaviour=OverrideBehaviour.RemoteOverLocal))
+                                   flag_overrides=LocalDictionaryFlagOverrides(
+                                       source=dictionary,
+                                       override_behaviour=OverrideBehaviour.RemoteOverLocal))
         client = ConfigCatClient.get(sdk_key='test', options=options)
         client.force_refresh()
 

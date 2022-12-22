@@ -10,8 +10,8 @@ class UserTests(unittest.TestCase):
         self.assertEqual('', u2.get_identifier())
 
     def test_attribute_case_sensitivity(self):
-        email = 'test@test.com';
-        country = 'country';
+        email = 'test@test.com'
+        country = 'country'
         user = User('user_id', email=email, country=country)
         self.assertEqual(email, user.get_attribute("Email"))
         self.assertIsNone(user.get_attribute("EMAIL"))

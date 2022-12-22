@@ -4,6 +4,8 @@ from qualname import qualname
 from datetime import datetime
 
 epoch_time = datetime(1970, 1, 1)
+distant_future = sys.float_info.max
+distant_past = 0
 
 
 def get_class_from_method(method):
@@ -60,6 +62,10 @@ def get_utc_now():
 
 def get_seconds_since_epoch(date_time):
     return (date_time - epoch_time).total_seconds()
+
+
+def get_date_time(seconds_since_epoch):
+    return datetime.utcfromtimestamp(seconds_since_epoch)
 
 
 def get_utc_now_seconds_since_epoch():

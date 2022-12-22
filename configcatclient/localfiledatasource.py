@@ -1,18 +1,24 @@
 from .constants import VALUE, FEATURE_FLAGS
-from .overridedatasource import OverrideDataSource
+from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
 import os
-import logging
-import sys
 
-log = logging.getLogger(sys.modules[__name__].__name__)
+
+class LocalFileFlagOverrides(FlagOverrides):
+    def __init__(self, file_path, override_behaviour):
+        self.file_path = file_path
+        self.override_behaviour = override_behaviour
+
+    def create_data_source(self, log):
+        return LocalFileDataSource(self.file_path, self.override_behaviour, log)
 
 
 class LocalFileDataSource(OverrideDataSource):
-    def __init__(self, file_path, override_behaviour):
+    def __init__(self, file_path, override_behaviour, log):
         OverrideDataSource.__init__(self, override_behaviour=override_behaviour)
+        self.log = log
         if not os.path.exists(file_path):
-            log.error('The file \'%s\' does not exists.' % file_path)
+            self.log.error('The file \'%s\' does not exists.' % file_path)
 
         self._file_path = file_path
         self._settings = None
@@ -30,15 +36,13 @@ class LocalFileDataSource(OverrideDataSource):
                 with open(self._file_path) as file:
                     data = json.load(file)
                     if 'flags' in data:
-                        dictionary = {}
+                        self._settings = {}
                         source = data['flags']
                         for key, value in source.items():
-                            dictionary[key] = {VALUE: value}
-                        self._settings = {FEATURE_FLAGS: dictionary}
+                            self._settings[key] = {VALUE: value}
                     else:
-                        self._settings = data
+                        self._settings = data[FEATURE_FLAGS]
         except OSError as e:
-            log.error('Could not read the content of the file %s. %s' % (self._file_path, e))
+            self.log.error('Could not read the content of the file %s. %s' % (self._file_path, e))
         except ValueError as e:
-            log.error('Could not decode json from file %s. %s' % (self._file_path, e))
-
+            self.log.error('Could not decode json from file %s. %s' % (self._file_path, e))

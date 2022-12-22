@@ -14,24 +14,22 @@ class PollingMode(object):
         """
 
     @staticmethod
-    def auto_poll(auto_poll_interval_seconds=60, max_init_wait_time_seconds=5, on_config_changed=None):
+    def auto_poll(poll_interval_seconds=60, max_init_wait_time_seconds=5):
         """
         Creates a configured auto polling configuration.
 
-        :param auto_poll_interval_seconds: sets at least how often this policy should fetch the latest configuration and refresh the cache.
+        :param poll_interval_seconds: sets at least how often this policy should fetch the latest configuration and refresh the cache.
         :param max_init_wait_time_seconds: sets the maximum waiting time between initialization and the first config acquisition in seconds.
-        :param on_config_changed: sets a configuration changed event handler.
         """
 
-        if auto_poll_interval_seconds < 1:
-            auto_poll_interval_seconds = 1
+        if poll_interval_seconds < 1:
+            poll_interval_seconds = 1
 
         if max_init_wait_time_seconds < 0:
             max_init_wait_time_seconds = 0
 
-        return AutoPollingMode(auto_poll_interval_seconds=auto_poll_interval_seconds,
-                               max_init_wait_time_seconds=max_init_wait_time_seconds,
-                               on_config_changed=on_config_changed)
+        return AutoPollingMode(poll_interval_seconds=poll_interval_seconds,
+                               max_init_wait_time_seconds=max_init_wait_time_seconds)
 
     @staticmethod
     def lazy_load(cache_refresh_interval_seconds=60):
@@ -55,10 +53,9 @@ class PollingMode(object):
 
 
 class AutoPollingMode(PollingMode):
-    def __init__(self, auto_poll_interval_seconds, max_init_wait_time_seconds, on_config_changed):
-        self.auto_poll_interval_seconds = auto_poll_interval_seconds
+    def __init__(self, poll_interval_seconds, max_init_wait_time_seconds):
+        self.poll_interval_seconds = poll_interval_seconds
         self.max_init_wait_time_seconds = max_init_wait_time_seconds
-        self.on_config_changed = on_config_changed
 
     def identifier(self):
         return "a"
