@@ -176,6 +176,9 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: the variation ID.
         """
+        self.log.warning('get_variation_id is deprecated and will be removed in a future major version. '
+                         'Please use [get_value_details] instead.')
+
         settings, fetch_time = self.__get_settings()
         if settings is None:
             message = 'Evaluating get_variation_id(\'{}\') failed. Cache is empty. ' \
@@ -200,6 +203,9 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: list of variation IDs
         """
+        self.log.warning('get_all_variation_ids is deprecated and will be removed in a future major version. '
+                         'Please use [get_all_value_details] instead.')
+
         keys = self.get_all_keys()
         variation_ids = []
         for key in keys:
@@ -254,6 +260,31 @@ class ConfigCatClient(object):
                 all_values[key] = value
 
         return all_values
+
+    def get_all_value_details(self, user=None):
+        """
+        Gets the values along with evaluation details of all feature flags and settings.
+
+        :param user: the user object to identify the caller.
+        :return: list of all evaluation details
+        """
+        settings, fetch_time = self.__get_settings()
+        if settings is None:
+            message = 'Evaluating get_all_value_details() failed. Cache is empty. Returning empty list.'
+            self.log.error(message)
+            return []
+
+        details_result = []
+        for key, value in list(settings.items()):
+            details = self.__evaluate(key=key,
+                                      user=user,
+                                      default_value=None,
+                                      default_variation_id=None,
+                                      settings=settings,
+                                      fetch_time=fetch_time)
+            details_result.append(details)
+
+        return details_result
 
     def force_refresh(self):
         """

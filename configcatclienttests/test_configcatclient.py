@@ -102,6 +102,47 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertFalse(all_values['key2'])
         client.close()
 
+    def test_get_all_value_details(self):
+        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                              config_cache=ConfigCacheMock()))
+        all_details = client.get_all_value_details()
+
+        def details_by_key(all_details, key):
+            for details in all_details:
+                if details.key == key:
+                    return details
+            return None
+
+        self.assertEqual(6, len(all_details))
+        details = details_by_key(all_details, 'testBoolKey')
+        self.assertEqual('testBoolKey', details.key)
+        self.assertEqual(True, details.value)
+
+        details = details_by_key(all_details, 'testStringKey')
+        self.assertEqual('testStringKey', details.key)
+        self.assertEqual('testValue', details.value)
+        self.assertEqual('id', details.variation_id)
+
+        details = details_by_key(all_details, 'testIntKey')
+        self.assertEqual('testIntKey', details.key)
+        self.assertEqual(1, details.value)
+
+        details = details_by_key(all_details, 'testDoubleKey')
+        self.assertEqual('testDoubleKey', details.key)
+        self.assertEqual(1.1, details.value)
+
+        details = details_by_key(all_details, 'key1')
+        self.assertEqual('key1', details.key)
+        self.assertEqual(True, details.value)
+        self.assertEqual('fakeId1', details.variation_id)
+
+        details = details_by_key(all_details, 'key2')
+        self.assertEqual('key2', details.key)
+        self.assertEqual(False, details.value)
+        self.assertEqual('fakeId2', details.variation_id)
+
+        client.close()
+
     def test_cache_key(self):
         client1 = ConfigCatClient.get('test1', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                                 config_cache=ConfigCacheMock()))
