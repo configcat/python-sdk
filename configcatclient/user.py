@@ -1,4 +1,6 @@
-__PREDEFINED__ = ["Identifier", 'Email', 'Country']
+import json
+
+__PREDEFINED__ = ['Identifier', 'Email', 'Country']
 
 
 class User(object):
@@ -19,23 +21,13 @@ class User(object):
         if attribute in __PREDEFINED__:
             return self.__data[attribute]
 
-        if self.__custom is not None:
-            for customField in self.__custom:
-                if customField == attribute:
-                    return self.__custom[customField]
-
-        return None
+        return self.__custom.get(attribute) if self.__custom else None
 
     def __str__(self):
-        r = '{\n    "Identifier": "%s"' % self.__identifier
-        if self.__data['Email'] is not None:
-            r += ',\n    "Email": "%s"' % self.__data['Email']
-        if self.__data['Country'] is not None:
-            r += ',\n    "Country": "%s"' % self.__data['Country']
-        if self.__custom is not None:
-            r += ',\n    "Custom": {'
-            for customField in self.__custom:
-                r += '\n        "%s": "%s",' % (customField, self.__custom[customField])
-            r += '\n    }'
-        r += '\n}'
-        return r
+        dump = {
+            'Identifier': self.__identifier,
+            'Email': self.__data.get('Email'),
+            'Country': self.__data.get('Country'),
+            'Custom': self.__custom,
+        }
+        return json.dumps(dump, indent=4)
