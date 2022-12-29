@@ -97,7 +97,7 @@ class ConfigFetcherWithErrorMock(ConfigFetcher):
         self._error = error
 
     def get_configuration(self, etag=''):
-        return FetchResponse.failure(self._error)
+        return FetchResponse.failure(self._error, True)
 
 
 class ConfigFetcherWaitMock(ConfigFetcher):
