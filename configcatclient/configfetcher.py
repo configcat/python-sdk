@@ -183,7 +183,7 @@ class ConfigFetcher(object):
             return FetchResponse.failure(error, True)
         except Timeout:
             error = 'Request timed out. Timeout values: [connect: {}s, read: {}s]'.format(
-                self._config_fetcher.get_connect_timeout(), self._config_fetcher.get_read_timeout())
+                self.get_connect_timeout(), self.get_read_timeout())
             self.log.error(error)
             return FetchResponse.failure(error, True)
         except Exception as e:
