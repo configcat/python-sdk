@@ -118,6 +118,32 @@ class HooksTests(unittest.TestCase):
 
             client.close()
 
+    def test_callback_exception(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            hook_callbacks = HookCallbacks()
+            hooks = Hooks(
+                on_client_ready=hook_callbacks.callback_exception,
+                on_config_changed=hook_callbacks.callback_exception,
+                on_flag_evaluated=hook_callbacks.callback_exception,
+                on_error=hook_callbacks.callback_exception
+            )
+            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                  hooks=hooks))
+
+            client.force_refresh()
+
+            value = client.get_value('testStringKey', '')
+            self.assertEqual('testValue', value)
+
+            value = client.get_value('', 'default')
+            self.assertEqual('default', value)
+
 
 if __name__ == '__main__':
     unittest.main()
