@@ -44,7 +44,7 @@ class RolloutTests(unittest.TestCase):
         custom_key = header.split(';')[3]
         content.pop(0)
 
-        client = configcatclient.create_client(sdk_key)
+        client = configcatclient.get(sdk_key)
         errors = ''
         for line in content:
             user_descriptor = line.rstrip().split(';')
@@ -81,10 +81,10 @@ class RolloutTests(unittest.TestCase):
         client.close()
 
     def test_wrong_user_object(self):
-        client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        client = configcatclient.get('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
         setting_value = client.get_value('stringContainsDogDefaultCat', 'Lion', {'Email': 'a@configcat.com'})
         self.assertEqual('Cat', setting_value)
-        client.close()
+        configcatclient.close_all()
 
 
 '''

@@ -68,6 +68,7 @@ class ConfigFetcherTests(unittest.TestCase):
             fetcher = ConfigFetcher(sdk_key='', log=log, mode='m')
             fetch_response = fetcher.get_configuration()
             self.assertTrue(fetch_response.is_failed())
+            self.assertTrue(fetch_response.is_transient_error)
             self.assertTrue(fetch_response.entry.is_empty())
 
     def test_exception(self):
@@ -76,6 +77,35 @@ class ConfigFetcherTests(unittest.TestCase):
             fetcher = ConfigFetcher(sdk_key='', log=log, mode='m')
             fetch_response = fetcher.get_configuration()
             self.assertTrue(fetch_response.is_failed())
+            self.assertTrue(fetch_response.is_transient_error)
+            self.assertTrue(fetch_response.entry.is_empty())
+
+    def test_404_failed_fetch_response(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = {}
+            response_mock.status_code = 404
+            response_mock.headers = {}
+            fetcher = ConfigFetcher(sdk_key='', log=log, mode='m')
+            fetch_response = fetcher.get_configuration()
+            self.assertTrue(fetch_response.is_failed())
+            self.assertFalse(fetch_response.is_transient_error)
+            self.assertFalse(fetch_response.is_fetched())
+            self.assertTrue(fetch_response.entry.is_empty())
+
+    def test_403_failed_fetch_response(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = {}
+            response_mock.status_code = 403
+            response_mock.headers = {}
+            fetcher = ConfigFetcher(sdk_key='', log=log, mode='m')
+            fetch_response = fetcher.get_configuration()
+            self.assertTrue(fetch_response.is_failed())
+            self.assertFalse(fetch_response.is_transient_error)
+            self.assertFalse(fetch_response.is_fetched())
             self.assertTrue(fetch_response.entry.is_empty())
 
     def test_server_side_etag(self):

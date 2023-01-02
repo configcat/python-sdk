@@ -1,12 +1,15 @@
+import datetime
 import logging
 import unittest
 import requests
 
 from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
+from configcatclient.constants import VALUE, COMPARATOR, COMPARISON_ATTRIBUTE, COMPARISON_VALUE
 from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions
 from configcatclient.pollingmode import PollingMode
+from configcatclient.utils import get_utc_now
 from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT
 
 # Python2/Python3 support
@@ -142,6 +145,37 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertEqual('fakeId2', details.variation_id)
 
         client.close()
+
+    def test_get_value_details(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
+            client.force_refresh()
+
+            user = User("test@test1.com")
+            details = client.get_value_details('testStringKey', '', user)
+
+            self.assertEqual('fake1', details.value)
+            self.assertEqual('testStringKey', details.key)
+            self.assertEqual('id1', details.variation_id)
+            self.assertFalse(details.is_default_value)
+            self.assertIsNone(details.error)
+            self.assertIsNone(details.matched_evaluation_percentage_rule)
+            self.assertEqual('fake1', details.matched_evaluation_rule[VALUE])
+            self.assertEqual(2, details.matched_evaluation_rule[COMPARATOR])
+            self.assertEqual('Identifier', details.matched_evaluation_rule[COMPARISON_ATTRIBUTE])
+            self.assertEqual('@test1.com', details.matched_evaluation_rule[COMPARISON_VALUE])
+            self.assertEqual(str(user), str(details.user))
+            now = get_utc_now()
+            self.assertGreaterEqual(now, details.fetch_time)
+            self.assertLessEqual(now, details.fetch_time + + datetime.timedelta(seconds=1))
+
+            client.close()
 
     def test_cache_key(self):
         client1 = ConfigCatClient.get('test1', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),

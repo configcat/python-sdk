@@ -132,7 +132,8 @@ class ConfigService(object):
                     self._cached_entry = response.entry
                     self._write_cache(response.entry)
                     self._hooks.invoke_on_config_changed(response.entry.config.get(FEATURE_FLAGS))
-                elif response.is_not_modified():
+                elif (response.is_not_modified() or not response.is_transient_error) and \
+                        not self._cached_entry.is_empty():
                     self._cached_entry.fetch_time = utils.get_utc_now_seconds_since_epoch()
                     self._write_cache(self._cached_entry)
 

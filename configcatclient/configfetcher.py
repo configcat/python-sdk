@@ -33,10 +33,11 @@ class Status(IntEnum):
 
 
 class FetchResponse(object):
-    def __init__(self, status, entry, error=None):
+    def __init__(self, status, entry, error=None, is_transient_error=False):
         self._status = status
         self.entry = entry
         self.error = error
+        self.is_transient_error = is_transient_error
 
     def is_fetched(self):
         """Gets whether a new configuration value was fetched or not.
@@ -65,8 +66,8 @@ class FetchResponse(object):
         return FetchResponse(Status.NotModified, ConfigEntry.empty)
 
     @classmethod
-    def failure(cls, error):
-        return FetchResponse(Status.Failure, ConfigEntry.empty, error)
+    def failure(cls, error, is_transient_error):
+        return FetchResponse(Status.Failure, ConfigEntry.empty, error, is_transient_error)
 
 
 class ConfigFetcher(object):
@@ -169,19 +170,23 @@ class ConfigFetcher(object):
                 return FetchResponse.success(ConfigEntry(config, response_etag, get_utc_now_seconds_since_epoch()))
             elif response.status_code == 304:
                 return FetchResponse.not_modified()
+            elif response.status_code in [404, 403]:
+                error = 'Double-check your SDK Key at https://app.configcat.com/sdkkey. ' \
+                        'Received unexpected response: %s' % str(response)
+                self.log.error(error)
+                return FetchResponse.failure(error, False)
             else:
                 raise (requests.HTTPError(response))
         except HTTPError as e:
-            error = 'Double-check your SDK Key at https://app.configcat.com/sdkkey. ' \
-                    'Received unexpected response: %s' % str(e.response)
+            error = 'Unexpected HTTP response was received: %s' % str(e.response)
             self.log.error(error)
-            return FetchResponse.failure(error)
+            return FetchResponse.failure(error, True)
         except Timeout:
             error = 'Request timed out. Timeout values: [connect: {}s, read: {}s]'.format(
-                self._config_fetcher.get_connect_timeout(), self._config_fetcher.get_read_timeout())
+                self.get_connect_timeout(), self.get_read_timeout())
             self.log.error(error)
-            return FetchResponse.failure(error)
+            return FetchResponse.failure(error, True)
         except Exception as e:
             error = 'Exception occurred during fetching: ' + str(e)
             self.log.error(error)
-            return FetchResponse.failure(error)
+            return FetchResponse.failure(error, True)
