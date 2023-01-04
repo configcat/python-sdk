@@ -36,9 +36,8 @@ import configcatclient
 ### 4. Create a *ConfigCat* client instance:
 
 ```python
-configcat_client = configcatclient.create_client('#YOUR-SDK-KEY#')
+configcat_client = configcatclient.get('#YOUR-SDK-KEY#')
 ```
-> We strongly recommend using the *ConfigCat Client* as a Singleton object in your application.
 
 ### 5. Get your setting value
 ```python
