@@ -39,6 +39,8 @@ import configcatclient
 configcat_client = configcatclient.get('#YOUR-SDK-KEY#')
 ```
 
+> We strongly recommend you to use the *ConfigCat Client* as a Singleton object in your application. The `configcatclient.get()` static factory method constructs singleton client instances for your SDK keys.
+
 ### 5. Get your setting value
 ```python
 isMyAwesomeFeatureEnabled = configcat_client.get_value('isMyAwesomeFeatureEnabled', False)
