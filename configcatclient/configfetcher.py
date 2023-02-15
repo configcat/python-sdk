@@ -41,19 +41,19 @@ class FetchResponse(object):
 
     def is_fetched(self):
         """Gets whether a new configuration value was fetched or not.
-        :return: True if a new configuration value was fetched, otherwise false.
+        :return: True if a new configuration value was fetched, otherwise False.
         """
         return self._status == Status.Fetched
 
     def is_not_modified(self):
         """Gets whether the fetch resulted a '304 Not Modified' or not.
-        :return: True if the fetch resulted a '304 Not Modified' code, otherwise false.
+        :return: True if the fetch resulted a '304 Not Modified' code, otherwise False.
         """
         return self._status == Status.NotModified
 
     def is_failed(self):
         """Gets whether the fetch failed or not.
-        :return: True if the fetch failed, otherwise false.
+        :return: True if the fetch failed, otherwise False.
         """
         return self._status == Status.Failure
 

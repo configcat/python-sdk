@@ -81,7 +81,7 @@ class ConfigCatClient(object):
         else:
             self._override_data_source = None
 
-        self._config_cache = options.config_cache if options.config_cache is not None else NullConfigCache()
+        config_cache = options.config_cache if options.config_cache is not None else NullConfigCache()
 
         if self._override_data_source and self._override_data_source.get_behaviour() == OverrideBehaviour.LocalOnly:
             self._config_fetcher = None
@@ -99,7 +99,7 @@ class ConfigCatClient(object):
                                                  self._hooks,
                                                  self._config_fetcher,
                                                  self.log,
-                                                 self._config_cache,
+                                                 config_cache,
                                                  options.offline)
 
     def get_value(self, key, default_value, user=None):
@@ -139,8 +139,8 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Evaluating get_value(\'{}\') failed. Cache is empty. ' \
-                      'Returning default_value in your get_value call: [{}].'.format(key, str(default_value))
+            message = 'Evaluating get_value_details(\'{}\') failed. Cache is empty. ' \
+                      'Returning default_value in your get_value_details call: [{}].'.format(key, str(default_value))
             self.log.error(message)
             details = EvaluationDetails.from_error(key, default_value, message)
             self._hooks.invoke_on_flag_evaluated(details)

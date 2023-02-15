@@ -228,6 +228,9 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
 
         time.sleep(3)
 
+        settings, _ = cache_policy.get_settings()
+
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(config_fetcher.get_fetch_count, 1)
         cache_policy.close()
@@ -295,6 +298,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
 
             cache_policy.set_offline()
             self.assertTrue(cache_policy.is_offline())
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
             self.assertEqual(2, request_get.call_count)
 
             time.sleep(2)
@@ -323,16 +328,23 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                          Hooks(), config_fetcher, log, NullConfigCache(), True)
 
             self.assertTrue(cache_policy.is_offline())
+            settings, _ = cache_policy.get_settings()
+            self.assertIsNone(settings)
             self.assertEqual(0, request_get.call_count)
 
             time.sleep(2)
 
+            settings, _ = cache_policy.get_settings()
+            self.assertIsNone(settings)
             self.assertEqual(0, request_get.call_count)
+
             cache_policy.set_online()
             self.assertFalse(cache_policy.is_offline())
 
             time.sleep(2.5)
 
+            settings, _ = cache_policy.get_settings()
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
             self.assertGreaterEqual(request_get.call_count, 2)
             cache_policy.close()
 

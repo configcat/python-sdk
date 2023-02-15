@@ -86,13 +86,6 @@ class ConfigCatOptions(object):
                  default_user=None,
                  hooks=None,
                  offline=False):
-        """
-        Default: `DataGovernance.Global`. Set this parameter to be in sync with the
-        Data Governance preference on the [Dashboard](https://app.configcat.com/organization/data-governance).
-        (Only Organization Admins have access)
-        """
-        self.data_governance = data_governance
-
         # The base ConfigCat CDN url.
         self.base_url = base_url
 
@@ -116,6 +109,11 @@ class ConfigCatOptions(object):
 
         # Feature flag and setting overrides.
         self.flag_overrides = flag_overrides
+
+        # Default: `DataGovernance.Global`. Set this parameter to be in sync with the
+        # Data Governance preference on the [Dashboard](https://app.configcat.com/organization/data-governance).
+        # (Only Organization Admins have access)
+        self.data_governance = data_governance
 
         # The default user, used as fallback when there's no user parameter is passed to the getValue() method.
         self.default_user = default_user
