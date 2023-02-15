@@ -58,7 +58,7 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
     :param connect_timeout_seconds: The number of seconds to wait for the server to make the initial connection
     (i.e. completing the TCP connection handshake). Default: 10 seconds.
     :param read_timeout_seconds: The number of seconds to wait for the server to respond before giving up. Default: 30 seconds.
-    :param flag_overrides: An FlagOverrides implementation used to override feature flags & settings.
+    :param flag_overrides: A FlagOverrides implementation used to override feature flags & settings.
     :param data_governance:
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
@@ -104,7 +104,7 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
     :param connect_timeout_seconds: The number of seconds to wait for the server to make the initial connection
     (i.e. completing the TCP connection handshake). Default: 10 seconds.
     :param read_timeout_seconds: The number of seconds to wait for the server to respond before giving up. Default: 30 seconds.
-    :param flag_overrides: An FlagOverrides implementation used to override feature flags & settings.
+    :param flag_overrides: A FlagOverrides implementation used to override feature flags & settings.
     :param data_governance:
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n
@@ -144,7 +144,7 @@ def create_client_with_manual_poll(sdk_key, config_cache=None,
     :param connect_timeout_seconds: The number of seconds to wait for the server to make the initial connection
     (i.e. completing the TCP connection handshake). Default: 10 seconds.
     :param read_timeout_seconds: The number of seconds to wait for the server to respond before giving up. Default: 30 seconds.
-    :param flag_overrides: An FlagOverrides implementation used to override feature flags & settings.
+    :param flag_overrides: A FlagOverrides implementation used to override feature flags & settings.
     :param data_governance:
     Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard: \n
     https://app.configcat.com/organization/data-governance \n

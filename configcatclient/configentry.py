@@ -27,9 +27,9 @@ class ConfigEntry(object):
 
     def to_json(self):
         return {
+            ConfigEntry.CONFIG: self.config,
             ConfigEntry.ETAG: self.etag,
-            ConfigEntry.FETCH_TIME: self.fetch_time,
-            ConfigEntry.CONFIG: self.config
+            ConfigEntry.FETCH_TIME: self.fetch_time
         }
 
 
