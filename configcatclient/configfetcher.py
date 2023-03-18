@@ -8,6 +8,7 @@ from requests import Timeout
 from .configentry import ConfigEntry
 from .constants import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
+from .logger import Logger
 from .utils import get_utc_now_seconds_since_epoch
 from .version import CONFIGCATCLIENT_VERSION
 
@@ -136,14 +137,13 @@ class ConfigFetcher(object):
         # Try to download again with the new url
 
         if redirect == int(RedirectMode.ShouldRedirect):
-            self.log.warning('Your data_governance parameter at ConfigCatClient initialization is not in sync '
-                             'with your preferences on the ConfigCat Dashboard: '
-                             'https://app.configcat.com/organization/data-governance. '
-                             'Only Organization Admins can access this preference.')
+            self.log.warning('The `dataGovernance` parameter specified at the client initialization is not in sync with the preferences on the ConfigCat Dashboard. ' \
+                             'Read more: https://configcat.com/docs/advanced/data-governance/',
+                             event_id = 3002)
 
         # To prevent loops we check if we retried at least 3 times with the new base_url
         if retries >= 2:
-            self.log.error('Redirect loop during config.json fetch. Please contact support@configcat.com.')
+            self.log.error('Redirection loop encountered while trying to fetch config JSON. Please contact us at https://configcat.com/support/', event_id = 1104)
             return fetch_response
 
         # Retry the config download with the new base_url
@@ -171,22 +171,24 @@ class ConfigFetcher(object):
             elif response.status_code == 304:
                 return FetchResponse.not_modified()
             elif response.status_code in [404, 403]:
-                error = 'Double-check your SDK Key at https://app.configcat.com/sdkkey. ' \
-                        'Received unexpected response: %s' % str(response)
-                self.log.error(error)
-                return FetchResponse.failure(error, False)
+                error = 'Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey. ' \
+                        'Received unexpected response: %s'
+                error_args = (str(response), )
+                self.log.error(error, *error_args, event_id = 1100)
+                return FetchResponse.failure(Logger.format(error, error_args), False)
             else:
                 raise (requests.HTTPError(response))
         except HTTPError as e:
-            error = 'Unexpected HTTP response was received: %s' % str(e.response)
-            self.log.error(error)
-            return FetchResponse.failure(error, True)
+            error = 'Unexpected HTTP response was received while trying to fetch config JSON: %s'
+            error_args = (str(e.response), )
+            self.log.error(error, *error_args, event_id = 1101)
+            return FetchResponse.failure(Logger.format(error, error_args), True)
         except Timeout:
-            error = 'Request timed out. Timeout values: [connect: {}s, read: {}s]'.format(
-                self.get_connect_timeout(), self.get_read_timeout())
-            self.log.error(error)
-            return FetchResponse.failure(error, True)
+            error = 'Request timed out while trying to fetch config JSON. Timeout values: [connect: %gs, read: %gs]'
+            error_args = (self.get_connect_timeout(), self.get_read_timeout())
+            self.log.error(error, *error_args, event_id = 1102)
+            return FetchResponse.failure(Logger.format(error, error_args), True)
         except Exception as e:
-            error = 'Exception occurred during fetching: ' + str(e)
-            self.log.error(error)
-            return FetchResponse.failure(error, True)
+            error = 'Unexpected error occurred while trying to fetch config JSON.'
+            self.log.exception(error, event_id = 1103)
+            return FetchResponse.failure(Logger.format(error, (), e), True)
