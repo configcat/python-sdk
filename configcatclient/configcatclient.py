@@ -332,7 +332,7 @@ class ConfigCatClient(object):
 
     def is_offline(self):
         """
-        True when the SDK is configured not to initiate HTTP requests, otherwise false.
+        True when the SDK is configured not to initiate HTTP requests, otherwise False.
         """
         if self._config_service:
             return self._config_service.is_offline()

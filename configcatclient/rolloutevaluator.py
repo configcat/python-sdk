@@ -34,7 +34,7 @@ class RolloutEvaluator(object):
 
     def evaluate(self, key, user, default_value, default_variation_id, settings):
         """
-        returns value, variation_id. matched_evaluation_rule, matched_evaluation_percentage_rule, error
+        returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error
         """
         setting_descriptor = settings.get(key)
 

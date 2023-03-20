@@ -33,4 +33,4 @@ class ConfigEntry(object):
         }
 
 
-ConfigEntry.empty = ConfigEntry()
+ConfigEntry.empty = ConfigEntry(etag='empty')
