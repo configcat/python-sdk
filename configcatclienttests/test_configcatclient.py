@@ -157,7 +157,7 @@ class ConfigCatClientTests(unittest.TestCase):
             client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
             client.force_refresh()
 
-            user = User("test@test1.com")
+            user = User('test@test1.com')
             details = client.get_value_details('testStringKey', '', user)
 
             self.assertEqual('fake1', details.value)
@@ -202,7 +202,7 @@ class ConfigCatClientTests(unittest.TestCase):
 
         client.close()
 
-    def test_default_user_get_all_value(self):
+    def test_default_user_get_all_values(self):
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                               config_cache=ConfigCacheMock()))
         user1 = User("test@test1.com")

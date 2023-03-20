@@ -28,7 +28,7 @@ class ConfigService(object):
         self._fetch_finished = Event()
         self._start_time = utils.get_utc_now()
 
-        if isinstance(self._polling_mode, AutoPollingMode):
+        if isinstance(self._polling_mode, AutoPollingMode) and not is_offline:
             self._start_poll()
         else:
             self._set_initialized()
@@ -66,7 +66,6 @@ class ConfigService(object):
             self._is_offline = False
             if isinstance(self._polling_mode, AutoPollingMode):
                 self._start_poll()
-            self.log.debug('Switched to ONLINE mode.')
 
     def set_offline(self):
         with self._lock:
@@ -77,8 +76,6 @@ class ConfigService(object):
             if isinstance(self._polling_mode, AutoPollingMode):
                 self._stopped.set()
                 self._thread.join()
-
-            self.log.debug('Switched to OFFLINE mode.')
 
     def is_offline(self):
         return self._is_offline  # atomic operation in python (lock is not needed)
