@@ -1,6 +1,8 @@
 import logging
 import unittest
 import requests
+from configcatclient.configcatoptions import Hooks
+from configcatclient.logger import Logger
 
 # Python2/Python3 support
 try:
@@ -15,7 +17,7 @@ except ImportError:
 from configcatclient.configfetcher import ConfigFetcher
 
 logging.basicConfig(level=logging.WARN)
-log = logging.getLogger()
+log = Logger('configcat', Hooks())
 
 
 class ConfigFetcherTests(unittest.TestCase):

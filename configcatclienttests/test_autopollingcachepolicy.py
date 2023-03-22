@@ -11,6 +11,7 @@ from configcatclient.configentry import ConfigEntry
 from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE
+from configcatclient.logger import Logger
 from configcatclient.utils import get_utc_now_seconds_since_epoch
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, ConfigFetcherWaitMock, \
     ConfigFetcherCountMock, TEST_JSON, TEST_JSON2, HookCallbacks, SingleValueConfigCache, TEST_OBJECT
@@ -26,7 +27,7 @@ except ImportError:
     from mock import Mock, ANY
 
 logging.basicConfig()
-log = logging.getLogger()
+log = Logger('configcat', Hooks())
 
 
 class AutoPollingCachePolicyTests(unittest.TestCase):
