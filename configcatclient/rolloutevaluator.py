@@ -45,7 +45,7 @@ class RolloutEvaluator(object):
                     'Returning the `%s` parameter that you specified in your application: \'%s\'. ' \
                     'Available keys: %s.'
             error_args = (key, 'default_value', str(default_value), ', '.join(list(settings)))
-            self.log.error(error, *error_args, event_id = 1001)
+            self.log.error(error, *error_args, event_id=1001)
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
         rollout_rules = setting_descriptor.get(ROLLOUT_RULES, [])
@@ -54,7 +54,7 @@ class RolloutEvaluator(object):
         user_has_invalid_type = user is not None and type(user) is not User
         if user_has_invalid_type:
             self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' (User Object is not an instance of User type).',
-                             key, event_id = 4001)
+                             key, event_id=4001)
             user = None
 
         if user is None:
@@ -62,10 +62,10 @@ class RolloutEvaluator(object):
                 self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' (User Object is missing). ' \
                                  'You should pass a User Object to the evaluation methods like `get_value()` in order to make targeting work properly. ' \
                                  'Read more: https://configcat.com/docs/advanced/user-object/',
-                                 key, event_id = 3001)
+                                 key, event_id=3001)
             return_value = setting_descriptor.get(VALUE, default_value)
             return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-            self.log.info('%s', 'Returning [%s]' % str(return_value), event_id = 5000)
+            self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
             return return_value, return_variation_id, None, None, None
 
         log_entries = ['Evaluating get_value(\'%s\').' % key, 'User object:\n%s' % str(user)]
@@ -196,7 +196,7 @@ class RolloutEvaluator(object):
             log_entries.append('Returning %s' % return_value)
             return return_value, return_variation_id, None, None, None
         finally:
-            self.log.info('%s', '\n'.join(log_entries), event_id = 5000)
+            self.log.info('%s', '\n'.join(log_entries), event_id=5000)
 
     def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => match, returning: %s' \

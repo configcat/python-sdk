@@ -67,7 +67,7 @@ class ConfigService(object):
             if isinstance(self._polling_mode, AutoPollingMode):
                 self._start_poll()
 
-            self.log.info('Switched to %s mode.', 'ONLINE', event_id = 5200)
+            self.log.info('Switched to %s mode.', 'ONLINE', event_id=5200)
 
     def set_offline(self):
         with self._lock:
@@ -79,7 +79,7 @@ class ConfigService(object):
                 self._stopped.set()
                 self._thread.join()
 
-            self.log.info('Switched to %s mode.', 'OFFLINE', event_id = 5200)
+            self.log.info('Switched to %s mode.', 'OFFLINE', event_id=5200)
 
     def is_offline(self):
         return self._is_offline  # atomic operation in python (lock is not needed)
@@ -115,7 +115,7 @@ class ConfigService(object):
             # If we are in offline mode we are not allowed to initiate fetch.
             if self._is_offline:
                 offline_warning = 'Client is in offline mode, it cannot initiate HTTP calls.'
-                self.log.warning(offline_warning, event_id = 3200)
+                self.log.warning(offline_warning, event_id=3200)
                 return self._cached_entry, offline_warning
 
         # No fetch is running, initiate a new one.
@@ -175,11 +175,11 @@ class ConfigService(object):
             self._cached_entry_string = json_string
             return ConfigEntry.create_from_json(json.loads(json_string))
         except Exception:
-            self.log.exception('Error occurred while reading the cache.', event_id = 2200)
+            self.log.exception('Error occurred while reading the cache.', event_id=2200)
             return ConfigEntry.empty
 
     def _write_cache(self, config_entry):
         try:
             self._config_cache.set(self._cache_key, json.dumps(config_entry.to_json()))
         except Exception:
-            self.log.exception('Error occurred while writing the cache.', event_id = 2201)
+            self.log.exception('Error occurred while writing the cache.', event_id=2201)

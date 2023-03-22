@@ -22,7 +22,7 @@ class LocalFileDataSource(OverrideDataSource):
                            'This is a path that your application provided to the ConfigCat SDK ' \
                            'by passing it to the constructor of the `LocalFileFlagOverrides` class. ' \
                            'Read more: https://configcat.com/docs/sdk-reference/python/#json-file',
-                           file_path, event_id = 1300)
+                           file_path, event_id=1300)
 
         self._file_path = file_path
         self._settings = None
@@ -47,6 +47,6 @@ class LocalFileDataSource(OverrideDataSource):
                     else:
                         self._settings = data[FEATURE_FLAGS]
         except OSError:
-            self.log.exception('Failed to read the local config file \'%s\'.', self._file_path, event_id = 1302)
+            self.log.exception('Failed to read the local config file \'%s\'.', self._file_path, event_id=1302)
         except ValueError:
-            self.log.exception('Failed to decode JSON from the local config file \'%s\'.', self._file_path, event_id = 2302)
+            self.log.exception('Failed to decode JSON from the local config file \'%s\'.', self._file_path, event_id=2302)

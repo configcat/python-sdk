@@ -41,7 +41,7 @@ class ConfigCatClient(object):
                     client.log.warning('There is an existing client instance for the specified SDK Key. ' \
                                        'No new client instance will be created and the specified options are ignored. ' \
                                        'Returning the existing client instance. SDK Key: \'%s\'.',
-                                       sdk_key, event_id = 3000)
+                                       sdk_key, event_id=3000)
                 return client
 
             if options is None:
@@ -118,7 +118,7 @@ class ConfigCatClient(object):
         if settings is None:
             message = 'Config JSON is not present. Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = ('default_value', str(default_value))
-            self.log.error(message, *message_args, event_id = 1000)
+            self.log.error(message, *message_args, event_id=1000)
             self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args)))
             return default_value
 
@@ -144,7 +144,7 @@ class ConfigCatClient(object):
         if settings is None:
             message = 'Config JSON is not present. Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = ('default_value', str(default_value))
-            self.log.error(message, *message_args, event_id = 1000)
+            self.log.error(message, *message_args, event_id=1000)
             details = EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args))
             self._hooks.invoke_on_flag_evaluated(details)
             return details
@@ -186,7 +186,7 @@ class ConfigCatClient(object):
         if settings is None:
             message = 'Config JSON is not present. Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = ('default_variation_id', str(default_variation_id))
-            self.log.error(message, *message_args, event_id = 1000)
+            self.log.error(message, *message_args, event_id=1000)
             self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, None, Logger.format(message, message_args), default_variation_id))
             return default_variation_id
 
@@ -226,7 +226,7 @@ class ConfigCatClient(object):
         """
         settings, _ = self.__get_settings()
         if settings is None:
-            self.log.error('Config JSON is not present. Returning None.', event_id = 1000)
+            self.log.error('Config JSON is not present. Returning None.', event_id=1000)
             return None
 
         for key, value in list(settings.items()):
@@ -243,7 +243,7 @@ class ConfigCatClient(object):
                 if variation_id == rollout_percentage_item.get(VARIATION_ID):
                     return KeyValue(key, rollout_percentage_item[VALUE])
 
-        self.log.error('Could not find the setting for the specified variation ID: \'%s\'.', variation_id, event_id = 2011)
+        self.log.error('Could not find the setting for the specified variation ID: \'%s\'.', variation_id, event_id=2011)
         return None
 
     def get_all_values(self, user=None):
@@ -271,7 +271,7 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            self.log.error('Config JSON is not present. Returning empty list.', event_id = 1000)
+            self.log.error('Config JSON is not present. Returning empty list.', event_id=1000)
             return []
 
         details_result = []
@@ -319,7 +319,7 @@ class ConfigCatClient(object):
         if self._config_service:
             self._config_service.set_online()
         else:
-            self.log.warning('Client is configured to use the `%s` override behavior, thus `%s()` has no effect.', 'LocalOnly', 'set_online', event_id = 3202)
+            self.log.warning('Client is configured to use the `%s` override behavior, thus `%s()` has no effect.', 'LocalOnly', 'set_online', event_id=3202)
 
     def set_offline(self):
         """
