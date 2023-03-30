@@ -164,7 +164,7 @@ class RolloutEvaluator:
                         continue
                 # IS ONE OF (Sensitive)
                 elif comparator == 16:
-                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [
+                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [  # NOSONAR python:S4790
                         x.strip() for x in str(comparison_value).split(',')
                     ]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
@@ -172,7 +172,7 @@ class RolloutEvaluator:
                         return value, variation_id, rollout_rule, None, None
                 # IS NOT ONE OF (Sensitive)
                 elif comparator == 17:
-                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [
+                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [  # NOSONAR python:S4790
                         x.strip() for x in str(comparison_value).split(',')
                     ]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
