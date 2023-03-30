@@ -1,6 +1,5 @@
 import sys
 import inspect
-from qualname import qualname
 from datetime import datetime
 
 epoch_time = datetime(1970, 1, 1)
@@ -12,7 +11,7 @@ def get_class_from_method(method):
     method_class = sys.modules.get(method.__module__)
     if method_class is None:
         return None
-    for name in qualname(method).split('.')[:-1]:
+    for name in method.__qualname__.split('.')[:-1]:
         method_class = getattr(method_class, name)
     if not inspect.isclass(method_class):
         return None

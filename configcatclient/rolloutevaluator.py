@@ -6,7 +6,7 @@ from .constants import ROLLOUT_RULES, ROLLOUT_PERCENTAGE_ITEMS, VALUE, VARIATION
 from .user import User
 
 
-class RolloutEvaluator(object):
+class RolloutEvaluator:
     SEMANTIC_VERSION_COMPARATORS = ['<', '<=', '>', '>=']
     COMPARATOR_TEXTS = [
         'IS ONE OF',
@@ -177,7 +177,7 @@ class RolloutEvaluator(object):
             # Evaluate variations
             if len(rollout_percentage_items) > 0:
                 user_key = user.get_identifier()
-                hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
+                hash_candidate = (f"{key}{user_key}").encode('utf-8')
                 hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
                 bucket = 0

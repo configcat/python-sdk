@@ -4,12 +4,6 @@ import time
 from configcatclient.configentry import ConfigEntry
 from configcatclient.utils import get_utc_now_seconds_since_epoch
 
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
-
-
 from configcatclient.configfetcher import FetchResponse, ConfigFetcher
 from configcatclient.interfaces import ConfigCache
 
@@ -164,7 +158,7 @@ class MockResponse:
         raise Exception(self.status_code)
 
 
-class HookCallbacks(object):
+class HookCallbacks:
     def __init__(self):
         self.is_ready = False
         self.is_ready_call_count = 0

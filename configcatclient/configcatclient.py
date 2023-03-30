@@ -20,7 +20,7 @@ from .utils import method_is_called_from, get_date_time
 KeyValue = namedtuple('KeyValue', 'key value')
 
 
-class ConfigCatClient(object):
+class ConfigCatClient:
     _lock = Lock()
     _instances = {}
 

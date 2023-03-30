@@ -1,20 +1,12 @@
 import logging
 import unittest
 
+from unittest import mock
+from unittest.mock import ANY
+
 from configcatclient import DataGovernance
-from configcatclienttests.mocks import MockResponse
-
-# Python2/Python3 support
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-try:
-    from unittest.mock import Mock, ANY
-except ImportError:
-    from mock import Mock, ANY
-
 from configcatclient.configfetcher import ConfigFetcher
+from configcatclienttests.mocks import MockResponse
 
 logging.basicConfig(level=logging.WARN)
 log = logging.getLogger()

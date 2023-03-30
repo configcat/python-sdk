@@ -1,7 +1,7 @@
 from . import utils
 
 
-class ConfigEntry(object):
+class ConfigEntry:
     CONFIG = 'config'
     ETAG = 'etag'
     FETCH_TIME = 'fetch_time'

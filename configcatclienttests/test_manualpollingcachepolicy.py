@@ -3,6 +3,9 @@ import logging
 import unittest
 import requests
 
+from unittest import mock
+from unittest.mock import Mock
+
 from configcatclient import PollingMode
 from configcatclient.configcache import NullConfigCache, InMemoryConfigCache
 from configcatclient.configcatoptions import Hooks
@@ -10,16 +13,6 @@ from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT, TEST_JSON_FORMAT
-
-# Python2/Python3 support
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-try:
-    from unittest.mock import Mock, ANY
-except ImportError:
-    from mock import Mock, ANY
 
 logging.basicConfig()
 log = logging.getLogger()

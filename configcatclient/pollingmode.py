@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 
-class PollingMode(object):
+class PollingMode:
     """
     Describes a polling mode.
     """

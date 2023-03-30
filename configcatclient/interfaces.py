@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 
-class ConfigCache(object):
+class ConfigCache:
     """
     Config cache interface
     """
