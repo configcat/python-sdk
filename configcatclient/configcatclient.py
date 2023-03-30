@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from threading import Lock
 
 from . import utils
@@ -22,7 +24,7 @@ KeyValue = namedtuple('KeyValue', 'key value')
 
 class ConfigCatClient:
     _lock = Lock()
-    _instances = {}
+    _instances: dict[str, ConfigCatClient] = {}
 
     @classmethod
     def get(cls, sdk_key, options=None):

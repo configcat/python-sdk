@@ -32,7 +32,7 @@ class RolloutEvaluator:
     def __init__(self, log):
         self.log = log
 
-    def evaluate(self, key, user, default_value, default_variation_id, settings):
+    def evaluate(self, key, user, default_value, default_variation_id, settings):  # noqa: C901
         """
         returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error
         """
@@ -77,7 +77,9 @@ class RolloutEvaluator:
 
                 user_value = user.get_attribute(comparison_attribute)
                 if user_value is None or not user_value:
-                    log_entries.append(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
+                    log_entries.append(
+                        self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value)
+                    )
                     continue
 
                 value = rollout_rule.get(VALUE)
@@ -162,13 +164,17 @@ class RolloutEvaluator:
                         continue
                 # IS ONE OF (Sensitive)
                 elif comparator == 16:
-                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [x.strip() for x in str(comparison_value).split(',')]:
+                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [
+                        x.strip() for x in str(comparison_value).split(',')
+                    ]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
                         return value, variation_id, rollout_rule, None, None
                 # IS NOT ONE OF (Sensitive)
                 elif comparator == 17:
-                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [x.strip() for x in str(comparison_value).split(',')]:
+                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [
+                        x.strip() for x in str(comparison_value).split(',')
+                    ]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
                         return value, variation_id, rollout_rule, None, None

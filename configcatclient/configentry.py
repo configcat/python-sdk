@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from . import utils
 
 
@@ -5,6 +7,7 @@ class ConfigEntry:
     CONFIG = 'config'
     ETAG = 'etag'
     FETCH_TIME = 'fetch_time'
+    empty: ConfigEntry
 
     def __init__(self, config={}, etag='', fetch_time=utils.distant_past):
         self.config = config
