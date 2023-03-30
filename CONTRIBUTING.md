@@ -38,11 +38,27 @@ To install requirements:
 
 ```bash
 pip install -r requirements.txt
-pip install pytest mock
+pip install pytest
 ```
 
 ## Running tests
 
 ```bash
 pytest configcatclienttests
+```
+
+## Running tests against all supported Python versions and linters
+
+There is a [tox](https://tox.wiki/) configuration file allowing to test against all supported Python versions
+as well as linting all files in isolated environments.
+
+Just run:
+
+```bash
+# Test against all supported Python versions and lint
+tox 
+# Test against a given Python version
+tox -e py310
+# Lint
+tox -e lint 
 ```
