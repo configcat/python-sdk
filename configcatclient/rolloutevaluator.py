@@ -113,7 +113,7 @@ class RolloutEvaluator:
                     try:
                         match = False
                         for x in filter(None, [x.strip() for x in str(comparison_value).split(',')]):
-                            match = semver.match(str(user_value).strip(), '==' + x) or match
+                            match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + x) or match
                         if (match and comparator == 4) or (not match and comparator == 5):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                        comparison_value, value))
@@ -128,8 +128,9 @@ class RolloutEvaluator:
                 # LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (Semantic version)
                 elif 6 <= comparator <= 9:
                     try:
-                        if semver.match(str(user_value).strip(),
-                                        self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()):
+                        if semver.VersionInfo.parse(str(user_value).strip()).match(
+                            self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()
+                        ):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                        comparison_value, value))
                             return value, variation_id, rollout_rule, None, None
