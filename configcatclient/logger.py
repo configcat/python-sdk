@@ -19,11 +19,11 @@ class Logger(logging.LoggerAdapter):
 
     def error(self, msg, *args, **kwargs):
         self._hooks.invoke_on_error(Logger.format(msg, args))
-        super().error(msg, *args, **kwargs)
+        super(Logger, self).error(msg, *args, **kwargs)
 
     def exception(self, msg, *args, **kwargs):
         self._hooks.invoke_on_error(Logger.format(msg, args, sys.exc_info()[1]))
-        super().exception(msg, *args, **kwargs)
+        super(Logger, self).exception(msg, *args, **kwargs)
 
     @staticmethod
     def format(msg, args, exc=None):
