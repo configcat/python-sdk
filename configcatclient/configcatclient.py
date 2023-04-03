@@ -38,8 +38,8 @@ class ConfigCatClient(object):
             client = cls._instances.get(sdk_key)
             if client is not None:
                 if options is not None:
-                    client.log.warning('There is an existing client instance for the specified SDK Key. ' \
-                                       'No new client instance will be created and the specified options are ignored. ' \
+                    client.log.warning('There is an existing client instance for the specified SDK Key. '
+                                       'No new client instance will be created and the specified options are ignored. '
                                        'Returning the existing client instance. SDK Key: \'%s\'.',
                                        sdk_key, event_id=3000)
                 return client

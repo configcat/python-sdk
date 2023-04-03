@@ -18,9 +18,9 @@ class LocalFileDataSource(OverrideDataSource):
         OverrideDataSource.__init__(self, override_behaviour=override_behaviour)
         self.log = log
         if not os.path.exists(file_path):
-            self.log.error('Cannot find the local config file \'%s\'. ' \
-                           'This is a path that your application provided to the ConfigCat SDK ' \
-                           'by passing it to the constructor of the `LocalFileFlagOverrides` class. ' \
+            self.log.error('Cannot find the local config file \'%s\'. '
+                           'This is a path that your application provided to the ConfigCat SDK '
+                           'by passing it to the constructor of the `LocalFileFlagOverrides` class. '
                            'Read more: https://configcat.com/docs/sdk-reference/python/#json-file',
                            file_path, event_id=1300)
 

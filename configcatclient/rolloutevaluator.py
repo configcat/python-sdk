@@ -59,8 +59,8 @@ class RolloutEvaluator(object):
 
         if user is None:
             if not user_has_invalid_type and (len(rollout_rules) > 0 or len(rollout_percentage_items) > 0):
-                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' (User Object is missing). ' \
-                                 'You should pass a User Object to the evaluation methods like `get_value()` in order to make targeting work properly. ' \
+                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' (User Object is missing). '
+                                 'You should pass a User Object to the evaluation methods like `get_value()` in order to make targeting work properly. '
                                  'Read more: https://configcat.com/docs/advanced/user-object/',
                                  key, event_id=3001)
             return_value = setting_descriptor.get(VALUE, default_value)

@@ -137,7 +137,7 @@ class ConfigFetcher(object):
         # Try to download again with the new url
 
         if redirect == int(RedirectMode.ShouldRedirect):
-            self.log.warning('The `dataGovernance` parameter specified at the client initialization is not in sync with the preferences on the ConfigCat Dashboard. ' \
+            self.log.warning('The `dataGovernance` parameter specified at the client initialization is not in sync with the preferences on the ConfigCat Dashboard. '
                              'Read more: https://configcat.com/docs/advanced/data-governance/',
                              event_id=3002)
 
