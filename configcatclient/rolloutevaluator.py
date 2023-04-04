@@ -44,7 +44,7 @@ class RolloutEvaluator(object):
             error = 'Failed to evaluate setting \'%s\' (the key was not found in config JSON). ' \
                     'Returning the `%s` parameter that you specified in your application: \'%s\'. ' \
                     'Available keys: [%s].'
-            error_args = (key, 'default_value', str(default_value), ', '.join(list(settings)))
+            error_args = (key, 'default_value', str(default_value), ', '.join("'{}'".format(s) for s in list(settings)))
             self.log.error(error, *error_args, event_id=1001)
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
