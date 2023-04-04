@@ -116,8 +116,8 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Config JSON is not present. Returning the `%s` parameter that you specified in your application: \'%s\'.'
-            message_args = ('default_value', str(default_value))
+            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message_args = (key, 'default_value', str(default_value))
             self.log.error(message, *message_args, event_id=1000)
             self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args)))
             return default_value
@@ -142,8 +142,8 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Config JSON is not present. Returning the `%s` parameter that you specified in your application: \'%s\'.'
-            message_args = ('default_value', str(default_value))
+            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message_args = (key, 'default_value', str(default_value))
             self.log.error(message, *message_args, event_id=1000)
             details = EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args))
             self._hooks.invoke_on_flag_evaluated(details)
@@ -184,8 +184,8 @@ class ConfigCatClient(object):
 
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Config JSON is not present. Returning the `%s` parameter that you specified in your application: \'%s\'.'
-            message_args = ('default_variation_id', str(default_variation_id))
+            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message_args = (key, 'default_variation_id', str(default_variation_id))
             self.log.error(message, *message_args, event_id=1000)
             self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, None, Logger.format(message, message_args), default_variation_id))
             return default_variation_id
