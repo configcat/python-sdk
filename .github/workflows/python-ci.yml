@@ -22,13 +22,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-versions }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-versions }}
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip 
+        pip install --upgrade pip
         pip install flake8 pytest mock
         pip install -r requirements.txt
 
@@ -55,7 +55,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip 
+        pip install --upgrade pip
         pip install pytest mock pytest-cov codecov
         pip install -r requirements.txt
 
@@ -74,13 +74,13 @@ jobs:
     - uses: actions/checkout@v2
       
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
         
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        pip install --upgrade pip
         pip install setuptools wheel twine
 
     - name: Build and publish
