@@ -3,7 +3,7 @@ import json
 __PREDEFINED__ = ['Identifier', 'Email', 'Country']
 
 
-class User(object):
+class User:
     """
     The user object for variation evaluation
     """

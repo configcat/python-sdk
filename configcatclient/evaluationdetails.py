@@ -1,4 +1,4 @@
-class EvaluationDetails(object):
+class EvaluationDetails:
     def __init__(self,
                  key,
                  value,

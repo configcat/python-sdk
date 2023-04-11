@@ -14,7 +14,7 @@ def test_method_is_called_from():
     pass
 
 
-class OtherClass(object):
+class OtherClass:
     def no_operation(self):
         pass
 
@@ -27,7 +27,7 @@ class UtilsTests(unittest.TestCase):
         pass
 
     def test_method_is_called_from(self):
-        class TestClass(object):
+        class TestClass:
             @classmethod
             def class_method(cls, method):
                 return method_is_called_from(method)

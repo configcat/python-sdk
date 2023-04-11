@@ -13,15 +13,8 @@ from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE
 from configcatclient.utils import get_seconds_since_epoch, get_utc_now_seconds_since_epoch
 
-# Python2/Python3 support
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-try:
-    from unittest.mock import Mock, ANY
-except ImportError:
-    from mock import Mock, ANY
+from unittest import mock
+from unittest.mock import Mock
 
 from configcatclient.configcache import NullConfigCache
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON, SingleValueConfigCache, \
@@ -151,7 +144,15 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
             ConfigEntry.FETCH_TIME: get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds
         }))
 
-        cache_policy = ConfigService('', PollingMode.lazy_load(cache_time_to_live_seconds), Hooks(), config_fetcher, log, config_cache, False)
+        cache_policy = ConfigService(
+            '',
+            PollingMode.lazy_load(cache_time_to_live_seconds),
+            Hooks(),
+            config_fetcher,
+            log,
+            config_cache,
+            False
+        )
 
         settings, _ = cache_policy.get_settings()
 

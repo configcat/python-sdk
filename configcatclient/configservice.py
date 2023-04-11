@@ -9,7 +9,7 @@ from .pollingmode import AutoPollingMode, LazyLoadingMode
 from .refreshresult import RefreshResult
 
 
-class ConfigService(object):
+class ConfigService:
     def __init__(self, sdk_key, polling_mode, hooks, config_fetcher, log, config_cache, is_offline):
         self._sdk_key = sdk_key
         self._cached_entry = ConfigEntry.empty

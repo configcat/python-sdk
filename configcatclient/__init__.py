@@ -1,5 +1,5 @@
 from .configcatclient import ConfigCatClient
-from .interfaces import ConfigCatClientException
+from .interfaces import ConfigCatClientException  # noqa: F401
 from .datagovernance import DataGovernance
 from .configcatoptions import ConfigCatOptions
 from .pollingmode import PollingMode
