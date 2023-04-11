@@ -125,7 +125,7 @@ class RolloutTests(unittest.TestCase):
             for line in content:
                 user_descriptor = line.rstrip().split(';')[:4]
                 user_object = None
-                if user_descriptor[0] is not None and user_descriptor[0] != '' and user_descriptor[0] != '##null##':
+                if user_descriptor[0] is not None and user_descriptor[0] != '##null##':
                     identifier = user_descriptor[0]
                      
                     email = None
@@ -146,5 +146,5 @@ class RolloutTests(unittest.TestCase):
                     value = client.get_value(setting_key, None, user_object)
                     user_descriptor.append(str(value))
 
-                f.writelines(';'.join(user_descriptor)  + '\n')
+                f.writelines(';'.join(user_descriptor) + '\n')
 '''
