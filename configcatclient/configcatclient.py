@@ -16,6 +16,7 @@ import hashlib
 from collections import namedtuple
 import copy
 from .utils import method_is_called_from, get_date_time
+import warnings
 
 KeyValue = namedtuple('KeyValue', 'key value')
 
@@ -37,8 +38,10 @@ class ConfigCatClient(object):
             client = cls._instances.get(sdk_key)
             if client is not None:
                 if options is not None:
-                    client.log.warning('Client for sdk_key `%s` is already created and will be reused; '
-                                       'options passed are being ignored.' % sdk_key)
+                    client.log.warning('There is an existing client instance for the specified SDK Key. '
+                                       'No new client instance will be created and the specified options are ignored. '
+                                       'Returning the existing client instance. SDK Key: \'%s\'.',
+                                       sdk_key, event_id=3000)
                 return client
 
             if options is None:
@@ -67,8 +70,8 @@ class ConfigCatClient(object):
         self.log = Logger('configcat', self._hooks)
 
         if not method_is_called_from(ConfigCatClient.get):
-            self.log.warning('ConfigCatClient.__init__() is deprecated. '
-                             'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead')
+            warnings.warn('ConfigCatClient.__init__() is deprecated. '
+                          'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead', DeprecationWarning, 2)
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
@@ -113,10 +116,10 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Evaluating get_value(\'{}\') failed. Cache is empty. ' \
-                      'Returning default_value in your get_value call: [{}].'.format(key, str(default_value))
-            self.log.error(message)
-            self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, default_value, message))
+            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message_args = (key, 'default_value', str(default_value))
+            self.log.error(message, *message_args, event_id=1000)
+            self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args)))
             return default_value
 
         details = self.__evaluate(key=key,
@@ -139,10 +142,10 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Evaluating get_value_details(\'{}\') failed. Cache is empty. ' \
-                      'Returning default_value in your get_value_details call: [{}].'.format(key, str(default_value))
-            self.log.error(message)
-            details = EvaluationDetails.from_error(key, default_value, message)
+            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message_args = (key, 'default_value', str(default_value))
+            self.log.error(message, *message_args, event_id=1000)
+            details = EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args))
             self._hooks.invoke_on_flag_evaluated(details)
             return details
 
@@ -176,16 +179,15 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: the variation ID.
         """
-        self.log.warning('get_variation_id is deprecated and will be removed in a future major version. '
-                         'Please use [get_value_details] instead.')
+        warnings.warn('get_variation_id is deprecated and will be removed in a future major version. '
+                      'Please use [get_value_details] instead.', DeprecationWarning, 2)
 
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Evaluating get_variation_id(\'{}\') failed. Cache is empty. ' \
-                      'Returning default_variation_id in your get_variation_id call: ' \
-                      '[{}].'.format(key, str(default_variation_id))
-            self.log.error(message)
-            self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, None, message, default_variation_id))
+            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message_args = (key, 'default_variation_id', str(default_variation_id))
+            self.log.error(message, *message_args, event_id=1000)
+            self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, None, Logger.format(message, message_args), default_variation_id))
             return default_variation_id
 
         details = self.__evaluate(key=key,
@@ -203,8 +205,8 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: list of variation IDs
         """
-        self.log.warning('get_all_variation_ids is deprecated and will be removed in a future major version. '
-                         'Please use [get_all_value_details] instead.')
+        warnings.warn('get_all_variation_ids is deprecated and will be removed in a future major version. '
+                      'Please use [get_all_value_details] instead.', DeprecationWarning, 2)
 
         keys = self.get_all_keys()
         variation_ids = []
@@ -224,8 +226,7 @@ class ConfigCatClient(object):
         """
         settings, _ = self.__get_settings()
         if settings is None:
-            self.log.warning('Evaluating get_key_and_value(\'%s\') failed. Cache is empty. '
-                             'Returning None.' % variation_id)
+            self.log.error('Config JSON is not present. Returning None.', event_id=1000)
             return None
 
         for key, value in list(settings.items()):
@@ -242,7 +243,7 @@ class ConfigCatClient(object):
                 if variation_id == rollout_percentage_item.get(VARIATION_ID):
                     return KeyValue(key, rollout_percentage_item[VALUE])
 
-        self.log.error('Could not find the setting for the given variation_id: ' + variation_id)
+        self.log.error('Could not find the setting for the specified variation ID: \'%s\'.', variation_id, event_id=2011)
         return None
 
     def get_all_values(self, user=None):
@@ -270,8 +271,7 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Evaluating get_all_value_details() failed. Cache is empty. Returning empty list.'
-            self.log.error(message)
+            self.log.error('Config JSON is not present. Returning empty list.', event_id=1000)
             return []
 
         details_result = []
@@ -318,8 +318,8 @@ class ConfigCatClient(object):
         """
         if self._config_service:
             self._config_service.set_online()
-
-        self.log.debug('Switched to ONLINE mode.')
+        else:
+            self.log.warning('Client is configured to use the `%s` override behavior, thus `%s()` has no effect.', 'LocalOnly', 'set_online', event_id=3202)
 
     def set_offline(self):
         """
@@ -327,8 +327,6 @@ class ConfigCatClient(object):
         """
         if self._config_service:
             self._config_service.set_offline()
-
-        self.log.debug('Switched to OFFLINE mode.')
 
     def is_offline(self):
         """

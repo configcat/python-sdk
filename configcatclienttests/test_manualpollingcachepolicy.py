@@ -9,6 +9,7 @@ from configcatclient.configcatoptions import Hooks
 from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE
+from configcatclient.logger import Logger
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT, TEST_JSON_FORMAT
 
 # Python2/Python3 support
@@ -22,7 +23,7 @@ except ImportError:
     from mock import Mock, ANY
 
 logging.basicConfig()
-log = logging.getLogger()
+log = Logger('configcat', Hooks())
 cache_key = 'cache_key'
 
 
