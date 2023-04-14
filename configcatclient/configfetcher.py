@@ -1,4 +1,5 @@
 import requests
+import sys
 from enum import IntEnum
 from platform import python_version
 from requests import HTTPError
@@ -9,6 +10,9 @@ from .constants import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
 from .utils import get_utc_now_seconds_since_epoch
 from .version import CONFIGCATCLIENT_VERSION
+
+if sys.version_info < (2, 7, 9):
+    requests.packages.urllib3.disable_warnings()
 
 BASE_URL_GLOBAL = 'https://cdn-global.configcat.com'
 BASE_URL_EU_ONLY = 'https://cdn-eu.configcat.com'
@@ -28,7 +32,7 @@ class Status(IntEnum):
     Failure = 2
 
 
-class FetchResponse:
+class FetchResponse(object):
     def __init__(self, status, entry, error=None, is_transient_error=False):
         self._status = status
         self.entry = entry
@@ -66,7 +70,7 @@ class FetchResponse:
         return FetchResponse(Status.Failure, ConfigEntry.empty, error, is_transient_error)
 
 
-class ConfigFetcher:
+class ConfigFetcher(object):
     def __init__(self, sdk_key, log, mode, base_url=None, proxies=None, proxy_auth=None,
                  connect_timeout=10, read_timeout=30, data_governance=DataGovernance.Global):
         self._sdk_key = sdk_key

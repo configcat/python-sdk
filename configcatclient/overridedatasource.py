@@ -18,7 +18,7 @@ class OverrideBehaviour(IntEnum):
     RemoteOverLocal = 2
 
 
-class FlagOverrides:
+class FlagOverrides(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
@@ -28,7 +28,7 @@ class FlagOverrides:
         """
 
 
-class OverrideDataSource:
+class OverrideDataSource(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, override_behaviour):

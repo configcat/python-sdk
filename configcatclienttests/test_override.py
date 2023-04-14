@@ -5,8 +5,6 @@ import tempfile
 import json
 import time
 
-from unittest import mock
-
 from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryFlagOverrides
 from configcatclient.localfiledatasource import LocalFileFlagOverrides
@@ -15,6 +13,15 @@ from configcatclienttests.mocks import MockResponse
 from configcatclient.configcatoptions import ConfigCatOptions
 from configcatclient.pollingmode import PollingMode
 
+# Python2/Python3 support
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+try:
+    from unittest.mock import Mock, ANY
+except ImportError:
+    from mock import Mock, ANY
 
 logging.basicConfig()
 

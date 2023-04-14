@@ -1,7 +1,7 @@
 import logging
 
 
-class Logger:
+class Logger(object):
     def __init__(self, name, hooks):
         self._hooks = hooks
         self._logger = logging.getLogger(name)

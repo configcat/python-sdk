@@ -35,7 +35,7 @@ class RolloutTests(unittest.TestCase):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
 
-        with open(file_path) as f:
+        with open(file_path, 'r') as f:
             content = f.readlines()
 
         # CSV header

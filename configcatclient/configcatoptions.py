@@ -3,7 +3,7 @@ from .datagovernance import DataGovernance
 from .pollingmode import PollingMode
 
 
-class Hooks:
+class Hooks(object):
     """
     Events fired by [ConfigCatClient].
     """
@@ -68,7 +68,7 @@ class Hooks:
         self._on_error_callbacks[:] = []
 
 
-class ConfigCatOptions:
+class ConfigCatOptions(object):
     """
     Configuration options for ConfigCatClient.
     """

@@ -2,16 +2,23 @@ import logging
 import unittest
 import time
 
-from unittest import mock
-
-from requests import Timeout
 from requests.auth import HTTPProxyAuth
+from requests import Timeout
 
 import configcatclient
 from configcatclient import ConfigCatClientException
 
 logging.basicConfig(level=logging.INFO)
 
+# Python2/Python3 support
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+try:
+    from unittest.mock import Mock, ANY
+except ImportError:
+    from mock import Mock, ANY
 
 _SDK_KEY = 'PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA'
 
