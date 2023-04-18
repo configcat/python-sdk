@@ -10,7 +10,7 @@ class ConfigCache(object):
     @abstractmethod
     def get(self, key):
         """
-        :returns the config json object from the cache
+        :return: the config json object from the cache
         """
 
     @abstractmethod
