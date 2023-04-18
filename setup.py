@@ -14,7 +14,6 @@ setup(
     name='configcat-client',
     version=configcatclient_version,
     packages=['configcatclient'],
-    package_data={"configcatclient": ["py.typed"]},
     url='https://github.com/configcat/python-sdk',
     license='MIT',
     author='ConfigCat',
