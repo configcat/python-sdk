@@ -1,6 +1,8 @@
 import hashlib
 import semver
 
+from .logger import Logger
+
 from .constants import ROLLOUT_RULES, ROLLOUT_PERCENTAGE_ITEMS, VALUE, VARIATION_ID, COMPARISON_ATTRIBUTE, \
     COMPARISON_VALUE, COMPARATOR, PERCENTAGE
 from .user import User
@@ -39,31 +41,31 @@ class RolloutEvaluator(object):
         setting_descriptor = settings.get(key)
 
         if setting_descriptor is None:
-            error = 'Evaluating get_value(\'{}\') failed. Value not found for key \'{}\' ' \
-                    'Returning default_value: [{}]. ' \
-                    'Here are the available keys: {}'.format(key, key, str(default_value),
-                                                             ', '.join(list(settings)))
-
-            self.log.error(error)
-            return default_value, default_variation_id, None, None, error
+            error = 'Failed to evaluate setting \'%s\' (the key was not found in config JSON). ' \
+                    'Returning the `%s` parameter that you specified in your application: \'%s\'. ' \
+                    'Available keys: [%s].'
+            error_args = (key, 'default_value', str(default_value), ', '.join("'{}'".format(s) for s in list(settings)))
+            self.log.error(error, *error_args, event_id=1001)
+            return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
         rollout_rules = setting_descriptor.get(ROLLOUT_RULES, [])
         rollout_percentage_items = setting_descriptor.get(ROLLOUT_PERCENTAGE_ITEMS, [])
 
-        if user is not None and type(user) is not User:
-            self.log.warning('Evaluating get_value(\'%s\'). User Object is not an instance of User type.' % key)
+        user_has_invalid_type = user is not None and type(user) is not User
+        if user_has_invalid_type:
+            self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' (User Object is not an instance of User type).',
+                             key, event_id=4001)
             user = None
 
         if user is None:
-            if len(rollout_rules) > 0 or len(rollout_percentage_items) > 0:
-                self.log.warning('Evaluating get_value(\'%s\'). UserObject missing! '
-                                 'You should pass a UserObject to get_value(), '
-                                 'in order to make targeting work properly. '
-                                 'Read more: https://configcat.com/docs/advanced/user-object/' %
-                                 key)
+            if not user_has_invalid_type and (len(rollout_rules) > 0 or len(rollout_percentage_items) > 0):
+                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' (User Object is missing). '
+                                 'You should pass a User Object to the evaluation methods like `get_value()` in order to make targeting work properly. '
+                                 'Read more: https://configcat.com/docs/advanced/user-object/',
+                                 key, event_id=3001)
             return_value = setting_descriptor.get(VALUE, default_value)
             return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-            self.log.info('Returning [%s]' % str(return_value))
+            self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
             return return_value, return_variation_id, None, None, None
 
         log_entries = ['Evaluating get_value(\'%s\').' % key, 'User object:\n%s' % str(user)]
@@ -201,7 +203,7 @@ class RolloutEvaluator(object):
             log_entries.append('Returning %s' % return_value)
             return return_value, return_variation_id, None, None, None
         finally:
-            self.log.info('\n'.join(log_entries))
+            self.log.info('%s', '\n'.join(log_entries), event_id=5000)
 
     def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => match, returning: %s' \

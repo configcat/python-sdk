@@ -2,6 +2,8 @@ import logging
 import unittest
 
 from configcatclient import DataGovernance
+from configcatclient.configcatoptions import Hooks
+from configcatclient.logger import Logger
 from configcatclienttests.mocks import MockResponse
 
 # Python2/Python3 support
@@ -17,7 +19,7 @@ except ImportError:
 from configcatclient.configfetcher import ConfigFetcher
 
 logging.basicConfig(level=logging.WARN)
-log = logging.getLogger()
+log = Logger('configcat', Hooks())
 
 FEATURE_TEST_JSON = {"test": "json"}
 

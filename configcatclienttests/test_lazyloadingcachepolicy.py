@@ -11,6 +11,7 @@ from configcatclient.configentry import ConfigEntry
 from configcatclient.configfetcher import FetchResponse, ConfigFetcher
 from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE
+from configcatclient.logger import Logger
 from configcatclient.utils import get_seconds_since_epoch, get_utc_now_seconds_since_epoch
 
 # Python2/Python3 support
@@ -28,7 +29,7 @@ from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithError
     TEST_OBJECT
 
 logging.basicConfig()
-log = logging.getLogger()
+log = Logger('configcat', Hooks())
 cache_key = 'cache_key'
 
 
