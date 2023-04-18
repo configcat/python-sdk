@@ -67,7 +67,8 @@ def create_client_with_auto_poll(sdk_key, poll_interval_seconds=60, max_init_wai
     """
 
     warnings.warn('create_client_with_auto_poll is deprecated. '
-                  'Create the ConfigCat Client as a Singleton object with `configcatclient.get()` instead', DeprecationWarning, 2)
+                  'Create the ConfigCat Client as a Singleton object with `configcatclient.get()` instead',
+                  DeprecationWarning, 2)
 
     options = ConfigCatOptions(
         base_url=base_url,
@@ -114,7 +115,8 @@ def create_client_with_lazy_load(sdk_key, cache_time_to_live_seconds=60, config_
     """
 
     warnings.warn('create_client_with_lazy_load is deprecated. '
-                  'Create the ConfigCat Client as a Singleton object with `configcatclient.get()` instead', DeprecationWarning, 2)
+                  'Create the ConfigCat Client as a Singleton object with `configcatclient.get()` instead',
+                  DeprecationWarning, 2)
 
     options = ConfigCatOptions(
         base_url=base_url,
@@ -156,7 +158,8 @@ def create_client_with_manual_poll(sdk_key, config_cache=None,
     """
 
     warnings.warn('create_client_with_manual_poll is deprecated. '
-                  'Create the ConfigCat Client as a Singleton object with `configcatclient.get()` instead', DeprecationWarning, 2)
+                  'Create the ConfigCat Client as a Singleton object with `configcatclient.get()` instead',
+                  DeprecationWarning, 2)
 
     options = ConfigCatOptions(
         base_url=base_url,
