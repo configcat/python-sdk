@@ -38,7 +38,7 @@ To install requirements:
 
 ```bash
 pip install -r requirements.txt
-pip install pytest
+pip install pytest mock
 ```
 
 ## Running tests
