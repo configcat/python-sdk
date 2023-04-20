@@ -37,7 +37,9 @@ class ConfigService(object):
         if isinstance(self._polling_mode, LazyLoadingMode):
             entry, _ = self._fetch_if_older(
                 utils.get_utc_now_seconds_since_epoch() - self._polling_mode.cache_refresh_interval_seconds)
-            return entry.config.get(FEATURE_FLAGS), entry.fetch_time
+            return (entry.config.get(FEATURE_FLAGS, {}), entry.fetch_time) \
+                if not entry.is_empty() \
+                else (None, utils.distant_past)
         elif isinstance(self._polling_mode, AutoPollingMode) and not self._initialized.is_set():
             elapsed_time = (utils.get_utc_now() - self._start_time).total_seconds()
             if elapsed_time < self._polling_mode.max_init_wait_time_seconds:
@@ -46,10 +48,14 @@ class ConfigService(object):
                 # Max wait time expired without result, notify subscribers with the cached config.
                 if not self._initialized.is_set():
                     self._set_initialized()
-                    return self._cached_entry.config.get(FEATURE_FLAGS), self._cached_entry.fetch_time
+                    return (self._cached_entry.config.get(FEATURE_FLAGS, {}), self._cached_entry.fetch_time) \
+                        if not self._cached_entry.is_empty() \
+                        else (None, utils.distant_past)
 
         entry, _ = self._fetch_if_older(utils.distant_past, prefer_cache=True)
-        return entry.config.get(FEATURE_FLAGS), entry.fetch_time
+        return (entry.config.get(FEATURE_FLAGS, {}), entry.fetch_time) \
+            if not entry.is_empty() \
+            else (None, utils.distant_past)
 
     def refresh(self):
         """
