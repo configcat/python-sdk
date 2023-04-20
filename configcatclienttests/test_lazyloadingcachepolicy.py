@@ -152,7 +152,15 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
             ConfigEntry.FETCH_TIME: get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds
         }))
 
-        cache_policy = ConfigService('', PollingMode.lazy_load(cache_time_to_live_seconds), Hooks(), config_fetcher, log, config_cache, False)
+        cache_policy = ConfigService(
+            '',
+            PollingMode.lazy_load(cache_time_to_live_seconds),
+            Hooks(),
+            config_fetcher,
+            log,
+            config_cache,
+            False
+        )
 
         settings, _ = cache_policy.get_settings()
 

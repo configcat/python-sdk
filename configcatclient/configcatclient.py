@@ -71,7 +71,8 @@ class ConfigCatClient(object):
 
         if not method_is_called_from(ConfigCatClient.get):
             warnings.warn('ConfigCatClient.__init__() is deprecated. '
-                          'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead', DeprecationWarning, 2)
+                          'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead',
+                          DeprecationWarning, 2)
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
@@ -116,10 +117,12 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
+                      'Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = (key, 'default_value', str(default_value))
             self.log.error(message, *message_args, event_id=1000)
-            self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args)))
+            self._hooks.invoke_on_flag_evaluated(
+                EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args)))
             return default_value
 
         details = self.__evaluate(key=key,
@@ -142,7 +145,8 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
+                      'Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = (key, 'default_value', str(default_value))
             self.log.error(message, *message_args, event_id=1000)
             details = EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args))
@@ -184,10 +188,12 @@ class ConfigCatClient(object):
 
         settings, fetch_time = self.__get_settings()
         if settings is None:
-            message = 'Config JSON is not present when evaluating setting \'%s\'. Returning the `%s` parameter that you specified in your application: \'%s\'.'
+            message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
+                      'Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = (key, 'default_variation_id', str(default_variation_id))
             self.log.error(message, *message_args, event_id=1000)
-            self._hooks.invoke_on_flag_evaluated(EvaluationDetails.from_error(key, None, Logger.format(message, message_args), default_variation_id))
+            self._hooks.invoke_on_flag_evaluated(
+                EvaluationDetails.from_error(key, None, Logger.format(message, message_args), default_variation_id))
             return default_variation_id
 
         details = self.__evaluate(key=key,
@@ -319,7 +325,8 @@ class ConfigCatClient(object):
         if self._config_service:
             self._config_service.set_online()
         else:
-            self.log.warning('Client is configured to use the `%s` override behavior, thus `%s()` has no effect.', 'LocalOnly', 'set_online', event_id=3202)
+            self.log.warning('Client is configured to use the `%s` override behavior, thus `%s()` has no effect.',
+                             'LocalOnly', 'set_online', event_id=3202)
 
     def set_offline(self):
         """

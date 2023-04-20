@@ -34,7 +34,7 @@ class RolloutEvaluator(object):
     def __init__(self, log):
         self.log = log
 
-    def evaluate(self, key, user, default_value, default_variation_id, settings):
+    def evaluate(self, key, user, default_value, default_variation_id, settings):  # noqa: C901
         """
         returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error
         """
@@ -53,14 +53,17 @@ class RolloutEvaluator(object):
 
         user_has_invalid_type = user is not None and type(user) is not User
         if user_has_invalid_type:
-            self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' (User Object is not an instance of User type).',
+            self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
+                             '(User Object is not an instance of User type).',
                              key, event_id=4001)
             user = None
 
         if user is None:
             if not user_has_invalid_type and (len(rollout_rules) > 0 or len(rollout_percentage_items) > 0):
-                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' (User Object is missing). '
-                                 'You should pass a User Object to the evaluation methods like `get_value()` in order to make targeting work properly. '
+                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
+                                 '(User Object is missing). '
+                                 'You should pass a User Object to the evaluation methods like `get_value()` '
+                                 'in order to make targeting work properly. '
                                  'Read more: https://configcat.com/docs/advanced/user-object/',
                                  key, event_id=3001)
             return_value = setting_descriptor.get(VALUE, default_value)
@@ -79,7 +82,9 @@ class RolloutEvaluator(object):
 
                 user_value = user.get_attribute(comparison_attribute)
                 if user_value is None or not user_value:
-                    log_entries.append(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
+                    log_entries.append(
+                        self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value)
+                    )
                     continue
 
                 value = rollout_rule.get(VALUE)
@@ -115,7 +120,7 @@ class RolloutEvaluator(object):
                     try:
                         match = False
                         for x in filter(None, [x.strip() for x in str(comparison_value).split(',')]):
-                            match = semver.match(str(user_value).strip(), '==' + x) or match
+                            match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + x) or match
                         if (match and comparator == 4) or (not match and comparator == 5):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                        comparison_value, value))
@@ -130,8 +135,9 @@ class RolloutEvaluator(object):
                 # LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (Semantic version)
                 elif 6 <= comparator <= 9:
                     try:
-                        if semver.match(str(user_value).strip(),
-                                        self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()):
+                        if semver.VersionInfo.parse(str(user_value).strip()).match(
+                            self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()
+                        ):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                        comparison_value, value))
                             return value, variation_id, rollout_rule, None, None
@@ -163,13 +169,17 @@ class RolloutEvaluator(object):
                         continue
                 # IS ONE OF (Sensitive)
                 elif comparator == 16:
-                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [x.strip() for x in str(comparison_value).split(',')]:
+                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) in [  # NOSONAR python:S4790
+                        x.strip() for x in str(comparison_value).split(',')
+                    ]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
                         return value, variation_id, rollout_rule, None, None
                 # IS NOT ONE OF (Sensitive)
                 elif comparator == 17:
-                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [x.strip() for x in str(comparison_value).split(',')]:
+                    if str(hashlib.sha1(user_value.encode('utf8')).hexdigest()) not in [  # NOSONAR python:S4790
+                        x.strip() for x in str(comparison_value).split(',')
+                    ]:
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value, value))
                         return value, variation_id, rollout_rule, None, None

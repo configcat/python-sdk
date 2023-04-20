@@ -24,7 +24,7 @@ class FlagOverrides(object):
     @abstractmethod
     def create_data_source(self, log):
         """
-        :returns the created OverrideDataSource
+        :return: the created OverrideDataSource
         """
 
 
@@ -40,5 +40,5 @@ class OverrideDataSource(object):
     @abstractmethod
     def get_overrides(self):
         """
-        :returns the override dictionary
+        :return: the override dictionary
         """

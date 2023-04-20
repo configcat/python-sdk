@@ -137,13 +137,15 @@ class ConfigFetcher(object):
         # Try to download again with the new url
 
         if redirect == int(RedirectMode.ShouldRedirect):
-            self.log.warning('The `dataGovernance` parameter specified at the client initialization is not in sync with the preferences on the ConfigCat Dashboard. '
+            self.log.warning('The `dataGovernance` parameter specified at the client initialization is not in sync '
+                             'with the preferences on the ConfigCat Dashboard. '
                              'Read more: https://configcat.com/docs/advanced/data-governance/',
                              event_id=3002)
 
         # To prevent loops we check if we retried at least 3 times with the new base_url
         if retries >= 2:
-            self.log.error('Redirection loop encountered while trying to fetch config JSON. Please contact us at https://configcat.com/support/', event_id=1104)
+            self.log.error('Redirection loop encountered while trying to fetch config JSON. '
+                           'Please contact us at https://configcat.com/support/', event_id=1104)
             return fetch_response
 
         # Retry the config download with the new base_url
@@ -171,7 +173,8 @@ class ConfigFetcher(object):
             elif response.status_code == 304:
                 return FetchResponse.not_modified()
             elif response.status_code in [404, 403]:
-                error = 'Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey. ' \
+                error = 'Your SDK Key seems to be wrong. ' \
+                        'You can find the valid SDK Key at https://app.configcat.com/sdkkey. ' \
                         'Received unexpected response: %s'
                 error_args = (str(response), )
                 self.log.error(error, *error_args, event_id=1100)
