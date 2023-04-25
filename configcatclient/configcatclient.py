@@ -2,7 +2,7 @@ from threading import Lock
 
 from . import utils
 from .configservice import ConfigService
-from .constants import ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS, CONFIG_FILE_NAME
+from .constants import TARGETING_RULES, VARIATION_ID, VALUE, PERCENTAGE_OPTIONS, CONFIG_FILE_NAME, FEATURE_FLAGS
 from .evaluationdetails import EvaluationDetails
 from .interfaces import ConfigCatClientException
 from .logger import Logger
@@ -115,8 +115,8 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: the value.
         """
-        settings, fetch_time = self.__get_settings()
-        if settings is None:
+        config, fetch_time = self.__get_config()
+        if config is None or config.get(FEATURE_FLAGS) is None:
             message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
                       'Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = (key, 'default_value', str(default_value))
@@ -129,7 +129,7 @@ class ConfigCatClient(object):
                                   user=user,
                                   default_value=default_value,
                                   default_variation_id=None,
-                                  settings=settings,
+                                  config=config,
                                   fetch_time=fetch_time)
 
         return details.value
@@ -143,8 +143,8 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: the evaluation details.
         """
-        settings, fetch_time = self.__get_settings()
-        if settings is None:
+        config, fetch_time = self.__get_config()
+        if config is None or config.get(FEATURE_FLAGS) is None:
             message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
                       'Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = (key, 'default_value', str(default_value))
@@ -157,7 +157,7 @@ class ConfigCatClient(object):
                                   user=user,
                                   default_value=default_value,
                                   default_variation_id=None,
-                                  settings=settings,
+                                  config=config,
                                   fetch_time=fetch_time)
 
         return details
@@ -168,7 +168,7 @@ class ConfigCatClient(object):
 
         :return: list of keys.
         """
-        settings, _ = self.__get_settings()
+        settings, _ = self.__get_config()
         if settings is None:
             return []
 
@@ -186,7 +186,7 @@ class ConfigCatClient(object):
         warnings.warn('get_variation_id is deprecated and will be removed in a future major version. '
                       'Please use [get_value_details] instead.', DeprecationWarning, 2)
 
-        settings, fetch_time = self.__get_settings()
+        settings, fetch_time = self.__get_config()
         if settings is None:
             message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
                       'Returning the `%s` parameter that you specified in your application: \'%s\'.'
@@ -200,7 +200,7 @@ class ConfigCatClient(object):
                                   user=user,
                                   default_value=None,
                                   default_variation_id=default_variation_id,
-                                  settings=settings,
+                                  config=settings,
                                   fetch_time=fetch_time)
         return details.variation_id
 
@@ -230,7 +230,7 @@ class ConfigCatClient(object):
         :param variation_id: variation ID
         :return: key and value
         """
-        settings, _ = self.__get_settings()
+        settings, _ = self.__get_config()
         if settings is None:
             self.log.error('Config JSON is not present. Returning None.', event_id=1000)
             return None
@@ -239,12 +239,12 @@ class ConfigCatClient(object):
             if variation_id == value.get(VARIATION_ID):
                 return KeyValue(key, value[VALUE])
 
-            rollout_rules = value.get(ROLLOUT_RULES, [])
+            rollout_rules = value.get(TARGETING_RULES, [])
             for rollout_rule in rollout_rules:
                 if variation_id == rollout_rule.get(VARIATION_ID):
                     return KeyValue(key, rollout_rule[VALUE])
 
-            rollout_percentage_items = value.get(ROLLOUT_PERCENTAGE_ITEMS, [])
+            rollout_percentage_items = value.get(PERCENTAGE_OPTIONS, [])
             for rollout_percentage_item in rollout_percentage_items:
                 if variation_id == rollout_percentage_item.get(VARIATION_ID):
                     return KeyValue(key, rollout_percentage_item[VALUE])
@@ -275,7 +275,7 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: list of all evaluation details
         """
-        settings, fetch_time = self.__get_settings()
+        settings, fetch_time = self.__get_config()
         if settings is None:
             self.log.error('Config JSON is not present. Returning empty list.', event_id=1000)
             return []
@@ -286,7 +286,7 @@ class ConfigCatClient(object):
                                       user=user,
                                       default_value=None,
                                       default_variation_id=None,
-                                      settings=settings,
+                                      config=settings,
                                       fetch_time=fetch_time)
             details_result.append(details)
 
@@ -365,47 +365,48 @@ class ConfigCatClient(object):
             self._config_service.close()
         self._hooks.clear()
 
-    def __get_settings(self):
+    def __get_config(self):
+        # TODO put value type format into override data source
         if self._override_data_source:
             behaviour = self._override_data_source.get_behaviour()
 
             if behaviour == OverrideBehaviour.LocalOnly:
                 return self._override_data_source.get_overrides(), utils.distant_past
             elif behaviour == OverrideBehaviour.RemoteOverLocal:
-                remote_settings, fetch_time = self._config_service.get_settings()
+                remote_config, fetch_time = self._config_service.get_config()
                 local_settings = self._override_data_source.get_overrides()
-                if not remote_settings:
-                    remote_settings = {}
+                if not remote_config:
+                    remote_config = {}
                 if not local_settings:
                     local_settings = {}
                 result = copy.deepcopy(local_settings)
                 if result:
-                    result.update(remote_settings)
+                    result.update(remote_config)
                 return result, fetch_time
             elif behaviour == OverrideBehaviour.LocalOverRemote:
-                remote_settings, fetch_time = self._config_service.get_settings()
+                remote_config, fetch_time = self._config_service.get_config()
                 local_settings = self._override_data_source.get_overrides()
-                if not remote_settings:
-                    remote_settings = {}
+                if not remote_config:
+                    remote_config = {}
                 if not local_settings:
                     local_settings = {}
-                result = copy.deepcopy(remote_settings)
+                result = copy.deepcopy(remote_config)
                 result.update(local_settings)
                 return result, fetch_time
 
-        return self._config_service.get_settings()
+        return self._config_service.get_config()
 
     def __get_cache_key(self):
         return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8')).hexdigest()
 
-    def __evaluate(self, key, user, default_value, default_variation_id, settings, fetch_time):
+    def __evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
         user = user if user is not None else self._default_user
-        value, variation_id, rule, percentage_rule, error = self._rollout_evaluator.evaluate(
+        value, variation_id, rule, percentage_rule, error, _ = self._rollout_evaluator.evaluate(
             key=key,
             user=user,
             default_value=default_value,
             default_variation_id=default_variation_id,
-            settings=settings)
+            config=config)
 
         details = EvaluationDetails(key=key,
                                     value=value,
