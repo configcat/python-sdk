@@ -268,7 +268,7 @@ class ConfigCatClient(object):
         if settings is None:
             self.log.error('Config JSON is not present. Returning %s.', 'empty dictionary', event_id=1000)
             return {}
-        
+
         all_values = {}
         for key in list(settings):
             value = self.get_value(key, None, user)
