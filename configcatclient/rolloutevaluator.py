@@ -31,8 +31,7 @@ class RolloutEvaluator(object):
         '> (Number)',
         '>= (Number)',
         'IS ONE OF (Sensitive)',
-        'IS NOT ONE OF (Sensitive)'
-        
+        'IS NOT ONE OF (Sensitive)',
         'BEFORE (DateTime)',
         'AFTER (DateTime)',
         'EQUALS (Sensitive)',
@@ -61,9 +60,8 @@ class RolloutEvaluator(object):
         DOUBLE_VALUE,       # >= (Number)
         STRING_LIST_VALUE,  # IS ONE OF (Sensitive)
         STRING_LIST_VALUE,  # IS NOT ONE OF (Sensitive)
-
-        STRING_VALUE,       # BEFORE (DateTime)
-        STRING_VALUE,       # AFTER (DateTime)
+        DOUBLE_VALUE,       # BEFORE (DateTime)
+        DOUBLE_VALUE,       # AFTER (DateTime)
         STRING_VALUE,       # EQUALS (Sensitive)
         STRING_VALUE,       # DOSE NOT EQUAL (Sensitive)
         STRING_VALUE,       # STARTS WITH (Sensitive)
@@ -183,12 +181,12 @@ class RolloutEvaluator(object):
                 if not self._evaluate_segment_condition(segment_condition, user, salt, value, segments, log_entries):
                     return False
             elif dependent_flag_condition is not None:
-                if not self._evaluate_dependent_flag_condition(dependent_flag_condition, user, config, key, salt, value, log_entries):
+                if not self._evaluate_dependent_flag_condition(dependent_flag_condition, user, config, log_entries):
                     return False
 
         return True
 
-    def _evaluate_dependent_flag_condition(self, dependent_flag_condition, user, config, key, salt, value, log_entries):
+    def _evaluate_dependent_flag_condition(self, dependent_flag_condition, user, config, log_entries):
         # TODO: tree circle checking
         dependency_key = dependent_flag_condition.get(DEPENDENCY_SETTING_KEY)
         dependency_comparator = dependent_flag_condition.get(DEPENDENCY_COMPARATOR)
@@ -341,7 +339,34 @@ class RolloutEvaluator(object):
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value, value))
                 return True
-
+        # BEFORE (DateTime)
+        elif comparator == 18:
+            if user_value < comparison_value:
+                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                           comparison_value, value))
+                return True
+        # AFTER (DateTime)
+        elif comparator == 19:
+            if user_value > comparison_value:
+                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                           comparison_value, value))
+                return True
+        # EQUALS (Sensitive)
+        elif comparator == 20:
+            if str(hashlib.sha256(
+                    user_value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()) == \
+                    comparison_value:
+                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                           comparison_value, value))
+                return True
+        # DOSE NOT EQUAL (Sensitive)
+        elif comparator == 21:
+            if str(hashlib.sha256(
+                    user_value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()) != \
+                    comparison_value:
+                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                           comparison_value, value))
+                return True
         # STARTS WITH (Sensitive)
         elif comparator == 22:
             underscore_index = comparison_value.index('_')
@@ -352,7 +377,6 @@ class RolloutEvaluator(object):
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value, value))
                 return True
-
         # ENDS WITH (Sensitive)
         elif comparator == 23:
             underscore_index = comparison_value.index('_')
@@ -360,6 +384,24 @@ class RolloutEvaluator(object):
             if len(user_value) >= length and \
                     str(hashlib.sha256(user_value[-length:].encode('utf8') + salt.encode('utf8') + context_salt.encode(
                         'utf8')).hexdigest()) == comparison_value[underscore_index + 1:]:
+                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                           comparison_value, value))
+                return True
+        # ARRAY CONTAINS (Sensitive)
+        elif comparator == 24:
+            if comparison_value in [
+                hashlib.sha256(x.strip().encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
+                for x in str(user_value).split(',')
+            ]:
+                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                           comparison_value, value))
+                return True
+        # ARRAY DOES NOT CONTAIN (Sensitive)
+        elif comparator == 25:
+            if comparison_value not in [
+                hashlib.sha256(x.strip().encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
+                for x in str(user_value).split(',')
+            ]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value, value))
                 return True
