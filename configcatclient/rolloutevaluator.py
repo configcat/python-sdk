@@ -76,7 +76,7 @@ class RolloutEvaluator(object):
     def __init__(self, log):
         self.log = log
 
-    def evaluate(self, key, user, default_value, default_variation_id, config):  # noqa: C901
+    def evaluate(self, key, user, default_value, default_variation_id, config, log_entries=[]):  # noqa: C901
         """
         returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error, setting_type
         """
@@ -116,43 +116,41 @@ class RolloutEvaluator(object):
             self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
             return return_value, return_variation_id, None, None, None, setting_type
 
-        log_entries = ['Evaluating get_value(\'%s\').' % key, 'User object:\n%s' % str(user)]
+        log_entries.append('Evaluating get_value(\'%s\').' % key)
+        log_entries.append('User object:\n%s' % str(user))
 
-        try:
-            # Evaluate targeting rules
-            for targeting_rule in targeting_rules:
-                conditions = targeting_rule.get(CONDITIONS, [])
-                percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
+        # Evaluate targeting rules
+        for targeting_rule in targeting_rules:
+            conditions = targeting_rule.get(CONDITIONS, [])
+            percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
 
-                if len(conditions) > 0:
-                    served_value = targeting_rule.get(SERVED_VALUE)
-                    value = self._get_value(served_value, setting_type, default_value)
-                    variation_id = served_value.get(VARIATION_ID, default_variation_id)
+            if len(conditions) > 0:
+                served_value = targeting_rule.get(SERVED_VALUE)
+                value = self._get_value(served_value, setting_type, default_value)
+                variation_id = served_value.get(VARIATION_ID, default_variation_id)
 
-                    if self.evaluate_conditions(conditions, user, key, salt, value, config, log_entries):
-                        return value, variation_id, targeting_rule, None, None, setting_type
+                if self.evaluate_conditions(conditions, user, key, salt, value, config, log_entries):
+                    return value, variation_id, targeting_rule, None, None, setting_type
 
-                # Evaluate variations
-                if len(percentage_options) > 0:
-                    user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None else user.get_identifier()
-                    hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
-                    hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
+            # Evaluate variations
+            if len(percentage_options) > 0:
+                user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None else user.get_identifier()
+                hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
+                hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
-                    bucket = 0
-                    for percentage_option in percentage_options or []:
-                        bucket += percentage_option.get(PERCENTAGE, 0)
-                        if hash_val < bucket:
-                            percentage_value = self._get_value(percentage_option, setting_type, default_value)
-                            variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
-                            log_entries.append('Evaluating %% options. Returning %s' % percentage_value)
-                            return percentage_value, variation_id, None, percentage_option, None, setting_type
+                bucket = 0
+                for percentage_option in percentage_options or []:
+                    bucket += percentage_option.get(PERCENTAGE, 0)
+                    if hash_val < bucket:
+                        percentage_value = self._get_value(percentage_option, setting_type, default_value)
+                        variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
+                        log_entries.append('Evaluating %% options. Returning %s' % percentage_value)
+                        return percentage_value, variation_id, None, percentage_option, None, setting_type
 
-            return_value = self._get_value(setting_descriptor, setting_type, default_value)
-            return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-            log_entries.append('Returning %s' % return_value)
-            return return_value, return_variation_id, None, None, None, setting_type
-        finally:
-            self.log.info('%s', '\n'.join(log_entries), event_id=5000)
+        return_value = self._get_value(setting_descriptor, setting_type, default_value)
+        return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
+        log_entries.append('Returning %s' % return_value)
+        return return_value, return_variation_id, None, None, None, setting_type
 
     def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => match, returning: %s' \
@@ -192,8 +190,7 @@ class RolloutEvaluator(object):
         dependency_key = dependent_flag_condition.get(DEPENDENCY_SETTING_KEY)
         dependency_comparator = dependent_flag_condition.get(DEPENDENCY_COMPARATOR)
 
-        # TODO: put the logs of the dependency flag evaluation into the log_entries
-        dependency_value, dependency_variation_id, _, _, error, setting_type = self.evaluate(dependency_key, user, None, None, config)
+        dependency_value, dependency_variation_id, _, _, error, setting_type = self.evaluate(dependency_key, user, None, None, config, log_entries)
         if error is not None:
             log_entries.append('Evaluating dependent flag condition. Dependency error: %s' % error)
             return False

@@ -410,12 +410,17 @@ class ConfigCatClient(object):
 
     def __evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
         user = user if user is not None else self._default_user
+        log_entries = []
         value, variation_id, rule, percentage_rule, error, _ = self._rollout_evaluator.evaluate(
             key=key,
             user=user,
             default_value=default_value,
             default_variation_id=default_variation_id,
-            config=config)
+            config=config,
+            log_entries=log_entries)
+
+        if len(log_entries) > 0:
+            self.log.info('%s', '\n'.join(log_entries), event_id=5000)
 
         details = EvaluationDetails(key=key,
                                     value=value,
