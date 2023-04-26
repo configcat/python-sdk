@@ -122,14 +122,15 @@ class RolloutEvaluator(object):
             # Evaluate targeting rules
             for targeting_rule in targeting_rules:
                 conditions = targeting_rule.get(CONDITIONS, [])
-                served_value = targeting_rule.get(SERVED_VALUE)
                 percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
 
-                value = self._get_value(served_value, setting_type, default_value)
-                variation_id = served_value.get(VARIATION_ID, default_variation_id)
+                if len(conditions) > 0:
+                    served_value = targeting_rule.get(SERVED_VALUE)
+                    value = self._get_value(served_value, setting_type, default_value)
+                    variation_id = served_value.get(VARIATION_ID, default_variation_id)
 
-                if self.evaluate_conditions(conditions, user, key, salt, value, config, log_entries):
-                    return value, variation_id, targeting_rule, None, None, setting_type
+                    if self.evaluate_conditions(conditions, user, key, salt, value, config, log_entries):
+                        return value, variation_id, targeting_rule, None, None, setting_type
 
                 # Evaluate variations
                 if len(percentage_options) > 0:
