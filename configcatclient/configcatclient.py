@@ -170,6 +170,7 @@ class ConfigCatClient(object):
         """
         settings, _ = self.__get_config()
         if settings is None:
+            self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
             return []
 
         return list(settings)
@@ -214,9 +215,13 @@ class ConfigCatClient(object):
         warnings.warn('get_all_variation_ids is deprecated and will be removed in a future major version. '
                       'Please use [get_all_value_details] instead.', DeprecationWarning, 2)
 
-        keys = self.get_all_keys()
+        settings, _ = self.__get_settings()
+        if settings is None:
+            self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
+            return []
+
         variation_ids = []
-        for key in keys:
+        for key in list(settings):
             variation_id = self.get_variation_id(key, None, user)
             if variation_id is not None:
                 variation_ids.append(variation_id)
@@ -232,7 +237,7 @@ class ConfigCatClient(object):
         """
         settings, _ = self.__get_config()
         if settings is None:
-            self.log.error('Config JSON is not present. Returning None.', event_id=1000)
+            self.log.error('Config JSON is not present. Returning %s.', 'None', event_id=1000)
             return None
 
         for key, value in list(settings.items()):
@@ -259,9 +264,13 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: dictionary of values
         """
-        keys = self.get_all_keys()
+        settings, _ = self.__get_settings()
+        if settings is None:
+            self.log.error('Config JSON is not present. Returning %s.', 'empty dictionary', event_id=1000)
+            return {}
+
         all_values = {}
-        for key in keys:
+        for key in list(settings):
             value = self.get_value(key, None, user)
             if value is not None:
                 all_values[key] = value
@@ -277,11 +286,11 @@ class ConfigCatClient(object):
         """
         settings, fetch_time = self.__get_config()
         if settings is None:
-            self.log.error('Config JSON is not present. Returning empty list.', event_id=1000)
+            self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
             return []
 
         details_result = []
-        for key, value in list(settings.items()):
+        for key in list(settings):
             details = self.__evaluate(key=key,
                                       user=user,
                                       default_value=None,
