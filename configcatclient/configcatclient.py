@@ -168,11 +168,12 @@ class ConfigCatClient(object):
 
         :return: list of keys.
         """
-        settings, _ = self.__get_config()
-        if settings is None:
+        config, _ = self.__get_config()
+        if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
             return []
 
+        settings = config.get(FEATURE_FLAGS, {})
         return list(settings)
 
     def get_variation_id(self, key, default_variation_id, user=None):
@@ -187,8 +188,8 @@ class ConfigCatClient(object):
         warnings.warn('get_variation_id is deprecated and will be removed in a future major version. '
                       'Please use [get_value_details] instead.', DeprecationWarning, 2)
 
-        settings, fetch_time = self.__get_config()
-        if settings is None:
+        config, fetch_time = self.__get_config()
+        if config is None:
             message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
                       'Returning the `%s` parameter that you specified in your application: \'%s\'.'
             message_args = (key, 'default_variation_id', str(default_variation_id))
@@ -201,7 +202,7 @@ class ConfigCatClient(object):
                                   user=user,
                                   default_value=None,
                                   default_variation_id=default_variation_id,
-                                  config=settings,
+                                  config=config,
                                   fetch_time=fetch_time)
         return details.variation_id
 
@@ -215,11 +216,12 @@ class ConfigCatClient(object):
         warnings.warn('get_all_variation_ids is deprecated and will be removed in a future major version. '
                       'Please use [get_all_value_details] instead.', DeprecationWarning, 2)
 
-        settings, _ = self.__get_settings()
-        if settings is None:
+        config, _ = self.__get_config()
+        if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
             return []
 
+        settings = config.get(FEATURE_FLAGS, {})
         variation_ids = []
         for key in list(settings):
             variation_id = self.get_variation_id(key, None, user)
@@ -235,11 +237,12 @@ class ConfigCatClient(object):
         :param variation_id: variation ID
         :return: key and value
         """
-        settings, _ = self.__get_config()
-        if settings is None:
+        config, _ = self.__get_config()
+        if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'None', event_id=1000)
             return None
 
+        settings = config.get(FEATURE_FLAGS, {})
         for key, value in list(settings.items()):
             if variation_id == value.get(VARIATION_ID):
                 return KeyValue(key, value[VALUE])
@@ -264,11 +267,12 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: dictionary of values
         """
-        settings, _ = self.__get_settings()
-        if settings is None:
+        config, _ = self.__get_config()
+        if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'empty dictionary', event_id=1000)
             return {}
 
+        settings = config.get(FEATURE_FLAGS, {})
         all_values = {}
         for key in list(settings):
             value = self.get_value(key, None, user)
@@ -284,18 +288,19 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: list of all evaluation details
         """
-        settings, fetch_time = self.__get_config()
-        if settings is None:
+        config, fetch_time = self.__get_config()
+        if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
             return []
 
         details_result = []
+        settings = config.get(FEATURE_FLAGS, {})
         for key in list(settings):
             details = self.__evaluate(key=key,
                                       user=user,
                                       default_value=None,
                                       default_variation_id=None,
-                                      config=settings,
+                                      config=config,
                                       fetch_time=fetch_time)
             details_result.append(details)
 
