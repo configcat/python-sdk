@@ -76,10 +76,22 @@ class RolloutEvaluator(object):
     def __init__(self, log):
         self.log = log
 
-    def evaluate(self, key, user, default_value, default_variation_id, config, log_entries=[]):  # noqa: C901
+    def evaluate(self, key, user, default_value, default_variation_id, config, log_entries, visited_keys=None):  # noqa: C901
         """
         returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error, setting_type
         """
+
+        # Dependency loop check
+        if visited_keys is None:
+            visited_keys = []
+        if key in visited_keys:
+            error = 'Failed to evaluate setting \'%s\'. Dependency loop detected between the following depending ' \
+                    'keys: %s.'
+            error_args = (key, ' -> '.join("'{}'".format(s) for s in list(visited_keys) + [key]))
+            self.log.error(error, *error_args, event_id=2003)
+            return default_value, default_variation_id, None, None, Logger.format(error, error_args), None
+        visited_keys.append(key)
+
         settings = config.get(FEATURE_FLAGS, {})
         salt = config.get(PREFERENCES, {}).get(SALT, '')
         setting_descriptor = settings.get(key)
@@ -129,7 +141,7 @@ class RolloutEvaluator(object):
                 value = self._get_value(served_value, setting_type, default_value)
                 variation_id = served_value.get(VARIATION_ID, default_variation_id)
 
-                if self.evaluate_conditions(conditions, user, key, salt, value, config, log_entries):
+                if self.evaluate_conditions(conditions, user, key, salt, value, config, log_entries, visited_keys):
                     return value, variation_id, targeting_rule, None, None, setting_type
 
             # Evaluate variations
@@ -164,7 +176,7 @@ class RolloutEvaluator(object):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => SKIP rule. Validation error: %s' \
                % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value, error)
 
-    def evaluate_conditions(self, conditions, user, key, salt, value, config, log_entries):
+    def evaluate_conditions(self, conditions, user, key, salt, value, config, log_entries, visited_keys):
         segments = config.get(SEGMENTS, [])
 
         # TODO: sort conditions by order: comparison_rule > segment_condition > dependent_flag_condition
@@ -180,17 +192,16 @@ class RolloutEvaluator(object):
                 if not self._evaluate_segment_condition(segment_condition, user, salt, value, segments, log_entries):
                     return False
             elif dependent_flag_condition is not None:
-                if not self._evaluate_dependent_flag_condition(dependent_flag_condition, user, config, log_entries):
+                if not self._evaluate_dependent_flag_condition(dependent_flag_condition, user, config, log_entries, visited_keys):
                     return False
 
         return True
 
-    def _evaluate_dependent_flag_condition(self, dependent_flag_condition, user, config, log_entries):
-        # TODO: tree circle checking
+    def _evaluate_dependent_flag_condition(self, dependent_flag_condition, user, config, log_entries, visited_keys):
         dependency_key = dependent_flag_condition.get(DEPENDENCY_SETTING_KEY)
         dependency_comparator = dependent_flag_condition.get(DEPENDENCY_COMPARATOR)
 
-        dependency_value, dependency_variation_id, _, _, error, setting_type = self.evaluate(dependency_key, user, None, None, config, log_entries)
+        dependency_value, dependency_variation_id, _, _, error, setting_type = self.evaluate(dependency_key, user, None, None, config, log_entries, visited_keys)
         if error is not None:
             log_entries.append('Evaluating dependent flag condition. Dependency error: %s' % error)
             return False

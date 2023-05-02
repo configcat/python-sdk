@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import unittest
 import requests
@@ -340,6 +341,35 @@ class ConfigCatClientTests(unittest.TestCase):
 
             self.assertEqual(1, request_get.call_count)
 
+            client.close()
+
+    def test_dependent_flag_loop(self):
+        dependent_loop_json = json.loads(r'''{
+            "p": {
+                "u": "https://cdn-global.configcat.com",
+                "r": 0
+            },
+            "f": {
+                "key1": { "v": { "b": true }, "t": 0,
+                   "r": [{"c": [{"d": {"f": "key2", "c": 0, "v": {"b": true}}}], "s": {"v": {"b": false}}}]
+                },
+                "key2": { "v": { "b": true }, "t": 0, 
+                    "r": [{"c": [{"d": {"f": "key1", "c": 0, "v": {"b": true}}}], "s": {"v": {"b": false}}}] 
+                }
+            }
+        }''')
+
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = dependent_loop_json
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
+            client.force_refresh()
+
+            self.assertEqual(False, client.get_value('key1', False))
             client.close()
 
 
