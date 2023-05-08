@@ -239,8 +239,8 @@ class RolloutEvaluator(object):
         elif segment_comparator == 1:
             for segment_comparison_rule in segment_comparison_rules:
                 if self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, value, log_entries):
-                    return True
-            return False
+                    return False
+            return True
 
     def _evaluate_comparison_rule_condition(self, comparison_rule, user, context_salt, salt, value, log_entries):
         comparison_attribute = comparison_rule.get(COMPARISON_ATTRIBUTE)

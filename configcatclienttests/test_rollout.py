@@ -33,6 +33,11 @@ class RolloutTests(unittest.TestCase):
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/Lv2mD9Tgx0Km27nuHjw_FA',
                           self.value_test_type, base_url='https://test-cdn-global.configcat.com')
 
+    def test_matrix_segments(self):
+        self._test_matrix('./testmatrix_segments.csv',
+                          'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LP0_4hhbQkmVVJcsbO_2Lw',
+                          self.value_test_type, base_url='https://test-cdn-global.configcat.com')
+
     def test_matrix_variation_id(self):
         self._test_matrix('./testmatrix_variationId.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
 
