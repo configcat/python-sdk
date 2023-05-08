@@ -1,0 +1,15 @@
+Identifier;Email;Country;Custom1;boolTrueIn202304;stringEqualsDogDefaultCat;stringDoseNotEqualDogDefaultCat;stringStartsWithDogDefaultCat;stringEndsWithDogDefaultCat;arrayContainsDogDefaultCat;arrayDoesNotContainDogDefaultCat;arrayContainsCaseCheckDogDefaultCat;arrayDoesNotContainCaseCheckDogDefaultCat
+##null##;;;;False;Cat;Cat;Cat;Cat;Cat;Cat;Cat;Cat
+;;;;False;Cat;Cat;Cat;Cat;Cat;Cat;Cat;Cat
+a@configcat.com;a@configcat.com;##null##;##null##;False;Dog;Dog;Dog;Dog;Cat;Cat;Cat;Cat
+b@configcat.com;b@configcat.com;Hungary;0;False;Cat;Cat;Cat;Dog;Cat;Dog;Cat;Dog
+c@configcat.com;c@configcat.com;United Kingdom;1680307199.9;False;Cat;Dog;Cat;Dog;Cat;Dog;Cat;Dog
+anna@configcat.com;anna@configcat.com;Hungary;1681118000.56;True;Cat;Dog;Dog;Dog;Cat;Dog;Cat;Dog
+bogjobber@verizon.net;bogjobber@verizon.net;##null##;1682899200.1;False;Cat;Dog;Cat;Cat;Cat;Dog;Cat;Dog
+cliffordj@aol.com;cliffordj@aol.com;##null##;1682999200;False;Cat;Dog;Cat;Cat;Cat;Dog;Cat;Dog
+reader@configcat.com;reader@configcat.com;##null##;read,execute;False;Cat;Dog;Cat;Dog;Dog;Dog;Cat;Dog
+writer@configcat.com;writer@configcat.com;##null##;write, execute;False;Cat;Dog;Cat;Dog;Cat;Cat;Cat;Dog
+reader@configcat.com;reader@configcat.com;##null##;execute, Read;False;Cat;Dog;Cat;Dog;Cat;Dog;Dog;Dog
+writer@configcat.com;writer@configcat.com;##null##;Write;False;Cat;Dog;Cat;Dog;Cat;Dog;Cat;Cat
+admin@configcat.com;admin@configcat.com;##null##;read, write,execute;False;Cat;Dog;Dog;Dog;Dog;Cat;Cat;Dog
+user@configcat.com;user@configcat.com;##null##;,execute;False;Cat;Dog;Cat;Dog;Cat;Dog;Cat;Dog

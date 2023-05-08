@@ -28,10 +28,15 @@ class RolloutTests(unittest.TestCase):
     def test_matrix_sensitive(self):
         self._test_matrix('./testmatrix_sensitive.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA', self.value_test_type)
 
+    def test_matrix_comparators_v6(self):
+        self._test_matrix('./testmatrix_comparators_v6.csv',
+                          'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/Lv2mD9Tgx0Km27nuHjw_FA',
+                          self.value_test_type, base_url='https://test-cdn-global.configcat.com')
+
     def test_matrix_variation_id(self):
         self._test_matrix('./testmatrix_variationId.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
 
-    def _test_matrix(self, file_path, sdk_key, type):
+    def _test_matrix(self, file_path, sdk_key, type, base_url=None):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
 
@@ -44,7 +49,8 @@ class RolloutTests(unittest.TestCase):
         custom_key = header.split(';')[3]
         content.pop(0)
 
-        client = configcatclient.get(sdk_key)
+        options = configcatclient.ConfigCatOptions(base_url=base_url)
+        client = configcatclient.get(sdk_key, options)
         errors = ''
         for line in content:
             user_descriptor = line.rstrip().split(';')

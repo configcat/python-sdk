@@ -348,18 +348,24 @@ class RolloutEvaluator(object):
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value, value))
                 return True
-        # BEFORE (DateTime)
-        elif comparator == 18:
-            if user_value < comparison_value:
-                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
-                return True
-        # AFTER (DateTime)
-        elif comparator == 19:
-            if user_value > comparison_value:
-                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
-                return True
+        # BEFORE, AFTER (DateTime)
+        elif 18 <= comparator <= 19:
+            try:
+                user_value_float = float(str(user_value).replace(",", "."))
+                comparison_value_float = float(str(comparison_value).replace(",", "."))
+
+                if (comparator == 18 and user_value_float < comparison_value_float) \
+                        or (comparator == 19 and user_value_float > comparison_value_float):
+                    log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                               comparison_value, value))
+                    return True
+
+            except Exception as e:
+                message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
+                                                             comparison_value, str(e))
+                self.log.warning(message)
+                log_entries.append(message)
+                return False
         # EQUALS (Sensitive)
         elif comparator == 20:
             if str(hashlib.sha256(
