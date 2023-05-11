@@ -11,6 +11,31 @@ from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUT
 from .user import User
 
 
+def has_user_based_targeting_rule(targeting_rules):
+    """
+    Checks if there is any targeting rule that uses a user.
+    Returns True if there is at least one percentage option, comparison value or segment condition.
+    For dependent flag condition, a user is not necessarily required.
+    Returns False if the targeting rules only has dependent flag conditions.
+    """
+    for targeting_rule in targeting_rules:
+        percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
+        if len(percentage_options) > 0:
+            return True
+
+        conditions = targeting_rule.get(CONDITIONS, [])
+        for condition in conditions:
+            comparison_rule = condition.get(COMPARISON_RULE, [])
+            if len(comparison_rule) > 0:
+                return True
+
+            segment_condition = condition.get(SEGMENT_CONDITION, [])
+            if len(segment_condition) > 0:
+                return True
+
+    return False
+
+
 class RolloutEvaluator(object):
     SEMANTIC_VERSION_COMPARATORS = ['<', '<=', '>', '>=']
     COMPARATOR_TEXTS = [
@@ -116,33 +141,38 @@ class RolloutEvaluator(object):
             user = None
 
         if user is None:
-            if not user_has_invalid_type and len(targeting_rules) > 0:
-                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
-                                 '(User Object is missing). '
-                                 'You should pass a User Object to the evaluation methods like `get_value()` '
-                                 'in order to make targeting work properly. '
-                                 'Read more: https://configcat.com/docs/advanced/user-object/',
-                                 key, event_id=3001)
-            return_value = self._get_value(setting_descriptor, setting_type, default_value)
-            return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-            self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
-            return return_value, return_variation_id, None, None, None, setting_type
+            if has_user_based_targeting_rule(targeting_rules):
+                if not user_has_invalid_type:
+                    self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
+                                     '(User Object is missing). '
+                                     'You should pass a User Object to the evaluation methods like `get_value()` '
+                                     'in order to make targeting work properly. '
+                                     'Read more: https://configcat.com/docs/advanced/user-object/',
+                                     key, event_id=3001)
+                return_value = self._get_value(setting_descriptor, setting_type, default_value)
+                return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
+                self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
+                return return_value, return_variation_id, None, None, None, setting_type
 
         log_entries.append('Evaluating get_value(\'%s\').' % key)
         log_entries.append('User object:\n%s' % str(user))
 
-        # Evaluate targeting rules
+        # Evaluate targeting rules (logically connected by OR)
         for targeting_rule in targeting_rules:
             conditions = targeting_rule.get(CONDITIONS, [])
             percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
 
             if len(conditions) > 0:
-                served_value = targeting_rule.get(SERVED_VALUE)
-                value = self._get_value(served_value, setting_type, default_value)
-                variation_id = served_value.get(VARIATION_ID, default_variation_id)
-
-                if self.evaluate_conditions(conditions, user, key, salt, value, config, log_entries, visited_keys):
-                    return value, variation_id, targeting_rule, None, None, setting_type
+                # Evaluate targeting rule conditions (logically connected by AND)
+                if self.evaluate_conditions(conditions, user, key, salt, config, log_entries, visited_keys):
+                    served_value = targeting_rule.get(SERVED_VALUE)
+                    if served_value is not None:
+                        value = self._get_value(served_value, setting_type, default_value)
+                        variation_id = served_value.get(VARIATION_ID, default_variation_id)
+                        log_entries.append('Returning %s' % value)
+                        return value, variation_id, targeting_rule, None, None, setting_type
+                else:
+                    continue
 
             # Evaluate variations
             if len(percentage_options) > 0:
@@ -164,9 +194,9 @@ class RolloutEvaluator(object):
         log_entries.append('Returning %s' % return_value)
         return return_value, return_variation_id, None, None, None, setting_type
 
-    def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
-        return 'Evaluating rule: [%s:%s] [%s] [%s] => match, returning: %s' \
-               % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value, value)
+    def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value):
+        return 'Evaluating rule: [%s:%s] [%s] [%s] => match' \
+               % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value)
 
     def _format_no_match_rule(self, comparison_attribute, user_value, comparator, comparison_value):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => no match' \
@@ -176,20 +206,19 @@ class RolloutEvaluator(object):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => SKIP rule. Validation error: %s' \
                % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value, error)
 
-    def evaluate_conditions(self, conditions, user, key, salt, value, config, log_entries, visited_keys):
+    def evaluate_conditions(self, conditions, user, key, salt, config, log_entries, visited_keys):
         segments = config.get(SEGMENTS, [])
 
-        # TODO: sort conditions by order: comparison_rule > segment_condition > dependent_flag_condition
         for condition in conditions:
             comparison_rule = condition.get(COMPARISON_RULE)
             segment_condition = condition.get(SEGMENT_CONDITION)
             dependent_flag_condition = condition.get(DEPENDENT_FLAG_CONDITION)
 
             if comparison_rule is not None:
-                if not self._evaluate_comparison_rule_condition(comparison_rule, user, key, salt, value, log_entries):
+                if not self._evaluate_comparison_rule_condition(comparison_rule, user, key, salt, log_entries):
                     return False
             elif segment_condition is not None:
-                if not self._evaluate_segment_condition(segment_condition, user, salt, value, segments, log_entries):
+                if not self._evaluate_segment_condition(segment_condition, user, salt, segments, log_entries):
                     return False
             elif dependent_flag_condition is not None:
                 if not self._evaluate_dependent_flag_condition(dependent_flag_condition, user, config, log_entries, visited_keys):
@@ -201,14 +230,15 @@ class RolloutEvaluator(object):
         dependency_key = dependent_flag_condition.get(DEPENDENCY_SETTING_KEY)
         dependency_comparator = dependent_flag_condition.get(DEPENDENCY_COMPARATOR)
 
+        log_entries.append('Evaluating dependent flag condition. Dependency key: %s' % dependency_key)
         dependency_value, dependency_variation_id, _, _, error, setting_type = self.evaluate(dependency_key, user, None, None, config, log_entries, visited_keys)
         if error is not None:
-            log_entries.append('Evaluating dependent flag condition. Dependency error: %s' % error)
+            log_entries.append('Dependency error: %s' % error)
             return False
 
         dependency_comparison_value = self._get_value(dependent_flag_condition, setting_type, None)
         if dependency_comparison_value is None:
-            log_entries.append('Evaluating dependent flag condition. Dependency comparison value is None.')
+            log_entries.append('Dependency comparison value is None.')
             return False
 
         # TODO: evaluation log entries
@@ -221,28 +251,33 @@ class RolloutEvaluator(object):
 
         return False
 
-    def _evaluate_segment_condition(self, segment_condition, user, salt, value, segments, log_entries):
+    def _evaluate_segment_condition(self, segment_condition, user, salt, segments, log_entries):
         segment_index = segment_condition.get(SEGMENT_INDEX)
         segment = segments[segment_index]
         segment_name = segment.get(SEGMENT_NAME, '')
         segment_comparator = segment_condition.get(SEGMENT_COMPARATOR)
         segment_comparison_rules = segment.get(SEGMENT_RULES, [])
 
-        # TODO: evaluation log entries
         # IS IN SEGMENT
         if segment_comparator == 0:
+            log_entries.append('Evaluating user [%s] [%s]:' %
+                               (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
             for segment_comparison_rule in segment_comparison_rules:
-                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, value, log_entries):
+                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, log_entries):
                     return False
             return True
         # IS NOT IN SEGMENT
         elif segment_comparator == 1:
+            log_entries.append('Evaluating user [%s] [%s]:' %
+                               (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
             for segment_comparison_rule in segment_comparison_rules:
-                if self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, value, log_entries):
+                if self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, log_entries):
                     return False
             return True
 
-    def _evaluate_comparison_rule_condition(self, comparison_rule, user, context_salt, salt, value, log_entries):
+        return False
+
+    def _evaluate_comparison_rule_condition(self, comparison_rule, user, context_salt, salt, log_entries):
         comparison_attribute = comparison_rule.get(COMPARISON_ATTRIBUTE)
         comparator = comparison_rule.get(COMPARATOR)
         comparison_value = comparison_rule.get(self.COMPARISON_VALUES[comparator])
@@ -258,25 +293,25 @@ class RolloutEvaluator(object):
         if comparator == 0:
             if str(user_value) in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # IS NOT ONE OF
         elif comparator == 1:
             if str(user_value) not in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # CONTAINS
         elif comparator == 2:
             if str(user_value).__contains__(str(comparison_value)):
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # DOES NOT CONTAIN
         elif comparator == 3:
             if not str(user_value).__contains__(str(comparison_value)):
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # IS ONE OF, IS NOT ONE OF (Semantic version)
         elif 4 <= comparator <= 5:
@@ -286,7 +321,7 @@ class RolloutEvaluator(object):
                     match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + x) or match
                 if (match and comparator == 4) or (not match and comparator == 5):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value, value))
+                                                               comparison_value))
                     return True
             except ValueError as e:
                 message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
@@ -301,7 +336,7 @@ class RolloutEvaluator(object):
                         self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()
                 ):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value, value))
+                                                               comparison_value))
                     return True
             except ValueError as e:
                 message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
@@ -322,7 +357,7 @@ class RolloutEvaluator(object):
                         or (comparator == 14 and user_value_float > comparison_value_float) \
                         or (comparator == 15 and user_value_float >= comparison_value_float):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value, value))
+                                                               comparison_value))
                     return True
             except Exception as e:
                 message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
@@ -337,7 +372,7 @@ class RolloutEvaluator(object):
                 x.strip() for x in comparison_value
             ]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # IS NOT ONE OF (Sensitive)
         elif comparator == 17:
@@ -346,7 +381,7 @@ class RolloutEvaluator(object):
                 x.strip() for x in comparison_value
             ]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # BEFORE, AFTER (DateTime)
         elif 18 <= comparator <= 19:
@@ -357,7 +392,7 @@ class RolloutEvaluator(object):
                 if (comparator == 18 and user_value_float < comparison_value_float) \
                         or (comparator == 19 and user_value_float > comparison_value_float):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value, value))
+                                                               comparison_value))
                     return True
 
             except Exception as e:
@@ -372,7 +407,7 @@ class RolloutEvaluator(object):
                     user_value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()) == \
                     comparison_value:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # DOSE NOT EQUAL (Sensitive)
         elif comparator == 21:
@@ -380,7 +415,7 @@ class RolloutEvaluator(object):
                     user_value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()) != \
                     comparison_value:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # STARTS WITH (Sensitive)
         elif comparator == 22:
@@ -390,7 +425,7 @@ class RolloutEvaluator(object):
                     str(hashlib.sha256(user_value[:length].encode('utf8') + salt.encode('utf8') + context_salt.encode(
                         'utf8')).hexdigest()) == comparison_value[underscore_index + 1:]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # ENDS WITH (Sensitive)
         elif comparator == 23:
@@ -400,7 +435,7 @@ class RolloutEvaluator(object):
                     str(hashlib.sha256(user_value[-length:].encode('utf8') + salt.encode('utf8') + context_salt.encode(
                         'utf8')).hexdigest()) == comparison_value[underscore_index + 1:]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # ARRAY CONTAINS (Sensitive)
         elif comparator == 24:
@@ -409,7 +444,7 @@ class RolloutEvaluator(object):
                 for x in str(user_value).split(',')
             ]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
         # ARRAY DOES NOT CONTAIN (Sensitive)
         elif comparator == 25:
@@ -418,7 +453,7 @@ class RolloutEvaluator(object):
                 for x in str(user_value).split(',')
             ]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value, value))
+                                                           comparison_value))
                 return True
 
         log_entries.append(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
