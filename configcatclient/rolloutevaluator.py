@@ -206,6 +206,18 @@ class RolloutEvaluator(object):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => SKIP rule. Validation error: %s' \
                % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value, error)
 
+    def _format_dependent_flag_match(self, dependency_key, dependency_value, dependency_comparator,
+                                     dependency_comparison_value):
+        return 'Dependent flag: [%s:%s] [%s] [%s] => match' \
+               % (dependency_key, dependency_value, self.DEPENDENCY_COMPARATOR_TEXTS[dependency_comparator],
+                  dependency_comparison_value)
+
+    def _format_dependent_flag_no_match(self, dependency_key, dependency_value, dependency_comparator,
+                                        dependency_comparison_value):
+        return 'Dependent flag: [%s:%s] [%s] [%s] => no match' \
+               % (dependency_key, dependency_value, self.DEPENDENCY_COMPARATOR_TEXTS[dependency_comparator],
+                  dependency_comparison_value)
+
     def evaluate_conditions(self, conditions, user, key, salt, config, log_entries, visited_keys):
         segments = config.get(SEGMENTS, [])
 
@@ -241,14 +253,21 @@ class RolloutEvaluator(object):
             log_entries.append('Dependency comparison value is None.')
             return False
 
-        # TODO: evaluation log entries
         # EQUALS
         if dependency_comparator == 0:
-            return dependency_value == dependency_comparison_value
+            if dependency_value == dependency_comparison_value:
+                log_entries.append(self._format_dependent_flag_match(dependency_key, dependency_value,
+                                                                     dependency_comparator, dependency_comparison_value))
+                return True
         # DOES NOT EQUAL
         elif dependency_comparator == 1:
-            return dependency_value != dependency_comparison_value
+            if dependency_value != dependency_comparison_value:
+                log_entries.append(self._format_dependent_flag_match(dependency_key, dependency_value,
+                                                                     dependency_comparator, dependency_comparison_value))
+                return True
 
+        log_entries.append(self._format_dependent_flag_no_match(dependency_key, dependency_value,
+                                                                dependency_comparator, dependency_comparison_value))
         return False
 
     def _evaluate_segment_condition(self, segment_condition, user, salt, segments, log_entries):
