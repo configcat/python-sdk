@@ -36,6 +36,13 @@ def has_user_based_targeting_rule(targeting_rules):
     return False
 
 
+def sha256(value, salt, context_salt):
+    """
+    Calculates the SHA256 hash of the given value with the given salt and context_salt.
+    """
+    return hashlib.sha256(value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
+
+
 class RolloutEvaluator(object):
     SEMANTIC_VERSION_COMPARATORS = ['<', '<=', '>', '>=']
     COMPARATOR_TEXTS = [
@@ -396,19 +403,13 @@ class RolloutEvaluator(object):
                 return False
         # IS ONE OF (Sensitive)
         elif comparator == 16:
-            if str(hashlib.sha256(
-                    user_value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()) in [
-                x.strip() for x in comparison_value
-            ]:
+            if sha256(user_value, salt, context_salt) in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
         # IS NOT ONE OF (Sensitive)
         elif comparator == 17:
-            if str(hashlib.sha256(
-                    user_value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()) not in [
-                x.strip() for x in comparison_value
-            ]:
+            if sha256(user_value, salt, context_salt) not in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
@@ -432,55 +433,44 @@ class RolloutEvaluator(object):
                 return False
         # EQUALS (Sensitive)
         elif comparator == 20:
-            if str(hashlib.sha256(
-                    user_value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()) == \
-                    comparison_value:
+            if sha256(user_value, salt, context_salt) == comparison_value:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
         # DOSE NOT EQUAL (Sensitive)
         elif comparator == 21:
-            if str(hashlib.sha256(
-                    user_value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()) != \
-                    comparison_value:
+            if sha256(user_value, salt, context_salt) != comparison_value:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
-        # STARTS WITH (Sensitive)
-        elif comparator == 22:
-            underscore_index = comparison_value.index('_')
-            length = int(comparison_value[:underscore_index])
-            if len(user_value) >= length and \
-                    str(hashlib.sha256(user_value[:length].encode('utf8') + salt.encode('utf8') + context_salt.encode(
-                        'utf8')).hexdigest()) == comparison_value[underscore_index + 1:]:
-                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
-                return True
-        # ENDS WITH (Sensitive)
-        elif comparator == 23:
-            underscore_index = comparison_value.index('_')
-            length = int(comparison_value[:underscore_index])
-            if len(user_value) >= length and \
-                    str(hashlib.sha256(user_value[-length:].encode('utf8') + salt.encode('utf8') + context_salt.encode(
-                        'utf8')).hexdigest()) == comparison_value[underscore_index + 1:]:
-                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
-                return True
+        # STARTS WITH, ENDS WITH (Sensitive)
+        elif 22 <= comparator <= 23:
+            try:
+                underscore_index = comparison_value.index('_')
+                length = int(comparison_value[:underscore_index])
+
+                if len(user_value) >= length:
+                    if (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_value[underscore_index + 1:]) \
+                        or (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_value[underscore_index + 1:]):
+                        log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                                   comparison_value))
+                        return True
+
+            except Exception as e:
+                message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
+                                                             comparison_value, str(e))
+                self.log.warning(message)
+                log_entries.append(message)
+                return False
         # ARRAY CONTAINS (Sensitive)
         elif comparator == 24:
-            if comparison_value in [
-                hashlib.sha256(x.strip().encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
-                for x in str(user_value).split(',')
-            ]:
+            if comparison_value in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
         # ARRAY DOES NOT CONTAIN (Sensitive)
         elif comparator == 25:
-            if comparison_value not in [
-                hashlib.sha256(x.strip().encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
-                for x in str(user_value).split(',')
-            ]:
+            if comparison_value not in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
