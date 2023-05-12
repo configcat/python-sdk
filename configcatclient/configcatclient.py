@@ -17,6 +17,7 @@ from collections import namedtuple
 import copy
 from .utils import method_is_called_from, get_date_time
 import warnings
+import re
 
 KeyValue = namedtuple('KeyValue', 'key value')
 
@@ -76,6 +77,12 @@ class ConfigCatClient(object):
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
+
+        is_valid_sdk_key = re.match('^.{22}/.{22}$', sdk_key) is not None or \
+            re.match('^configcat-sdk-1/.{22}/.{22}$', sdk_key) is not None or \
+            (options.base_url and re.match('^configcat-proxy/.+$', sdk_key) is not None)
+        if not is_valid_sdk_key:
+            raise ConfigCatClientException('SDK Key `%s` is invalid.' % sdk_key)
 
         self._sdk_key = sdk_key
         self._default_user = options.default_user

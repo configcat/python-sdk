@@ -2,6 +2,8 @@ import datetime
 import json
 import logging
 import unittest
+
+import pytest
 import requests
 
 from configcatclient import ConfigCatClientException
@@ -47,6 +49,26 @@ class ConfigCatClientTests(unittest.TestCase):
             self.fail('Expected ConfigCatClientException')
         except ConfigCatClientException:
             pass
+
+    def test_invalid_sdk_key(self):
+        with pytest.raises(ConfigCatClientException):
+            ConfigCatClient.get('key')
+
+        with pytest.raises(ConfigCatClientException):
+            ConfigCatClient.get('configcat-proxy/key')
+
+        with pytest.raises(ConfigCatClientException):
+            ConfigCatClient.get('1234567890abcdefghijkl01234567890abcdefghijkl')
+
+        with pytest.raises(ConfigCatClientException):
+            ConfigCatClient.get('configcat-sdk-2/1234567890abcdefghijkl/1234567890abcdefghijkl')
+
+        with pytest.raises(ConfigCatClientException):
+            ConfigCatClient.get('configcat/1234567890abcdefghijkl/1234567890abcdefghijkl')
+
+        ConfigCatClient.get('1234567890abcdefghijkl/1234567890abcdefghijkl')
+        ConfigCatClient.get('configcat-sdk-1/1234567890abcdefghijkl/1234567890abcdefghijkl')
+        ConfigCatClient.get('configcat-proxy/key', options=ConfigCatOptions(base_url='base_url'))
 
     def test_bool(self):
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
