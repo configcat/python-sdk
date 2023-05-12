@@ -281,6 +281,8 @@ class RolloutEvaluator(object):
         if segment_comparator == 0:
             log_entries.append('Evaluating user [%s] [%s]:' %
                                (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
+
+            # Evaluate segment rules (logically connected by AND)
             for segment_comparison_rule in segment_comparison_rules:
                 if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, log_entries):
                     return False
@@ -289,6 +291,8 @@ class RolloutEvaluator(object):
         elif segment_comparator == 1:
             log_entries.append('Evaluating user [%s] [%s]:' %
                                (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
+
+            # Evaluate segment rules (logically connected by AND)
             for segment_comparison_rule in segment_comparison_rules:
                 if self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, log_entries):
                     return False
