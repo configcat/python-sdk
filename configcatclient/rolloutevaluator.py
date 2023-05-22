@@ -185,7 +185,6 @@ class RolloutEvaluator(object):
             if len(percentage_options) > 0:
                 user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None else user.get_identifier()
                 if percentage_rule_attribute is not None and user_key is None:
-                    # TODO: what should we do if the attribute is None? Show a warning? Drop the percentage options?
                     log_entries.append('Evaluating %% options => SKIP rule. Validation error: User object does not '
                                        'contain the attribute `%s` specified in the percentage rule attribute.' %
                                        percentage_rule_attribute)
