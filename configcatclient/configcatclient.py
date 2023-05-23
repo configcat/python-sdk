@@ -394,7 +394,6 @@ class ConfigCatClient(object):
         self._hooks.clear()
 
     def __get_config(self):
-        # TODO put value type format into override data source
         if self._override_data_source:
             behaviour = self._override_data_source.get_behaviour()
 
