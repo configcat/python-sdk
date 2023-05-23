@@ -20,7 +20,7 @@ COMPARATOR = 'c'
 
 # Feature flag (Evaluation Formula)
 SETTING_TYPE = 't'  # 0 = bool, 1 = string, 2 = int, 3 = double
-PERCENTAGE_RULE_ATTRIBUTE = 'p'  # Percentage rule evaluation will hash this attribute of the User object to calculate the buckets.
+PERCENTAGE_RULE_ATTRIBUTE = 'p'  # Percentage rule evaluation hashes this attribute of the User object to calculate the buckets
 TARGETING_RULES = 'r'  # Targeting Rules (Logically connected by OR)
 VALUE = 'v'
 VARIATION_ID = 'i'

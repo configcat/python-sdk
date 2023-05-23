@@ -4,7 +4,7 @@ import semver
 from .logger import Logger
 
 from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUTE, \
-    COMPARATOR, PERCENTAGE, SETTING_TYPE, SERVED_VALUE, CONDITIONS, PERCENTAGE_OPTIONS, PERCENTAGE_RULE_ATTRIBUTE, \
+    COMPARATOR, PERCENTAGE, SERVED_VALUE, CONDITIONS, PERCENTAGE_OPTIONS, PERCENTAGE_RULE_ATTRIBUTE, \
     COMPARISON_RULE, STRING_LIST_VALUE, DOUBLE_VALUE, STRING_VALUE, FEATURE_FLAGS, PREFERENCES, SALT, SEGMENTS, \
     SEGMENT_CONDITION, DEPENDENT_FLAG_CONDITION, SEGMENT_INDEX, SEGMENT_COMPARATOR, SEGMENT_RULES, SEGMENT_NAME, \
     DEPENDENCY_SETTING_KEY, DEPENDENCY_COMPARATOR, BOOL_VALUE, INT_VALUE
@@ -153,7 +153,6 @@ class RolloutEvaluator(object):
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
         targeting_rules = setting_descriptor.get(TARGETING_RULES, [])
-        setting_type = setting_descriptor.get(SETTING_TYPE)
         percentage_rule_attribute = setting_descriptor.get(PERCENTAGE_RULE_ATTRIBUTE)
 
         user_has_invalid_type = user is not None and type(user) is not User
@@ -200,7 +199,8 @@ class RolloutEvaluator(object):
 
                 # Evaluate variations
                 if len(percentage_options) > 0:
-                    user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None else user.get_identifier()
+                    user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None \
+                        else user.get_identifier()
                     if percentage_rule_attribute is not None and user_key is None:
                         log_entries.append('Evaluating %% options => SKIP rule. Validation error: User object does not '
                                            'contain the attribute `%s` specified in the percentage rule attribute.' %
@@ -268,7 +268,8 @@ class RolloutEvaluator(object):
                 if not self._evaluate_segment_condition(segment_condition, user, salt, segments, log_entries):
                     return False
             elif dependent_flag_condition is not None:
-                if not self._evaluate_dependent_flag_condition(dependent_flag_condition, user, config, log_entries, visited_keys):
+                if not self._evaluate_dependent_flag_condition(dependent_flag_condition, user, config, log_entries,
+                                                               visited_keys):
                     return False
 
         return True
@@ -278,7 +279,8 @@ class RolloutEvaluator(object):
         dependency_comparator = dependent_flag_condition.get(DEPENDENCY_COMPARATOR)
 
         log_entries.append('Evaluating dependent flag condition. Dependency key: %s' % dependency_key)
-        dependency_value, dependency_variation_id, _, _, error = self.evaluate(dependency_key, user, None, None, config, log_entries, visited_keys)
+        dependency_value, dependency_variation_id, _, _, error = self.evaluate(dependency_key, user, None, None, config,
+                                                                               log_entries, visited_keys)
         if error is not None:
             log_entries.append('Dependency error: %s' % error)
             return False
@@ -320,7 +322,8 @@ class RolloutEvaluator(object):
 
             # Evaluate segment rules (logically connected by AND)
             for segment_comparison_rule in segment_comparison_rules:
-                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, log_entries):
+                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt,
+                                                                log_entries):
                     return False
             return True
         # IS NOT IN SEGMENT
@@ -336,7 +339,7 @@ class RolloutEvaluator(object):
 
         return False
 
-    def _evaluate_comparison_rule_condition(self, comparison_rule, user, context_salt, salt, log_entries):
+    def _evaluate_comparison_rule_condition(self, comparison_rule, user, context_salt, salt, log_entries):  # noqa: C901
         comparison_attribute = comparison_rule.get(COMPARISON_ATTRIBUTE)
         comparator = comparison_rule.get(COMPARATOR)
         comparison_value = comparison_rule.get(self.COMPARISON_VALUES[comparator])
@@ -473,8 +476,9 @@ class RolloutEvaluator(object):
                 length = int(comparison_value[:underscore_index])
 
                 if len(user_value) >= length:
-                    if (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_value[underscore_index + 1:]) \
-                        or (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_value[underscore_index + 1:]):
+                    comparison_string = comparison_value[underscore_index + 1:]
+                    if (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string) \
+                            or (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_string):
                         log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                    comparison_value))
                         return True
