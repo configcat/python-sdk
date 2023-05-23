@@ -31,22 +31,22 @@ class RolloutTests(unittest.TestCase):
     def test_matrix_comparators_v6(self):
         self._test_matrix('./testmatrix_comparators_v6.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/Lv2mD9Tgx0Km27nuHjw_FA',
-                          self.value_test_type, base_url='https://test-cdn-global.configcat.com')
+                          self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
     def test_matrix_segments(self):
         self._test_matrix('./testmatrix_segments.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LP0_4hhbQkmVVJcsbO_2Lw',
-                          self.value_test_type, base_url='https://test-cdn-global.configcat.com')
+                          self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
     def test_matrix_dependent_flag(self):
         self._test_matrix('./testmatrix_dependent_flag.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA',
-                          self.value_test_type, base_url='https://test-cdn-global.configcat.com')
+                          self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
     def test_matrix_and_or(self):
         self._test_matrix('./testmatrix_and_or.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/FfwncdJg1kq0lBqxhYC_7g',
-                          self.value_test_type, base_url='https://test-cdn-global.configcat.com')
+                          self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
     def test_matrix_variation_id(self):
         self._test_matrix('./testmatrix_variationId.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
