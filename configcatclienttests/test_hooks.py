@@ -4,12 +4,12 @@ import unittest
 import requests
 
 from configcatclient.configcatclient import ConfigCatClient
-from configcatclient.constants import FEATURE_FLAGS, VALUE, COMPARATOR, COMPARISON_ATTRIBUTE, COMPARISON_VALUE
+from configcatclient.constants import FEATURE_FLAGS, VALUE, COMPARATOR, COMPARISON_ATTRIBUTE, SERVED_VALUE, STRING_VALUE
 from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions, Hooks
 from configcatclient.pollingmode import PollingMode
 from configcatclient.utils import get_utc_now
-from configcatclienttests.mocks import ConfigCacheMock, HookCallbacks, TEST_OBJECT
+from configcatclienttests.mocks import ConfigCacheMock, HookCallbacks, TEST_OBJECT, TEST_SDK_KEY
 
 # Python2/Python3 support
 try:
@@ -36,9 +36,9 @@ class HooksTests(unittest.TestCase):
         )
 
         config_cache = ConfigCacheMock()
-        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                              config_cache=config_cache,
-                                                              hooks=hooks))
+        client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                    config_cache=config_cache,
+                                                                    hooks=hooks))
 
         value = client.get_value('testStringKey', '')
 
@@ -63,9 +63,9 @@ class HooksTests(unittest.TestCase):
         hooks.add_on_error(hook_callbacks.on_error)
 
         config_cache = ConfigCacheMock()
-        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                              config_cache=config_cache,
-                                                              hooks=hooks))
+        client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                    config_cache=config_cache,
+                                                                    hooks=hooks))
 
         value = client.get_value('testStringKey', '')
 
@@ -90,7 +90,7 @@ class HooksTests(unittest.TestCase):
             response_mock.headers = {}
 
             hook_callbacks = HookCallbacks()
-            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
+            client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
 
             client.get_hooks().add_on_flag_evaluated(hook_callbacks.on_flag_evaluated)
 
@@ -107,10 +107,7 @@ class HooksTests(unittest.TestCase):
             self.assertFalse(details.is_default_value)
             self.assertIsNone(details.error)
             self.assertIsNone(details.matched_evaluation_percentage_rule)
-            self.assertEqual('fake1', details.matched_evaluation_rule[VALUE])
-            self.assertEqual(2, details.matched_evaluation_rule[COMPARATOR])
-            self.assertEqual('Identifier', details.matched_evaluation_rule[COMPARISON_ATTRIBUTE])
-            self.assertEqual('@test1.com', details.matched_evaluation_rule[COMPARISON_VALUE])
+            self.assertEqual('fake1', details.matched_evaluation_rule[SERVED_VALUE][VALUE][STRING_VALUE])
             self.assertEqual(str(user), str(details.user))
             now = get_utc_now()
             self.assertGreaterEqual(now, details.fetch_time)
@@ -133,8 +130,8 @@ class HooksTests(unittest.TestCase):
                 on_flag_evaluated=hook_callbacks.callback_exception,
                 on_error=hook_callbacks.callback_exception
             )
-            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                                  hooks=hooks))
+            client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                        hooks=hooks))
 
             client.force_refresh()
 

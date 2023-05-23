@@ -26,7 +26,7 @@ FEATURE_TEST_JSON = {"test": "json"}
 
 # An organization with Global data_governance config.json representation
 def mocked_requests_get_global(*args, **kwargs):
-    if args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v5.json':
+    if args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v6.json':
         return MockResponse({
             "p": {
                 "u": "https://cdn-global.configcat.com",
@@ -34,7 +34,7 @@ def mocked_requests_get_global(*args, **kwargs):
             },
             "f": FEATURE_TEST_JSON
         }, 200)
-    elif args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v5.json':
+    elif args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v6.json':
         return MockResponse({
             "p": {
                 "u": "https://cdn-global.configcat.com",
@@ -47,7 +47,7 @@ def mocked_requests_get_global(*args, **kwargs):
 
 # An organization with EuOnly data_governance config.json representation
 def mocked_requests_get_eu_only(*args, **kwargs):
-    if args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v5.json':
+    if args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v6.json':
         return MockResponse({
             "p": {
                 "u": "https://cdn-eu.configcat.com",
@@ -55,7 +55,7 @@ def mocked_requests_get_eu_only(*args, **kwargs):
             },
             "f": {}
         }, 200)
-    elif args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v5.json':
+    elif args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v6.json':
         return MockResponse({
             "p": {
                 "u": "https://cdn-eu.configcat.com",
@@ -68,7 +68,7 @@ def mocked_requests_get_eu_only(*args, **kwargs):
 
 # An organization with Global data_governance config.json representation with custom baseurl
 def mocked_requests_get_custom(*args, **kwargs):
-    if args[0] == 'https://custom.configcat.com/configuration-files//config_v5.json':
+    if args[0] == 'https://custom.configcat.com/configuration-files//config_v6.json':
         return MockResponse({
             "p": {
                 "u": "https://cdn-global.configcat.com",
@@ -81,7 +81,7 @@ def mocked_requests_get_custom(*args, **kwargs):
 
 # Redirect loop in config.json
 def mocked_requests_get_redirect_loop(*args, **kwargs):
-    if args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v5.json':
+    if args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v6.json':
         return MockResponse({
             "p": {
                 "u": "https://cdn-eu.configcat.com",
@@ -89,7 +89,7 @@ def mocked_requests_get_redirect_loop(*args, **kwargs):
             },
             "f": FEATURE_TEST_JSON
         }, 200)
-    elif args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v5.json':
+    elif args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v6.json':
         return MockResponse({
             "p": {
                 "u": "https://cdn-global.configcat.com",
@@ -102,10 +102,10 @@ def mocked_requests_get_redirect_loop(*args, **kwargs):
 
 # An organization with forced=2 redirection config.json representation
 def mocked_requests_get_forced_2(*args, **kwargs):
-    if args[0] == 'https://custom.configcat.com/configuration-files//config_v5.json' \
-            or args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v5.json' \
-            or args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v5.json'\
-            or args[0] == 'https://forced.configcat.com/configuration-files//config_v5.json':
+    if args[0] == 'https://custom.configcat.com/configuration-files//config_v6.json' \
+            or args[0] == 'https://cdn-global.configcat.com/configuration-files//config_v6.json' \
+            or args[0] == 'https://cdn-eu.configcat.com/configuration-files//config_v6.json'\
+            or args[0] == 'https://forced.configcat.com/configuration-files//config_v6.json':
         return MockResponse({
             "p": {
                 "u": "https://forced.configcat.com",
@@ -116,13 +116,13 @@ def mocked_requests_get_forced_2(*args, **kwargs):
     return MockResponse(None, 404)
 
 
-call_to_global = mock.call('https://cdn-global.configcat.com/configuration-files//config_v5.json',
+call_to_global = mock.call('https://cdn-global.configcat.com/configuration-files//config_v6.json',
                            auth=ANY, headers=ANY, proxies=ANY, timeout=ANY)
-call_to_eu = mock.call('https://cdn-eu.configcat.com/configuration-files//config_v5.json',
+call_to_eu = mock.call('https://cdn-eu.configcat.com/configuration-files//config_v6.json',
                        auth=ANY, headers=ANY, proxies=ANY, timeout=ANY)
-call_to_custom = mock.call('https://custom.configcat.com/configuration-files//config_v5.json',
+call_to_custom = mock.call('https://custom.configcat.com/configuration-files//config_v6.json',
                            auth=ANY, headers=ANY, proxies=ANY, timeout=ANY)
-call_to_forced = mock.call('https://forced.configcat.com/configuration-files//config_v5.json',
+call_to_forced = mock.call('https://forced.configcat.com/configuration-files//config_v6.json',
                            auth=ANY, headers=ANY, proxies=ANY, timeout=ANY)
 
 

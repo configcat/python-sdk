@@ -7,7 +7,7 @@ from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUT
     COMPARATOR, PERCENTAGE, SETTING_TYPE, SERVED_VALUE, CONDITIONS, PERCENTAGE_OPTIONS, PERCENTAGE_RULE_ATTRIBUTE, \
     COMPARISON_RULE, STRING_LIST_VALUE, DOUBLE_VALUE, STRING_VALUE, FEATURE_FLAGS, PREFERENCES, SALT, SEGMENTS, \
     SEGMENT_CONDITION, DEPENDENT_FLAG_CONDITION, SEGMENT_INDEX, SEGMENT_COMPARATOR, SEGMENT_RULES, SEGMENT_NAME, \
-    DEPENDENCY_SETTING_KEY, DEPENDENCY_COMPARATOR
+    DEPENDENCY_SETTING_KEY, DEPENDENCY_COMPARATOR, BOOL_VALUE, INT_VALUE
 from .user import User
 
 
@@ -41,6 +41,23 @@ def sha256(value, salt, context_salt):
     Calculates the SHA256 hash of the given value with the given salt and context_salt.
     """
     return hashlib.sha256(value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
+
+
+def get_value(dictionary):
+    value = dictionary.get(VALUE)
+    if value is None:
+        raise ValueError('Value is missing.')
+
+    if value.get(BOOL_VALUE) is not None:
+        return value.get(BOOL_VALUE)
+    elif value.get(STRING_VALUE) is not None:
+        return value.get(STRING_VALUE)
+    elif value.get(INT_VALUE) is not None:
+        return value.get(INT_VALUE)
+    elif value.get(DOUBLE_VALUE) is not None:
+        return value.get(DOUBLE_VALUE)
+    else:
+        raise ValueError('Unknown value type.')
 
 
 class RolloutEvaluator(object):
@@ -101,7 +118,6 @@ class RolloutEvaluator(object):
         STRING_VALUE,       # ARRAY CONTAINS (Sensitive)
         STRING_VALUE        # ARRAY DOES NOT CONTAIN (Sensitive)
     ]
-    SETTING_TYPES = ['b', 's', 'i', 'd']
     SEGMENT_COMPARATOR_TEXTS = ['IS IN SEGMENT', 'IS NOT IN SEGMENT']
     DEPENDENCY_COMPARATOR_TEXTS = ['EQUALS', 'DOES NOT EQUAL']
 
@@ -110,7 +126,7 @@ class RolloutEvaluator(object):
 
     def evaluate(self, key, user, default_value, default_variation_id, config, log_entries, visited_keys=None):  # noqa: C901
         """
-        returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error, setting_type
+        returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error
         """
 
         # Dependency loop check
@@ -121,7 +137,7 @@ class RolloutEvaluator(object):
                     'keys: %s.'
             error_args = (key, ' -> '.join("'{}'".format(s) for s in list(visited_keys) + [key]))
             self.log.error(error, *error_args, event_id=2003)
-            return default_value, default_variation_id, None, None, Logger.format(error, error_args), None
+            return default_value, default_variation_id, None, None, Logger.format(error, error_args)
         visited_keys.append(key)
 
         settings = config.get(FEATURE_FLAGS, {})
@@ -134,7 +150,7 @@ class RolloutEvaluator(object):
                     'Available keys: [%s].'
             error_args = (key, 'default_value', str(default_value), ', '.join("'{}'".format(s) for s in list(settings)))
             self.log.error(error, *error_args, event_id=1001)
-            return default_value, default_variation_id, None, None, Logger.format(error, error_args), None
+            return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
         targeting_rules = setting_descriptor.get(TARGETING_RULES, [])
         setting_type = setting_descriptor.get(SETTING_TYPE)
@@ -147,64 +163,71 @@ class RolloutEvaluator(object):
                              key, event_id=4001)
             user = None
 
-        if user is None:
-            if has_user_based_targeting_rule(targeting_rules):
-                if not user_has_invalid_type:
-                    self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
-                                     '(User Object is missing). '
-                                     'You should pass a User Object to the evaluation methods like `get_value()` '
-                                     'in order to make targeting work properly. '
-                                     'Read more: https://configcat.com/docs/advanced/user-object/',
-                                     key, event_id=3001)
-                return_value = self._get_value(setting_descriptor, setting_type, default_value)
-                return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-                self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
-                return return_value, return_variation_id, None, None, None, setting_type
+        try:
+            if user is None:
+                if has_user_based_targeting_rule(targeting_rules):
+                    if not user_has_invalid_type:
+                        self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
+                                         '(User Object is missing). '
+                                         'You should pass a User Object to the evaluation methods like `get_value()` '
+                                         'in order to make targeting work properly. '
+                                         'Read more: https://configcat.com/docs/advanced/user-object/',
+                                         key, event_id=3001)
+                    return_value = get_value(setting_descriptor)
+                    return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
+                    self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
+                    return return_value, return_variation_id, None, None, None
 
-        log_entries.append('Evaluating get_value(\'%s\').' % key)
-        log_entries.append('User object:\n%s' % str(user))
+            log_entries.append('Evaluating get_value(\'%s\').' % key)
+            log_entries.append('User object:\n%s' % str(user))
 
-        # Evaluate targeting rules (logically connected by OR)
-        for targeting_rule in targeting_rules:
-            conditions = targeting_rule.get(CONDITIONS, [])
-            percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
+            # Evaluate targeting rules (logically connected by OR)
+            for targeting_rule in targeting_rules:
+                conditions = targeting_rule.get(CONDITIONS, [])
+                percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
 
-            if len(conditions) > 0:
-                # Evaluate targeting rule conditions (logically connected by AND)
-                if self.evaluate_conditions(conditions, user, key, salt, config, log_entries, visited_keys):
-                    served_value = targeting_rule.get(SERVED_VALUE)
-                    if served_value is not None:
-                        value = self._get_value(served_value, setting_type, default_value)
-                        variation_id = served_value.get(VARIATION_ID, default_variation_id)
-                        log_entries.append('Returning %s' % value)
-                        return value, variation_id, targeting_rule, None, None, setting_type
-                else:
-                    continue
+                if len(conditions) > 0:
+                    # Evaluate targeting rule conditions (logically connected by AND)
+                    if self.evaluate_conditions(conditions, user, key, salt, config, log_entries, visited_keys):
+                        served_value = targeting_rule.get(SERVED_VALUE)
+                        if served_value is not None:
+                            value = get_value(served_value)
+                            variation_id = served_value.get(VARIATION_ID, default_variation_id)
+                            log_entries.append('Returning %s' % value)
+                            return value, variation_id, targeting_rule, None, None
+                    else:
+                        continue
 
-            # Evaluate variations
-            if len(percentage_options) > 0:
-                user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None else user.get_identifier()
-                if percentage_rule_attribute is not None and user_key is None:
-                    log_entries.append('Evaluating %% options => SKIP rule. Validation error: User object does not '
-                                       'contain the attribute `%s` specified in the percentage rule attribute.' %
-                                       percentage_rule_attribute)
-                    continue
-                hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
-                hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
+                # Evaluate variations
+                if len(percentage_options) > 0:
+                    user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None else user.get_identifier()
+                    if percentage_rule_attribute is not None and user_key is None:
+                        log_entries.append('Evaluating %% options => SKIP rule. Validation error: User object does not '
+                                           'contain the attribute `%s` specified in the percentage rule attribute.' %
+                                           percentage_rule_attribute)
+                        continue
+                    hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
+                    hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
-                bucket = 0
-                for percentage_option in percentage_options or []:
-                    bucket += percentage_option.get(PERCENTAGE, 0)
-                    if hash_val < bucket:
-                        percentage_value = self._get_value(percentage_option, setting_type, default_value)
-                        variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
-                        log_entries.append('Evaluating %% options. Returning %s' % percentage_value)
-                        return percentage_value, variation_id, None, percentage_option, None, setting_type
+                    bucket = 0
+                    for percentage_option in percentage_options or []:
+                        bucket += percentage_option.get(PERCENTAGE, 0)
+                        if hash_val < bucket:
+                            percentage_value = get_value(percentage_option)
+                            variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
+                            log_entries.append('Evaluating %% options. Returning %s' % percentage_value)
+                            return percentage_value, variation_id, None, percentage_option, None
 
-        return_value = self._get_value(setting_descriptor, setting_type, default_value)
-        return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-        log_entries.append('Returning %s' % return_value)
-        return return_value, return_variation_id, None, None, None, setting_type
+            return_value = get_value(setting_descriptor)
+            return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
+            log_entries.append('Returning %s' % return_value)
+            return return_value, return_variation_id, None, None, None
+        except Exception as e:
+            error = 'Failed to evaluate setting \'%s\'. (%s)' \
+                    'Returning the `%s` parameter that you specified in your application: \'%s\'. '
+            error_args = (key, str(e), 'default_value', str(default_value))
+            self.log.error(error, *error_args, event_id=2001)
+            return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
     def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => match' \
@@ -255,14 +278,15 @@ class RolloutEvaluator(object):
         dependency_comparator = dependent_flag_condition.get(DEPENDENCY_COMPARATOR)
 
         log_entries.append('Evaluating dependent flag condition. Dependency key: %s' % dependency_key)
-        dependency_value, dependency_variation_id, _, _, error, setting_type = self.evaluate(dependency_key, user, None, None, config, log_entries, visited_keys)
+        dependency_value, dependency_variation_id, _, _, error = self.evaluate(dependency_key, user, None, None, config, log_entries, visited_keys)
         if error is not None:
             log_entries.append('Dependency error: %s' % error)
             return False
 
-        dependency_comparison_value = self._get_value(dependent_flag_condition, setting_type, None)
-        if dependency_comparison_value is None:
-            log_entries.append('Dependency comparison value is None.')
+        try:
+            dependency_comparison_value = get_value(dependent_flag_condition)
+        except ValueError as e:
+            log_entries.append('Dependency comparison value error: %s' % str(e))
             return False
 
         # EQUALS
@@ -476,8 +500,3 @@ class RolloutEvaluator(object):
 
         log_entries.append(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
         return False
-
-    def _get_value(self, dictionary, setting_type, default_value):
-        # TODO: type checking
-        value = dictionary.get(VALUE)
-        return value.get(self.SETTING_TYPES[setting_type], default_value) if value is not None else default_value

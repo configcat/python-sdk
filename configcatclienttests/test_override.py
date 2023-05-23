@@ -9,7 +9,7 @@ from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryFlagOverrides
 from configcatclient.localfiledatasource import LocalFileFlagOverrides
 from configcatclient.overridedatasource import OverrideBehaviour
-from configcatclienttests.mocks import MockResponse
+from configcatclienttests.mocks import MockResponse, TEST_SDK_KEY
 from configcatclient.configcatoptions import ConfigCatOptions
 from configcatclient.pollingmode import PollingMode
 
@@ -27,7 +27,7 @@ logging.basicConfig()
 
 
 def mocked_requests_get(*args, **kwargs):
-    return MockResponse({"f": {"fakeKey": {"v": False}}}, 200)
+    return MockResponse({"f": {"fakeKey": {"v": {"b": False}}, "fakeKey2": {"v": {"s": "test"}}}}, 200)
 
 
 class OverrideTests(unittest.TestCase):
@@ -38,7 +38,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=path.join(OverrideTests.script_dir, 'test.json'),
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
         self.assertFalse(client.get_value('disabledFeature', True))
@@ -52,7 +52,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=path.join(OverrideTests.script_dir, 'test-simple.json'),
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
         self.assertFalse(client.get_value('disabledFeature', True))
@@ -66,7 +66,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path='non_existent.json',
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
         self.assertFalse(client.get_value('enabledFeature', False))
         client.close()
 
@@ -82,7 +82,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=temp.name,
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
         self.assertFalse(client.get_value('enabledFeature', True))
 
@@ -110,7 +110,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=temp.name,
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
         self.assertFalse(client.get_value('enabledFeature', False))
 
@@ -129,7 +129,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalDictionaryFlagOverrides(
                                        source=dictionary,
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
         self.assertFalse(client.get_value('disabledFeature', True))
@@ -149,10 +149,11 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalDictionaryFlagOverrides(
                                        source=dictionary,
                                        override_behaviour=OverrideBehaviour.LocalOverRemote))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
         client.force_refresh()
 
         self.assertTrue(client.get_value('fakeKey', False))
+        self.assertEqual('test', client.get_value('fakeKey2', 'default'))
         self.assertTrue(client.get_value('nonexisting', False))
         client.close()
 
@@ -167,10 +168,11 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalDictionaryFlagOverrides(
                                        source=dictionary,
                                        override_behaviour=OverrideBehaviour.RemoteOverLocal))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
         client.force_refresh()
 
         self.assertFalse(client.get_value('fakeKey', True))
+        self.assertEqual('test', client.get_value('fakeKey2', 'default'))
         self.assertTrue(client.get_value('nonexisting', False))
         client.close()
 

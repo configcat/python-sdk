@@ -13,3 +13,4 @@ reader@configcat.com;reader@configcat.com;##null##;execute, Read;False;Cat;Dog;C
 writer@configcat.com;writer@configcat.com;##null##;Write;False;Cat;Dog;Cat;Dog;Cat;Dog;Cat;Cat
 admin@configcat.com;admin@configcat.com;##null##;read, write,execute;False;Cat;Dog;Dog;Dog;Dog;Cat;Cat;Dog
 user@configcat.com;user@configcat.com;##null##;,execute;False;Cat;Dog;Cat;Dog;Cat;Dog;Cat;Dog
+user@configcat.com;user@configcat.com;##null##;,null, ,,nil, None;False;Cat;Dog;Cat;Dog;Cat;Dog;Cat;Dog

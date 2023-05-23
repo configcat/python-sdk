@@ -25,7 +25,7 @@ TARGETING_RULES = 'r'  # Targeting Rules (Logically connected by OR)
 VALUE = 'v'
 VARIATION_ID = 'i'
 
-# Targeting Rule
+# Targeting Rule (Evaluation Rule)
 CONDITIONS = 'c'
 SERVED_VALUE = 's'  # Value and Variation ID
 PERCENTAGE_OPTIONS = 'p'

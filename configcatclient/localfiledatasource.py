@@ -1,4 +1,4 @@
-from .constants import VALUE, FEATURE_FLAGS
+from .constants import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
 import os
@@ -25,12 +25,12 @@ class LocalFileDataSource(OverrideDataSource):
                            file_path, event_id=1300)
 
         self._file_path = file_path
-        self._settings = None
+        self._config = None
         self._cached_file_stamp = 0
 
     def get_overrides(self):
         self._reload_file_content()
-        return self._settings
+        return self._config
 
     def _reload_file_content(self):
         try:
@@ -40,12 +40,21 @@ class LocalFileDataSource(OverrideDataSource):
                 with open(self._file_path) as file:
                     data = json.load(file)
                     if 'flags' in data:
-                        self._settings = {}
+                        self._config = {FEATURE_FLAGS: {}}
                         source = data['flags']
                         for key, value in source.items():
-                            self._settings[key] = {VALUE: value}
+                            if isinstance(value, bool):
+                                value_type = BOOL_VALUE
+                            elif isinstance(value, str):
+                                value_type = STRING_VALUE
+                            elif isinstance(value, int):
+                                value_type = INT_VALUE
+                            else:
+                                value_type = DOUBLE_VALUE
+
+                            self._config[FEATURE_FLAGS][key] = {VALUE: {value_type: value}}
                     else:
-                        self._settings = data[FEATURE_FLAGS]
+                        self._config = data
         except OSError:
             self.log.exception('Failed to read the local config file \'%s\'.', self._file_path, event_id=1302)
         except ValueError:

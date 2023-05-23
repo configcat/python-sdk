@@ -8,7 +8,7 @@ from configcatclient.configcache import NullConfigCache, InMemoryConfigCache
 from configcatclient.configcatoptions import Hooks
 from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
-from configcatclient.constants import VALUE
+from configcatclient.constants import VALUE, FEATURE_FLAGS, STRING_VALUE
 from configcatclient.logger import Logger
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT, TEST_JSON_FORMAT
 
@@ -32,8 +32,8 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherMock()
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.manual_poll(), Hooks(), config_fetcher, log, config_cache, False)
-        settings, _ = cache_policy.get_settings()
-        self.assertEqual(settings, None)
+        config, _ = cache_policy.get_config()
+        self.assertEqual(config, None)
         self.assertEqual(config_fetcher.get_call_count, 0)
         cache_policy.close()
 
@@ -42,8 +42,9 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.manual_poll(), Hooks(), config_fetcher, log, config_cache, False)
         cache_policy.refresh()
-        settings, _ = cache_policy.get_settings()
-        self.assertEqual('testValue', settings.get('testKey').get(VALUE))
+        config, _ = cache_policy.get_config()
+        settings = config.get(FEATURE_FLAGS)
+        self.assertEqual('testValue', settings.get('testKey').get(VALUE).get(STRING_VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         cache_policy.close()
 
@@ -52,8 +53,8 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.manual_poll(), Hooks(), config_fetcher, log, config_cache, False)
         cache_policy.refresh()
-        settings, _ = cache_policy.get_settings()
-        self.assertEqual(settings, None)
+        config, _ = cache_policy.get_config()
+        self.assertEqual(config, None)
         cache_policy.close()
 
     def test_with_failed_refresh(self):
@@ -69,16 +70,18 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, NullConfigCache(), False)
 
             cache_policy.refresh()
-            settings, _ = cache_policy.get_settings()
-            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+            config, _ = cache_policy.get_config()
+            settings = config.get(FEATURE_FLAGS)
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE).get(STRING_VALUE))
 
             response_mock.json.return_value = {}
             response_mock.status_code = 500
             response_mock.headers = {}
 
             cache_policy.refresh()
-            settings, _ = cache_policy.get_settings()
-            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+            config, _ = cache_policy.get_config()
+            settings = config.get(FEATURE_FLAGS)
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE).get(STRING_VALUE))
 
             cache_policy.close()
 
@@ -86,7 +89,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         with mock.patch.object(requests, 'get') as request_get:
             response_mock = Mock()
             request_get.return_value = response_mock
-            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='"test"'))
+            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='{ "s": "test"}'))
             response_mock.status_code = 200
             response_mock.headers = {}
 
@@ -96,16 +99,18 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, config_cache, False)
 
             cache_policy.refresh()
-            settings, _ = cache_policy.get_settings()
-            self.assertEqual('test', settings.get('testKey').get(VALUE))
+            config, _ = cache_policy.get_config()
+            settings = config.get(FEATURE_FLAGS)
+            self.assertEqual('test', settings.get('testKey').get(VALUE).get(STRING_VALUE))
             self.assertEqual(1, request_get.call_count)
             self.assertEqual(1, len(config_cache._value))
 
-            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='"test2"'))
+            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='{ "s": "test2"}'))
 
             cache_policy.refresh()
-            settings, _ = cache_policy.get_settings()
-            self.assertEqual('test2', settings.get('testKey').get(VALUE))
+            config, _ = cache_policy.get_config()
+            settings = config.get(FEATURE_FLAGS)
+            self.assertEqual('test2', settings.get('testKey').get(VALUE).get(STRING_VALUE))
             self.assertEqual(2, request_get.call_count)
             self.assertEqual(1, len(config_cache._value))
 
@@ -125,8 +130,9 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
 
             self.assertFalse(cache_policy.is_offline())
             self.assertTrue(cache_policy.refresh().is_success)
-            settings, _ = cache_policy.get_settings()
-            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+            config, _ = cache_policy.get_config()
+            settings = config.get(FEATURE_FLAGS)
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE).get(STRING_VALUE))
             self.assertEqual(1, request_get.call_count)
 
             cache_policy.set_offline()
@@ -163,8 +169,9 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
 
             self.assertFalse(cache_policy.is_offline())
             self.assertTrue(cache_policy.refresh().is_success)
-            settings, _ = cache_policy.get_settings()
-            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE))
+            config, _ = cache_policy.get_config()
+            settings = config.get(FEATURE_FLAGS)
+            self.assertEqual('testValue', settings.get('testStringKey').get(VALUE).get(STRING_VALUE))
             self.assertEqual(1, request_get.call_count)
 
             cache_policy.close()

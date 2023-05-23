@@ -2,7 +2,8 @@ from threading import Lock
 
 from . import utils
 from .configservice import ConfigService
-from .constants import TARGETING_RULES, VARIATION_ID, VALUE, PERCENTAGE_OPTIONS, CONFIG_FILE_NAME, FEATURE_FLAGS
+from .constants import TARGETING_RULES, VARIATION_ID, VALUE, PERCENTAGE_OPTIONS, CONFIG_FILE_NAME, FEATURE_FLAGS, \
+    SERVED_VALUE
 from .evaluationdetails import EvaluationDetails
 from .interfaces import ConfigCatClientException
 from .logger import Logger
@@ -11,7 +12,7 @@ from .configcache import NullConfigCache
 from .configcatoptions import ConfigCatOptions, Hooks
 from .overridedatasource import OverrideBehaviour
 from .refreshresult import RefreshResult
-from .rolloutevaluator import RolloutEvaluator
+from .rolloutevaluator import RolloutEvaluator, get_value
 import hashlib
 from collections import namedtuple
 import copy
@@ -251,18 +252,24 @@ class ConfigCatClient(object):
 
         settings = config.get(FEATURE_FLAGS, {})
         for key, value in list(settings.items()):
-            if variation_id == value.get(VARIATION_ID):
-                return KeyValue(key, value[VALUE])
+            try:
+                if variation_id == value.get(VARIATION_ID):
+                    return KeyValue(key, get_value(value))
 
-            rollout_rules = value.get(TARGETING_RULES, [])
-            for rollout_rule in rollout_rules:
-                if variation_id == rollout_rule.get(VARIATION_ID):
-                    return KeyValue(key, rollout_rule[VALUE])
+                targeting_rules = value.get(TARGETING_RULES, [])
+                for targeting_rule in targeting_rules:
+                    served_value = targeting_rule.get(SERVED_VALUE)
+                    if served_value is not None and variation_id == served_value.get(VARIATION_ID):
+                        return KeyValue(key, get_value(served_value))
 
-            rollout_percentage_items = value.get(PERCENTAGE_OPTIONS, [])
-            for rollout_percentage_item in rollout_percentage_items:
-                if variation_id == rollout_percentage_item.get(VARIATION_ID):
-                    return KeyValue(key, rollout_percentage_item[VALUE])
+                    rollout_percentage_items = targeting_rule.get(PERCENTAGE_OPTIONS, [])
+                    for rollout_percentage_item in rollout_percentage_items:
+                        if variation_id == rollout_percentage_item.get(VARIATION_ID):
+                            return KeyValue(key, get_value(rollout_percentage_item))
+            except ValueError as e:
+                self.log.error("Value for variation ID '%s' for the key '%s' is invalid (%s)", variation_id, key,
+                               str(e), event_id=2010)
+                return None
 
         self.log.error('Could not find the setting for the specified variation ID: \'%s\'.', variation_id, event_id=2011)
         return None
@@ -395,24 +402,23 @@ class ConfigCatClient(object):
                 return self._override_data_source.get_overrides(), utils.distant_past
             elif behaviour == OverrideBehaviour.RemoteOverLocal:
                 remote_config, fetch_time = self._config_service.get_config()
-                local_settings = self._override_data_source.get_overrides()
+                local_config = self._override_data_source.get_overrides()
                 if not remote_config:
-                    remote_config = {}
-                if not local_settings:
-                    local_settings = {}
-                result = copy.deepcopy(local_settings)
-                if result:
-                    result.update(remote_config)
+                    remote_config = {FEATURE_FLAGS: {}}
+                if not local_config:
+                    local_config = {FEATURE_FLAGS: {}}
+                result = copy.deepcopy(local_config)
+                result[FEATURE_FLAGS].update(remote_config[FEATURE_FLAGS])
                 return result, fetch_time
             elif behaviour == OverrideBehaviour.LocalOverRemote:
                 remote_config, fetch_time = self._config_service.get_config()
-                local_settings = self._override_data_source.get_overrides()
+                local_config = self._override_data_source.get_overrides()
                 if not remote_config:
-                    remote_config = {}
-                if not local_settings:
-                    local_settings = {}
+                    remote_config = {FEATURE_FLAGS: {}}
+                if not local_config:
+                    local_config = {FEATURE_FLAGS: {}}
                 result = copy.deepcopy(remote_config)
-                result.update(local_settings)
+                result[FEATURE_FLAGS].update(local_config[FEATURE_FLAGS])
                 return result, fetch_time
 
         return self._config_service.get_config()
@@ -423,7 +429,7 @@ class ConfigCatClient(object):
     def __evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
         user = user if user is not None else self._default_user
         log_entries = []
-        value, variation_id, rule, percentage_rule, error, _ = self._rollout_evaluator.evaluate(
+        value, variation_id, rule, percentage_rule, error = self._rollout_evaluator.evaluate(
             key=key,
             user=user,
             default_value=default_value,
