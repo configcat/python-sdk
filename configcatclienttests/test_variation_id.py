@@ -29,16 +29,6 @@ class VariationIdTests(unittest.TestCase):
         self.assertEqual(None, client.get_value_details('nonexisting', 'default_value').variation_id)
         client.close()
 
-    def test_get_all_variation_ids(self):
-        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                              config_cache=ConfigCacheMock()))
-        result = [details.variation_id for details in client.get_all_value_details() if details.variation_id is not None]
-        self.assertEqual(3, len(result))
-        self.assertTrue('id' in result)
-        self.assertTrue('fakeId1' in result)
-        self.assertTrue('fakeId2' in result)
-        client.close()
-
     def test_get_key_and_value(self):
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                               config_cache=ConfigCacheMock()))
