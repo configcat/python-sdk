@@ -16,7 +16,6 @@ import hashlib
 from collections import namedtuple
 import copy
 from .utils import method_is_called_from, get_date_time
-import warnings
 
 KeyValue = namedtuple('KeyValue', 'key value')
 
@@ -70,9 +69,8 @@ class ConfigCatClient(object):
         self.log = Logger('configcat', self._hooks)
 
         if not method_is_called_from(ConfigCatClient.get):
-            warnings.warn('ConfigCatClient.__init__() is deprecated. '
-                          'Create the ConfigCat Client as a Singleton object with `ConfigCatClient.get()` instead',
-                          DeprecationWarning, 2)
+            raise ConfigCatClientException('ConfigCatClient.__init__() is private. Create the ConfigCat Client as a '
+                                           'Singleton object with `ConfigCatClient.get()` instead.')
 
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
@@ -174,59 +172,6 @@ class ConfigCatClient(object):
             return []
 
         return list(settings)
-
-    def get_variation_id(self, key, default_variation_id, user=None):
-        """
-        Gets the Variation ID (analytics) of a feature flag or setting based on it's key.
-
-        :param key: the identifier of the feature flag or setting.
-        :param default_variation_id: in case of any failure, this value will be returned.
-        :param user: the user object to identify the caller.
-        :return: the variation ID.
-        """
-        warnings.warn('get_variation_id is deprecated and will be removed in a future major version. '
-                      'Please use [get_value_details] instead.', DeprecationWarning, 2)
-
-        settings, fetch_time = self.__get_settings()
-        if settings is None:
-            message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
-                      'Returning the `%s` parameter that you specified in your application: \'%s\'.'
-            message_args = (key, 'default_variation_id', str(default_variation_id))
-            self.log.error(message, *message_args, event_id=1000)
-            self._hooks.invoke_on_flag_evaluated(
-                EvaluationDetails.from_error(key, None, Logger.format(message, message_args), default_variation_id))
-            return default_variation_id
-
-        details = self.__evaluate(key=key,
-                                  user=user,
-                                  default_value=None,
-                                  default_variation_id=default_variation_id,
-                                  settings=settings,
-                                  fetch_time=fetch_time)
-        return details.variation_id
-
-    def get_all_variation_ids(self, user=None):
-        """
-        Gets the Variation IDs (analytics) of all feature flags or settings.
-
-        :param user: the user object to identify the caller.
-        :return: list of variation IDs
-        """
-        warnings.warn('get_all_variation_ids is deprecated and will be removed in a future major version. '
-                      'Please use [get_all_value_details] instead.', DeprecationWarning, 2)
-
-        settings, _ = self.__get_settings()
-        if settings is None:
-            self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
-            return []
-
-        variation_ids = []
-        for key in list(settings):
-            variation_id = self.get_variation_id(key, None, user)
-            if variation_id is not None:
-                variation_ids.append(variation_id)
-
-        return variation_ids
 
     def get_key_and_value(self, variation_id):
         """
