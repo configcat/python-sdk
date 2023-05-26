@@ -91,7 +91,7 @@ class RolloutTests(unittest.TestCase):
 
             i = 0
             for setting_key in setting_keys:
-                value = client.get_variation_id(setting_key, None, user_object) if type == self.variation_test_type \
+                value = client.get_value_details(setting_key, None, user_object).variation_id if type == self.variation_test_type \
                     else client.get_value(setting_key, None, user_object)
                 if str(value) != str(user_descriptor[i + 4]):
                     errors += 'Identifier: ' + user_descriptor[0] + '. SettingKey: ' + setting_key + \
