@@ -241,49 +241,6 @@ class ConfigCatClientTests(unittest.TestCase):
 
         client.close()
 
-    def test_default_user_get_variation_id(self):
-        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                              config_cache=ConfigCacheMock()))
-        user1 = User("test@test1.com")
-        user2 = User("test@test2.com")
-
-        client.set_default_user(user1)
-        self.assertEqual("id1", client.get_variation_id("testStringKey", ""))
-        self.assertEqual("id2", client.get_variation_id("testStringKey", "", user2))
-
-        client.clear_default_user()
-        self.assertEqual("id", client.get_variation_id("testStringKey", ""))
-
-        client.close()
-
-    def test_default_user_get_all_variation_ids(self):
-        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                              config_cache=ConfigCacheMock()))
-        user1 = User("test@test1.com")
-        user2 = User("test@test2.com")
-
-        client.set_default_user(user1)
-        result = client.get_all_variation_ids()
-        self.assertEqual(3, len(result))
-        self.assertTrue('id1' in result)
-        self.assertTrue('fakeId1' in result)
-        self.assertTrue('fakeId2' in result)
-
-        result = client.get_all_variation_ids(user2)
-        self.assertEqual(3, len(result))
-        self.assertTrue('id2' in result)
-        self.assertTrue('fakeId1' in result)
-        self.assertTrue('fakeId2' in result)
-
-        client.clear_default_user()
-        result = client.get_all_variation_ids()
-        self.assertEqual(3, len(result))
-        self.assertTrue('id' in result)
-        self.assertTrue('fakeId1' in result)
-        self.assertTrue('fakeId2' in result)
-
-        client.close()
-
     def test_online_offline(self):
         with mock.patch.object(requests, 'get') as request_get:
             response_mock = Mock()

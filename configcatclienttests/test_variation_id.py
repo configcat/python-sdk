@@ -13,30 +13,20 @@ class VariationIdTests(unittest.TestCase):
     def test_get_variation_id(self):
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                               config_cache=ConfigCacheMock()))
-        self.assertEqual('fakeId1', client.get_variation_id('key1', None))
-        self.assertEqual('fakeId2', client.get_variation_id('key2', None))
+        self.assertEqual('fakeId1', client.get_value_details('key1', None).variation_id)
+        self.assertEqual('fakeId2', client.get_value_details('key2', None).variation_id)
         client.close()
 
     def test_get_variation_id_not_found(self):
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                               config_cache=ConfigCacheMock()))
-        self.assertEqual('default_variation_id', client.get_variation_id('nonexisting', 'default_variation_id'))
+        self.assertEqual(None, client.get_value_details('nonexisting', 'default_value').variation_id)
         client.close()
 
     def test_get_variation_id_empty_config(self):
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                               config_cache=ConfigCacheMock()))
-        self.assertEqual('default_variation_id', client.get_variation_id('nonexisting', 'default_variation_id'))
-        client.close()
-
-    def test_get_all_variation_ids(self):
-        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                              config_cache=ConfigCacheMock()))
-        result = client.get_all_variation_ids()
-        self.assertEqual(3, len(result))
-        self.assertTrue('id' in result)
-        self.assertTrue('fakeId1' in result)
-        self.assertTrue('fakeId2' in result)
+        self.assertEqual(None, client.get_value_details('nonexisting', 'default_value').variation_id)
         client.close()
 
     def test_get_key_and_value(self):

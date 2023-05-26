@@ -17,7 +17,7 @@ def _manual_force_refresh(client, repeat=10, delay=0.1):
 
 class ConcurrencyTests(unittest.TestCase):
     def test_concurrency_process(self):
-        client = configcatclient.create_client('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+        client = configcatclient.get('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
         value = client.get_value('keySampleText', False, User('key'))
         print("'keySampleText' value from ConfigCat: " + str(value))
 
