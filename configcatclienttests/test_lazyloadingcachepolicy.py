@@ -30,7 +30,6 @@ from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithError
 
 logging.basicConfig()
 log = Logger('configcat', Hooks())
-cache_key = 'cache_key'
 
 
 class LazyLoadingCachePolicyTests(unittest.TestCase):
@@ -121,11 +120,11 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
 
     def test_return_cached_config_when_cache_is_not_expired(self):
         config_fetcher = ConfigFetcherMock()
-        config_cache = SingleValueConfigCache(json.dumps({
-            ConfigEntry.CONFIG: json.loads(TEST_JSON),
-            ConfigEntry.ETAG: 'test-etag',
-            ConfigEntry.FETCH_TIME: get_utc_now_seconds_since_epoch()
-        }))
+        config_cache = SingleValueConfigCache('\n'.join([
+            str(get_utc_now_seconds_since_epoch()),
+            'test-etag',
+            TEST_JSON
+        ]))
 
         cache_policy = ConfigService('', PollingMode.lazy_load(1), Hooks(), config_fetcher, log, config_cache, False)
 
@@ -146,11 +145,11 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_fetch_config_when_cache_is_expired(self):
         config_fetcher = ConfigFetcherMock()
         cache_time_to_live_seconds = 1
-        config_cache = SingleValueConfigCache(json.dumps({
-            ConfigEntry.CONFIG: json.loads(TEST_JSON),
-            ConfigEntry.ETAG: 'test-etag',
-            ConfigEntry.FETCH_TIME: get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds
-        }))
+        config_cache = SingleValueConfigCache('\n'.join([
+            str(get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds),
+            'test-etag',
+            TEST_JSON
+        ]))
 
         cache_policy = ConfigService(
             '',

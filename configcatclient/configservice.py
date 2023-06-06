@@ -1,24 +1,22 @@
 import hashlib
-import json
 from threading import Thread, Event, Lock
 
 from . import utils
 from .configentry import ConfigEntry
-from .constants import CONFIG_FILE_NAME, FEATURE_FLAGS
+from .constants import CONFIG_FILE_NAME, FEATURE_FLAGS, SERIALIZATION_FORMAT_VERSION
 from .pollingmode import AutoPollingMode, LazyLoadingMode
 from .refreshresult import RefreshResult
 
 
 class ConfigService(object):
     def __init__(self, sdk_key, polling_mode, hooks, config_fetcher, log, config_cache, is_offline):
-        self._sdk_key = sdk_key
         self._cached_entry = ConfigEntry.empty
         self._cached_entry_string = ''
         self._polling_mode = polling_mode
         self.log = log
         self._config_cache = config_cache
         self._hooks = hooks
-        self._cache_key = hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8')).hexdigest()
+        self._cache_key = ConfigService._get_cache_key(sdk_key)
         self._config_fetcher = config_fetcher
         self._is_offline = is_offline
         self._response_future = None
@@ -172,6 +170,11 @@ class ConfigService(object):
             self._initialized.set()
             self._hooks.invoke_on_client_ready()
 
+    @staticmethod
+    def _get_cache_key(sdk_key):
+        return hashlib.sha1(
+            (sdk_key + '_' + CONFIG_FILE_NAME + '_' + SERIALIZATION_FORMAT_VERSION).encode('utf-8')).hexdigest()
+
     def _read_cache(self):
         try:
             json_string = self._config_cache.get(self._cache_key)
@@ -179,13 +182,13 @@ class ConfigService(object):
                 return ConfigEntry.empty
 
             self._cached_entry_string = json_string
-            return ConfigEntry.create_from_json(json.loads(json_string))
+            return ConfigEntry.create_from_string(json_string)
         except Exception:
             self.log.exception('Error occurred while reading the cache.', event_id=2200)
             return ConfigEntry.empty
 
     def _write_cache(self, config_entry):
         try:
-            self._config_cache.set(self._cache_key, json.dumps(config_entry.to_json()))
+            self._config_cache.set(self._cache_key, config_entry.serialize())
         except Exception:
             self.log.exception('Error occurred while writing the cache.', event_id=2201)

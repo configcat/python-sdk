@@ -2,7 +2,7 @@ import json
 import time
 
 from configcatclient.configentry import ConfigEntry
-from configcatclient.utils import get_utc_now_seconds_since_epoch
+from configcatclient.utils import get_utc_now_seconds_since_epoch, distant_past
 
 try:
     from unittest.mock import Mock
@@ -121,7 +121,7 @@ class ConfigFetcherCountMock(ConfigFetcher):
 
 class ConfigCacheMock(ConfigCache):
     def get(self, key):
-        return json.dumps({ConfigEntry.CONFIG: TEST_OBJECT, ConfigEntry.ETAG: 'test-etag'})
+        return '\n'.join([str(distant_past), 'test-etag', json.dumps(TEST_OBJECT)])
 
     def set(self, key, value):
         pass
