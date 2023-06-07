@@ -205,7 +205,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
     def test_return_cached_config_when_cache_is_not_expired(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = SingleValueConfigCache('\n'.join([
-            str(get_utc_now_seconds_since_epoch()),
+            '{:.7f}'.format(get_utc_now_seconds_since_epoch()),
             'test-etag',
             TEST_JSON,
         ]))
@@ -241,7 +241,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         poll_interval_seconds = 2
         max_init_wait_time_seconds = 1
         config_cache = SingleValueConfigCache('\n'.join([
-            str(get_utc_now_seconds_since_epoch() - poll_interval_seconds),
+            '{:.7f}'.format(get_utc_now_seconds_since_epoch() - poll_interval_seconds),
             'test-etag',
             TEST_JSON
         ]))
@@ -261,7 +261,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         poll_interval_seconds = 60
         max_init_wait_time_seconds = 1
         config_cache = SingleValueConfigCache('\n'.join([
-            str(get_utc_now_seconds_since_epoch() - 2 * poll_interval_seconds),
+            '{:.7f}'.format(get_utc_now_seconds_since_epoch() - 2 * poll_interval_seconds),
             'test-etag',
             TEST_JSON2
         ]))

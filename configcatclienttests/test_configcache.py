@@ -35,11 +35,9 @@ class ConfigCacheTests(unittest.TestCase):
         self.assertEqual("ea7ecf506fe66ed3d4b667c81f9b96551a9d2112", ConfigService._get_cache_key('test2'))
 
     def test_invalid_cache_content(self):
-        # TODO: Store the callback results in lists in HookCallbacks
-        errors = []
-        hooks = Hooks(on_error=lambda error: errors.append(error))
-
-        config_cache = SingleValueConfigCache('\n'.join([str(get_utc_now_seconds_since_epoch()),
+        hook_callbacks = HookCallbacks()
+        hooks = Hooks(on_error=hook_callbacks.on_error)
+        config_cache = SingleValueConfigCache('\n'.join(['{:.7f}'.format(get_utc_now_seconds_since_epoch()),
                                                          'test-etag',
                                                          TEST_JSON_FORMAT.format(value='"test"')]))
 
@@ -48,7 +46,7 @@ class ConfigCacheTests(unittest.TestCase):
                                                               hooks=hooks))
 
         self.assertEqual('test', client.get_value('testKey', 'default'))
-        self.assertEqual(0, len(errors))
+        self.assertEqual(0, hook_callbacks.error_call_count)
 
         # Invalid fetch time in cache
         config_cache._value = '\n'.join(['text',
@@ -56,7 +54,7 @@ class ConfigCacheTests(unittest.TestCase):
                                          TEST_JSON_FORMAT.format(value='"test2"')])
 
         self.assertEqual('test', client.get_value('testKey', 'default'))
-        self.assertTrue('Error occurred while reading the cache.\nInvalid fetch time: text' in errors)
+        self.assertTrue('Error occurred while reading the cache.\nInvalid fetch time: text' in hook_callbacks.error)
 
         # Number of values is fewer than expected
         errors = []
@@ -64,7 +62,8 @@ class ConfigCacheTests(unittest.TestCase):
                                          TEST_JSON_FORMAT.format(value='"test2"')])
 
         self.assertEqual('test', client.get_value('testKey', 'default'))
-        self.assertTrue('Error occurred while reading the cache.\nNumber of values is fewer than expected.' in errors)
+        self.assertTrue('Error occurred while reading the cache.\nNumber of values is fewer than expected.'
+                        in hook_callbacks.error)
 
         # Invalid config JSON
         errors = []
@@ -73,8 +72,8 @@ class ConfigCacheTests(unittest.TestCase):
                                          'wrong-json'])
 
         self.assertEqual('test', client.get_value('testKey', 'default'))
-        self.assertTrue('Error occurred while reading the cache.\nInvalid config JSON: wrong-json. '
-                        'Expecting value: line 1 column 1 (char 0)' in errors)
+        self.assertTrue('Error occurred while reading the cache.\nInvalid config JSON: wrong-json.'
+                        in hook_callbacks.error)
 
         client.close()
 

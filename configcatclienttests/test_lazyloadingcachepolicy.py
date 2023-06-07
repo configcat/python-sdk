@@ -121,7 +121,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
     def test_return_cached_config_when_cache_is_not_expired(self):
         config_fetcher = ConfigFetcherMock()
         config_cache = SingleValueConfigCache('\n'.join([
-            str(get_utc_now_seconds_since_epoch()),
+            '{:.7f}'.format(get_utc_now_seconds_since_epoch()),
             'test-etag',
             TEST_JSON
         ]))
@@ -146,7 +146,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         config_fetcher = ConfigFetcherMock()
         cache_time_to_live_seconds = 1
         config_cache = SingleValueConfigCache('\n'.join([
-            str(get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds),
+            '{:.7f}'.format(get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds),
             'test-etag',
             TEST_JSON
         ]))
