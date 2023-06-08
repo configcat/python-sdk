@@ -173,7 +173,7 @@ class ConfigService(object):
     @staticmethod
     def _get_cache_key(sdk_key):
         return hashlib.sha1(
-            (sdk_key + '_' + CONFIG_FILE_NAME + '_' + SERIALIZATION_FORMAT_VERSION).encode('utf-8')).hexdigest()
+            (sdk_key + '_' + CONFIG_FILE_NAME + '.json' + '_' + SERIALIZATION_FORMAT_VERSION).encode('utf-8')).hexdigest()
 
     def _read_cache(self):
         try:

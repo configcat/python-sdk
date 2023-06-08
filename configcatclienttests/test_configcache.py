@@ -33,8 +33,8 @@ class ConfigCacheTests(unittest.TestCase):
         self.assertEqual(value2, None)
 
     def test_cache_key(self):
-        self.assertEqual("23c140ee52202e4ce7125714651f14b777caa40d", ConfigService._get_cache_key('test1'))
-        self.assertEqual("ea7ecf506fe66ed3d4b667c81f9b96551a9d2112", ConfigService._get_cache_key('test2'))
+        self.assertEqual("4911a4a56e463f82d44ac26caeff86e9e34db33d", ConfigService._get_cache_key('test1'))
+        self.assertEqual("b8de24c1a79dfe407adb5fc4ba88c656b7ed8e9e", ConfigService._get_cache_key('test2'))
 
     def test_invalid_cache_content(self):
         hook_callbacks = HookCallbacks()
