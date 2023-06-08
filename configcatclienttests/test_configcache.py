@@ -1,9 +1,11 @@
+import json
 import logging
 import unittest
 
 from configcatclient import ConfigCatClient, ConfigCatOptions, PollingMode
 from configcatclient.configcache import InMemoryConfigCache
 from configcatclient.configcatoptions import Hooks
+from configcatclient.configentry import ConfigEntry
 from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.constants import VALUE
 from configcatclient.logger import Logger
@@ -37,9 +39,11 @@ class ConfigCacheTests(unittest.TestCase):
     def test_invalid_cache_content(self):
         hook_callbacks = HookCallbacks()
         hooks = Hooks(on_error=hook_callbacks.on_error)
-        config_cache = SingleValueConfigCache('\n'.join(['{:.7f}'.format(get_utc_now_seconds_since_epoch()),
-                                                         'test-etag',
-                                                         TEST_JSON_FORMAT.format(value='"test"')]))
+        config_cache = SingleValueConfigCache(ConfigEntry(
+            config=json.loads(TEST_JSON_FORMAT.format(value='"test"')),
+            etag='test-etag',
+            fetch_time=get_utc_now_seconds_since_epoch()).serialize()
+        )
 
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                               config_cache=config_cache,
