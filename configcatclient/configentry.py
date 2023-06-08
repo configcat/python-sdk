@@ -24,21 +24,26 @@ class ConfigEntry(object):
         if not string:
             return ConfigEntry.empty
 
-        tokens = string.split('\n')
-        if len(tokens) < 3:
+        fetch_time_index = string.find('\n')
+        etag_index = string.find('\n', fetch_time_index + 1)
+        if fetch_time_index < 0 or etag_index < 0:
             raise ValueError('Number of values is fewer than expected.')
 
         try:
-            fetch_time = float(tokens[0])
+            fetch_time = float(string[0:fetch_time_index])
         except ValueError:
-            raise ValueError('Invalid fetch time: {}'.format(tokens[0]))
+            raise ValueError('Invalid fetch time: {}'.format(string[0:fetch_time_index]))
 
+        etag = string[fetch_time_index + 1:etag_index]
+        if not etag:
+            raise ValueError('Empty eTag value')
         try:
-            config = json.loads(tokens[2])
+            config_json = string[etag_index + 1:]
+            config = json.loads(config_json)
         except ValueError as e:
-            raise ValueError('Invalid config JSON: {}. {}'.format(tokens[2], str(e)))
+            raise ValueError('Invalid config JSON: {}. {}'.format(config_json, str(e)))
 
-        return ConfigEntry(config=config, etag=tokens[1], fetch_time=fetch_time)
+        return ConfigEntry(config=config, etag=etag, fetch_time=fetch_time)
 
 
 ConfigEntry.empty = ConfigEntry(etag='empty')
