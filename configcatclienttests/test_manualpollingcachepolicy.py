@@ -12,8 +12,7 @@ from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE
 from configcatclient.logger import Logger
 from configcatclient.utils import get_utc_now_seconds_since_epoch
-from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT, TEST_JSON_FORMAT, \
-    SingleValueConfigCache, TEST_JSON
+from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT, TEST_JSON_FORMAT
 
 # Python2/Python3 support
 try:
@@ -88,7 +87,9 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         with mock.patch.object(requests, 'get') as request_get:
             response_mock = Mock()
             request_get.return_value = response_mock
-            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='"test"'))
+            config_json_string = TEST_JSON_FORMAT.format(value='"test"')
+            response_mock.json.return_value = json.loads(config_json_string)
+            response_mock.text = config_json_string
             response_mock.status_code = 200
             response_mock.headers = {'Etag': 'test-etag'}
 
@@ -110,9 +111,11 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             self.assertLessEqual(start_time_milliseconds, float(cache_tokens[0]))
             self.assertGreaterEqual(int(get_utc_now_seconds_since_epoch() * 1000), float(cache_tokens[0]))
             self.assertEqual('test-etag', cache_tokens[1])
-            self.assertEqual(response_mock.json.return_value, json.loads(cache_tokens[2]))
+            self.assertEqual(config_json_string, cache_tokens[2])
 
-            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='"test2"'))
+            config_json_string = TEST_JSON_FORMAT.format(value='"test2"')
+            response_mock.json.return_value = json.loads(config_json_string)
+            response_mock.text = config_json_string
 
             start_time_milliseconds = get_utc_now_seconds_since_epoch()
             cache_policy.refresh()
@@ -127,7 +130,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             self.assertLessEqual(start_time_milliseconds, float(cache_tokens[0]))
             self.assertGreaterEqual(int(get_utc_now_seconds_since_epoch() * 1000), float(cache_tokens[0]))
             self.assertEqual('test-etag', cache_tokens[1])
-            self.assertEqual(response_mock.json.return_value, json.loads(cache_tokens[2]))
+            self.assertEqual(config_json_string, cache_tokens[2])
 
             cache_policy.close()
 

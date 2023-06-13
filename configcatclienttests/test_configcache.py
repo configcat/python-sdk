@@ -33,15 +33,17 @@ class ConfigCacheTests(unittest.TestCase):
         self.assertEqual(value2, None)
 
     def test_cache_key(self):
-        self.assertEqual("4911a4a56e463f82d44ac26caeff86e9e34db33d", ConfigService._get_cache_key('test1'))
-        self.assertEqual("b8de24c1a79dfe407adb5fc4ba88c656b7ed8e9e", ConfigService._get_cache_key('test2'))
+        self.assertEqual("147c5b4c2b2d7c77e1605b1a4309f0ea6684a0c6", ConfigService._get_cache_key('test1'))
+        self.assertEqual("c09513b1756de9e4bc48815ec7a142b2441ed4d5", ConfigService._get_cache_key('test2'))
 
     def test_invalid_cache_content(self):
         hook_callbacks = HookCallbacks()
         hooks = Hooks(on_error=hook_callbacks.on_error)
+        config_json_string = TEST_JSON_FORMAT.format(value='"test"')
         config_cache = SingleValueConfigCache(ConfigEntry(
-            config=json.loads(TEST_JSON_FORMAT.format(value='"test"')),
+            config=json.loads(config_json_string),
             etag='test-etag',
+            config_json_string=config_json_string,
             fetch_time=get_utc_now_seconds_since_epoch()).serialize()
         )
 

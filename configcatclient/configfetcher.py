@@ -169,7 +169,8 @@ class ConfigFetcher(object):
                 if response_etag is None:
                     response_etag = ''
                 config = response.json()
-                return FetchResponse.success(ConfigEntry(config, response_etag, get_utc_now_seconds_since_epoch()))
+                return FetchResponse.success(
+                    ConfigEntry(config, response_etag, response.text, get_utc_now_seconds_since_epoch()))
             elif response.status_code == 304:
                 return FetchResponse.not_modified()
             elif response.status_code in [404, 403]:

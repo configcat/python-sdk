@@ -207,6 +207,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         config_cache = SingleValueConfigCache(ConfigEntry(
             config=json.loads(TEST_JSON),
             etag='test-etag',
+            config_json_string=TEST_JSON,
             fetch_time=get_utc_now_seconds_since_epoch()).serialize()
         )
         poll_interval_seconds = 2
@@ -243,6 +244,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         config_cache = SingleValueConfigCache(ConfigEntry(
             config=json.loads(TEST_JSON),
             etag='test-etag',
+            config_json_string=TEST_JSON,
             fetch_time=get_utc_now_seconds_since_epoch() - poll_interval_seconds).serialize()
         )
         cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds,
@@ -263,6 +265,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         config_cache = SingleValueConfigCache(ConfigEntry(
             config=json.loads(TEST_JSON2),
             etag='test-etag',
+            config_json_string=TEST_JSON2,
             fetch_time=get_utc_now_seconds_since_epoch() - 2 * poll_interval_seconds).serialize()
         )
 

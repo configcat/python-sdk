@@ -86,7 +86,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
 
     def test_get_skips_hitting_api_after_update_from_different_thread(self):
         config_fetcher = mock.MagicMock()
-        successful_fetch_response = FetchResponse.success(ConfigEntry(json.loads(TEST_JSON)))
+        successful_fetch_response = FetchResponse.success(ConfigEntry(json.loads(TEST_JSON), '', TEST_JSON))
         config_fetcher.get_configuration.return_value = successful_fetch_response
         config_cache = NullConfigCache()
         cache_policy = ConfigService('', PollingMode.lazy_load(160), Hooks(), config_fetcher, log, config_cache, False)
@@ -123,6 +123,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         config_cache = SingleValueConfigCache(ConfigEntry(
             config=json.loads(TEST_JSON),
             etag='test-etag',
+            config_json_string=TEST_JSON,
             fetch_time=get_utc_now_seconds_since_epoch()).serialize()
         )
 
@@ -148,6 +149,7 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         config_cache = SingleValueConfigCache(ConfigEntry(
             config=json.loads(TEST_JSON),
             etag='test-etag',
+            config_json_string=TEST_JSON,
             fetch_time=get_utc_now_seconds_since_epoch() - cache_time_to_live_seconds).serialize()
         )
 

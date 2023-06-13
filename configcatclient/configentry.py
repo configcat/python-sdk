@@ -8,16 +8,17 @@ class ConfigEntry(object):
     ETAG = 'etag'
     FETCH_TIME = 'fetch_time'
 
-    def __init__(self, config={}, etag='', fetch_time=utils.distant_past):
+    def __init__(self, config={}, etag='', config_json_string='{}', fetch_time=utils.distant_past):
         self.config = config
         self.etag = etag
+        self.config_json_string = config_json_string
         self.fetch_time = fetch_time
 
     def is_empty(self):
         return self == ConfigEntry.empty
 
     def serialize(self):
-        return '{}\n{}\n{}'.format(int(self.fetch_time * 1000), self.etag, json.dumps(self.config))
+        return '{}\n{}\n{}'.format(int(self.fetch_time * 1000), self.etag, self.config_json_string)
 
     @classmethod
     def create_from_string(cls, string):
@@ -43,7 +44,7 @@ class ConfigEntry(object):
         except ValueError as e:
             raise ValueError('Invalid config JSON: {}. {}'.format(config_json, str(e)))
 
-        return ConfigEntry(config=config, etag=etag, fetch_time=fetch_time / 1000.0)
+        return ConfigEntry(config=config, etag=etag, config_json_string=config_json, fetch_time=fetch_time / 1000.0)
 
 
 ConfigEntry.empty = ConfigEntry(etag='empty')
