@@ -333,9 +333,9 @@ class RolloutEvaluator(object):
 
             # Evaluate segment rules (logically connected by AND)
             for segment_comparison_rule in segment_comparison_rules:
-                if self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, log_entries):
-                    return False
-            return True
+                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, log_entries):
+                    return True
+            return False
 
         return False
 
