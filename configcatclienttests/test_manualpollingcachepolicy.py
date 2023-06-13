@@ -97,7 +97,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
             cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, config_cache, False)
 
-            start_time = get_utc_now_seconds_since_epoch()
+            start_time_milliseconds = int(get_utc_now_seconds_since_epoch() * 1000)
             cache_policy.refresh()
             settings, _ = cache_policy.get_settings()
             self.assertEqual('test', settings.get('testKey').get(VALUE))
@@ -107,14 +107,14 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             # Check cache content
             cache_tokens = list(config_cache._value.values())[0].split('\n')
             self.assertEqual(3, len(cache_tokens))
-            self.assertLessEqual(start_time, float(cache_tokens[0]))
-            self.assertGreaterEqual(get_utc_now_seconds_since_epoch(), float(cache_tokens[0]))
+            self.assertLessEqual(start_time_milliseconds, float(cache_tokens[0]))
+            self.assertGreaterEqual(int(get_utc_now_seconds_since_epoch() * 1000), float(cache_tokens[0]))
             self.assertEqual('test-etag', cache_tokens[1])
             self.assertEqual(response_mock.json.return_value, json.loads(cache_tokens[2]))
 
             response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='"test2"'))
 
-            start_time = get_utc_now_seconds_since_epoch()
+            start_time_milliseconds = get_utc_now_seconds_since_epoch()
             cache_policy.refresh()
             settings, _ = cache_policy.get_settings()
             self.assertEqual('test2', settings.get('testKey').get(VALUE))
@@ -124,8 +124,8 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             # Check cache content
             cache_tokens = list(config_cache._value.values())[0].split('\n')
             self.assertEqual(3, len(cache_tokens))
-            self.assertLessEqual(start_time, float(cache_tokens[0]))
-            self.assertGreaterEqual(get_utc_now_seconds_since_epoch(), float(cache_tokens[0]))
+            self.assertLessEqual(start_time_milliseconds, float(cache_tokens[0]))
+            self.assertGreaterEqual(int(get_utc_now_seconds_since_epoch() * 1000), float(cache_tokens[0]))
             self.assertEqual('test-etag', cache_tokens[1])
             self.assertEqual(response_mock.json.return_value, json.loads(cache_tokens[2]))
 

@@ -17,7 +17,7 @@ class ConfigEntry(object):
         return self == ConfigEntry.empty
 
     def serialize(self):
-        return '{:.7f}\n{}\n{}'.format(self.fetch_time, self.etag, json.dumps(self.config))
+        return '{}\n{}\n{}'.format(int(self.fetch_time * 1000), self.etag, json.dumps(self.config))
 
     @classmethod
     def create_from_string(cls, string):
@@ -43,7 +43,7 @@ class ConfigEntry(object):
         except ValueError as e:
             raise ValueError('Invalid config JSON: {}. {}'.format(config_json, str(e)))
 
-        return ConfigEntry(config=config, etag=etag, fetch_time=fetch_time)
+        return ConfigEntry(config=config, etag=etag, fetch_time=fetch_time / 1000.0)
 
 
 ConfigEntry.empty = ConfigEntry(etag='empty')
