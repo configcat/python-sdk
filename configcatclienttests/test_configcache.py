@@ -1,19 +1,14 @@
 import json
 import logging
 import unittest
-from math import floor
 
 from configcatclient import ConfigCatClient, ConfigCatOptions, PollingMode
 from configcatclient.configcache import InMemoryConfigCache
 from configcatclient.configcatoptions import Hooks
 from configcatclient.configentry import ConfigEntry
-from configcatclient.configfetcher import ConfigFetcher
-from configcatclient.constants import VALUE
-from configcatclient.logger import Logger
 from configcatclient.configservice import ConfigService
-from configcatclient.utils import get_utc_now_seconds_since_epoch, distant_future
-from configcatclienttests.mocks import TEST_JSON, SingleValueConfigCache, HookCallbacks, TEST_JSON_FORMAT, \
-    ConfigFetcherMock
+from configcatclient.utils import get_utc_now_seconds_since_epoch
+from configcatclienttests.mocks import TEST_JSON, SingleValueConfigCache, HookCallbacks, TEST_JSON_FORMAT
 
 logging.basicConfig()
 
@@ -38,7 +33,7 @@ class ConfigCacheTests(unittest.TestCase):
         self.assertEqual("c09513b1756de9e4bc48815ec7a142b2441ed4d5", ConfigService._get_cache_key('test2'))
 
     def test_cache_payload(self):
-        now_seconds = 1686756435.844
+        now_seconds = 1686756435.8449
         etag = 'test-etag'
         entry = ConfigEntry(json.loads(TEST_JSON), etag, TEST_JSON, now_seconds)
         self.assertEqual('1686756435844' + '\n' + etag + '\n' + TEST_JSON, entry.serialize())
