@@ -1,6 +1,7 @@
 import json
 import logging
 import unittest
+from math import floor
 
 from configcatclient import ConfigCatClient, ConfigCatOptions, PollingMode
 from configcatclient.configcache import InMemoryConfigCache
@@ -35,6 +36,12 @@ class ConfigCacheTests(unittest.TestCase):
     def test_cache_key(self):
         self.assertEqual("147c5b4c2b2d7c77e1605b1a4309f0ea6684a0c6", ConfigService._get_cache_key('test1'))
         self.assertEqual("c09513b1756de9e4bc48815ec7a142b2441ed4d5", ConfigService._get_cache_key('test2'))
+
+    def test_cache_payload(self):
+        now_seconds = 1686756435.844
+        etag = 'test-etag'
+        entry = ConfigEntry(json.loads(TEST_JSON), etag, TEST_JSON, now_seconds)
+        self.assertEqual('1686756435844' + '\n' + etag + '\n' + TEST_JSON, entry.serialize())
 
     def test_invalid_cache_content(self):
         hook_callbacks = HookCallbacks()
