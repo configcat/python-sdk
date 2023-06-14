@@ -1,4 +1,5 @@
 import json
+from math import floor
 
 from . import utils
 
@@ -18,7 +19,7 @@ class ConfigEntry(object):
         return self == ConfigEntry.empty
 
     def serialize(self):
-        return '{}\n{}\n{}'.format(int(self.fetch_time * 1000), self.etag, self.config_json_string)
+        return '{}\n{}\n{}'.format(floor(self.fetch_time * 1000), self.etag, self.config_json_string)
 
     @classmethod
     def create_from_string(cls, string):
