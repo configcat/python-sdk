@@ -9,8 +9,8 @@ class ConfigEntry(object):
     ETAG = 'etag'
     FETCH_TIME = 'fetch_time'
 
-    def __init__(self, config={}, etag='', config_json_string='{}', fetch_time=utils.distant_past):
-        self.config = config
+    def __init__(self, config=None, etag='', config_json_string='{}', fetch_time=utils.distant_past):
+        self.config = config if config is not None else {}
         self.etag = etag
         self.config_json_string = config_json_string
         self.fetch_time = fetch_time

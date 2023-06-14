@@ -65,7 +65,6 @@ class ConfigCacheTests(unittest.TestCase):
         self.assertTrue('Error occurred while reading the cache.\nInvalid fetch time: text' in hook_callbacks.error)
 
         # Number of values is fewer than expected
-        errors = []
         config_cache._value = '\n'.join([str(get_utc_now_seconds_since_epoch()),
                                          TEST_JSON_FORMAT.format(value='"test2"')])
 
@@ -74,7 +73,6 @@ class ConfigCacheTests(unittest.TestCase):
                         in hook_callbacks.error)
 
         # Invalid config JSON
-        errors = []
         config_cache._value = '\n'.join([str(get_utc_now_seconds_since_epoch()),
                                          'test-etag',
                                          'wrong-json'])
