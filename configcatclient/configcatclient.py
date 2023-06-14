@@ -2,7 +2,7 @@ from threading import Lock
 
 from . import utils
 from .configservice import ConfigService
-from .constants import ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS, CONFIG_FILE_NAME
+from .constants import ROLLOUT_RULES, VARIATION_ID, VALUE, ROLLOUT_PERCENTAGE_ITEMS
 from .evaluationdetails import EvaluationDetails
 from .interfaces import ConfigCatClientException
 from .logger import Logger
@@ -12,7 +12,6 @@ from .configcatoptions import ConfigCatOptions, Hooks
 from .overridedatasource import OverrideBehaviour
 from .refreshresult import RefreshResult
 from .rolloutevaluator import RolloutEvaluator
-import hashlib
 from collections import namedtuple
 import copy
 from .utils import method_is_called_from, get_date_time
@@ -348,9 +347,6 @@ class ConfigCatClient(object):
                 return result, fetch_time
 
         return self._config_service.get_settings()
-
-    def __get_cache_key(self):
-        return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8')).hexdigest()
 
     def __evaluate(self, key, user, default_value, default_variation_id, settings, fetch_time):
         user = user if user is not None else self._default_user

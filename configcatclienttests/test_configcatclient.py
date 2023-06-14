@@ -177,16 +177,6 @@ class ConfigCatClientTests(unittest.TestCase):
 
             client.close()
 
-    def test_cache_key(self):
-        client1 = ConfigCatClient.get('test1', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                                config_cache=ConfigCacheMock()))
-        client2 = ConfigCatClient.get('test2', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                                config_cache=ConfigCacheMock()))
-        self.assertEqual("5a9acc8437104f46206f6f273c4a5e26dd14715c", client1._ConfigCatClient__get_cache_key())
-        self.assertEqual("ade7f71ba5d52ebd3d9aeef5f5488e6ffe6323b8", client2._ConfigCatClient__get_cache_key())
-        client1.close()
-        client2.close()
-
     def test_default_user_get_value(self):
         client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                               config_cache=ConfigCacheMock()))

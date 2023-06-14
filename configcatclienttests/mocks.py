@@ -2,7 +2,7 @@ import json
 import time
 
 from configcatclient.configentry import ConfigEntry
-from configcatclient.utils import get_utc_now_seconds_since_epoch
+from configcatclient.utils import get_utc_now_seconds_since_epoch, distant_past
 
 try:
     from unittest.mock import Mock
@@ -74,7 +74,7 @@ class ConfigFetcherMock(ConfigFetcher):
         if etag != self._etag:
             self._fetch_count += 1
             return FetchResponse.success(
-                ConfigEntry(json.loads(self._configuration), self._etag, get_utc_now_seconds_since_epoch())
+                ConfigEntry(json.loads(self._configuration), self._etag, self._configuration, get_utc_now_seconds_since_epoch())
             )
         return FetchResponse.not_modified()
 
@@ -106,7 +106,7 @@ class ConfigFetcherWaitMock(ConfigFetcher):
 
     def get_configuration(self, etag=''):
         time.sleep(self._wait_seconds)
-        return FetchResponse.success(ConfigEntry(json.loads(TEST_JSON)))
+        return FetchResponse.success(ConfigEntry(json.loads(TEST_JSON), etag, TEST_JSON))
 
 
 class ConfigFetcherCountMock(ConfigFetcher):
@@ -115,13 +115,14 @@ class ConfigFetcherCountMock(ConfigFetcher):
 
     def get_configuration(self, etag=''):
         self._value += 1
-        config = json.loads(TEST_JSON_FORMAT.format(value=self._value))
-        return FetchResponse.success(ConfigEntry(config))
+        config_json_string = TEST_JSON_FORMAT.format(value=self._value)
+        config = json.loads(config_json_string)
+        return FetchResponse.success(ConfigEntry(config, etag, config_json_string))
 
 
 class ConfigCacheMock(ConfigCache):
     def get(self, key):
-        return json.dumps({ConfigEntry.CONFIG: TEST_OBJECT, ConfigEntry.ETAG: 'test-etag'})
+        return '\n'.join([str(distant_past), 'test-etag', json.dumps(TEST_OBJECT)])
 
     def set(self, key, value):
         pass
@@ -152,6 +153,7 @@ class MockHeader:
 class MockResponse:
     def __init__(self, json_data, status_code, etag=None):
         self.json_data = json_data
+        self.text = json.dumps(json_data)
         self.status_code = status_code
         self.headers = MockHeader(etag)
 
