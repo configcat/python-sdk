@@ -65,8 +65,8 @@ class RolloutEvaluator(object):
     COMPARATOR_TEXTS = [
         'IS ONE OF',
         'IS NOT ONE OF',
-        'CONTAINS',
-        'DOES NOT CONTAIN',
+        'CONTAINS ANY OF',
+        'NOT CONTAINS ANY OF',
         'IS ONE OF (SemVer)',
         'IS NOT ONE OF (SemVer)',
         '< (SemVer)',
@@ -79,22 +79,22 @@ class RolloutEvaluator(object):
         '<= (Number)',
         '> (Number)',
         '>= (Number)',
-        'IS ONE OF (Sensitive)',
-        'IS NOT ONE OF (Sensitive)',
-        'BEFORE (DateTime)',
-        'AFTER (DateTime)',
-        'EQUALS (Sensitive)',
-        'DOSE NOT EQUAL (Sensitive)',
-        'STARTS WITH (Sensitive)',
-        'ENDS WITH (Sensitive)',
-        'ARRAY CONTAINS (Sensitive)',
-        'ARRAY DOES NOT CONTAIN (Sensitive)'
+        'IS ONE OF (hashed)',
+        'IS NOT ONE OF (hashed)',
+        'BEFORE (UTC DateTime)',
+        'AFTER (UTC DateTime)',
+        'EQUALS (hashed)',
+        'NOT EQUALS (hashed)',
+        'STARTS WITH ANY OF (hashed)',
+        'ENDS WITH (hashed)',
+        'ARRAY CONTAINS (hashed)',
+        'ARRAY NOT CONTAINS (hashed)'
     ]
     COMPARISON_VALUES = [
         STRING_LIST_VALUE,  # IS ONE OF
         STRING_LIST_VALUE,  # IS NOT ONE OF
-        STRING_VALUE,       # CONTAINS
-        STRING_VALUE,       # DOES NOT CONTAIN
+        STRING_LIST_VALUE,  # CONTAINS ANY OF
+        STRING_LIST_VALUE,  # NOT CONTAINS ANY OF
         STRING_LIST_VALUE,  # IS ONE OF (SemVer)
         STRING_LIST_VALUE,  # IS NOT ONE OF (SemVer)
         STRING_VALUE,       # < (SemVer)
@@ -107,16 +107,16 @@ class RolloutEvaluator(object):
         DOUBLE_VALUE,       # <= (Number)
         DOUBLE_VALUE,       # > (Number)
         DOUBLE_VALUE,       # >= (Number)
-        STRING_LIST_VALUE,  # IS ONE OF (Sensitive)
-        STRING_LIST_VALUE,  # IS NOT ONE OF (Sensitive)
-        DOUBLE_VALUE,       # BEFORE (DateTime)
-        DOUBLE_VALUE,       # AFTER (DateTime)
-        STRING_VALUE,       # EQUALS (Sensitive)
-        STRING_VALUE,       # DOSE NOT EQUAL (Sensitive)
-        STRING_VALUE,       # STARTS WITH (Sensitive)
-        STRING_VALUE,       # ENDS WITH (Sensitive)
-        STRING_VALUE,       # ARRAY CONTAINS (Sensitive)
-        STRING_VALUE        # ARRAY DOES NOT CONTAIN (Sensitive)
+        STRING_LIST_VALUE,  # IS ONE OF (hashed)
+        STRING_LIST_VALUE,  # IS NOT ONE OF (hashed)
+        DOUBLE_VALUE,       # BEFORE (UTC DateTime)
+        DOUBLE_VALUE,       # AFTER (UTC DateTime)
+        STRING_VALUE,       # EQUALS (hashed)
+        STRING_VALUE,       # NOT EQUALS (hashed)
+        STRING_LIST_VALUE,  # STARTS WITH ANY OF (hashed)
+        STRING_LIST_VALUE,  # ENDS WITH (hashed)
+        STRING_VALUE,       # ARRAY CONTAINS (hashed)
+        STRING_VALUE        # ARRAY NOT CONTAINS (hashed)
     ]
     SEGMENT_COMPARATOR_TEXTS = ['IS IN SEGMENT', 'IS NOT IN SEGMENT']
     DEPENDENCY_COMPARATOR_TEXTS = ['EQUALS', 'DOES NOT EQUAL']
@@ -363,15 +363,16 @@ class RolloutEvaluator(object):
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
-        # CONTAINS
+        # CONTAINS ANY OF
         elif comparator == 2:
-            if str(user_value).__contains__(str(comparison_value)):
-                log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
-                return True
-        # DOES NOT CONTAIN
+            for comparison in comparison_value:
+                if str(comparison) in str(user_value):
+                    log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                               comparison_value))
+                    return True
+        # NOT CONTAINS ANY OF
         elif comparator == 3:
-            if not str(user_value).__contains__(str(comparison_value)):
+            if not any(str(comparison) in str(user_value) for comparison in comparison_value):
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
@@ -427,19 +428,19 @@ class RolloutEvaluator(object):
                 self.log.warning(message)
                 log_entries.append(message)
                 return False
-        # IS ONE OF (Sensitive)
+        # IS ONE OF (hashed)
         elif comparator == 16:
             if sha256(user_value, salt, context_salt) in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
-        # IS NOT ONE OF (Sensitive)
+        # IS NOT ONE OF (hashed)
         elif comparator == 17:
             if sha256(user_value, salt, context_salt) not in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
-        # BEFORE, AFTER (DateTime)
+        # BEFORE, AFTER (UTC DateTime)
         elif 18 <= comparator <= 19:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
@@ -457,31 +458,32 @@ class RolloutEvaluator(object):
                 self.log.warning(message)
                 log_entries.append(message)
                 return False
-        # EQUALS (Sensitive)
+        # EQUALS (hashed)
         elif comparator == 20:
             if sha256(user_value, salt, context_salt) == comparison_value:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
-        # DOSE NOT EQUAL (Sensitive)
+        # NOT EQUALS (hashed)
         elif comparator == 21:
             if sha256(user_value, salt, context_salt) != comparison_value:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
-        # STARTS WITH, ENDS WITH (Sensitive)
+        # STARTS WITH ANY OF, ENDS WITH ANY OF (hashed)
         elif 22 <= comparator <= 23:
             try:
-                underscore_index = comparison_value.index('_')
-                length = int(comparison_value[:underscore_index])
+                for comparison in comparison_value:
+                    underscore_index = comparison.index('_')
+                    length = int(comparison[:underscore_index])
 
-                if len(user_value) >= length:
-                    comparison_string = comparison_value[underscore_index + 1:]
-                    if (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string) \
-                            or (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_string):
-                        log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                                   comparison_value))
-                        return True
+                    if len(user_value) >= length:
+                        comparison_string = comparison[underscore_index + 1:]
+                        if (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string) \
+                                or (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_string):
+                            log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
+                                                                       comparison))
+                            return True
 
             except Exception as e:
                 message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
@@ -489,13 +491,13 @@ class RolloutEvaluator(object):
                 self.log.warning(message)
                 log_entries.append(message)
                 return False
-        # ARRAY CONTAINS (Sensitive)
+        # ARRAY CONTAINS (hashed)
         elif comparator == 24:
             if comparison_value in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                            comparison_value))
                 return True
-        # ARRAY DOES NOT CONTAIN (Sensitive)
+        # ARRAY NOT CONTAINS (hashed)
         elif comparator == 25:
             if comparison_value not in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,

@@ -46,8 +46,8 @@ TEST_OBJECT = json.loads(r'''{
     "r": 0
   },
   "s": [
-    {"n": "id1", "r": [{"a": "Identifier", "c": 2, "s": "@test1.com"}]},
-    {"n": "id2", "r": [{"a": "Identifier", "c": 2, "s": "@test2.com"}]}
+    {"n": "id1", "r": [{"a": "Identifier", "c": 2, "l": ["@test1.com"]}]},
+    {"n": "id2", "r": [{"a": "Identifier", "c": 2, "l": ["@test2.com"]}]}
   ],
   "f": {
     "testBoolKey": {"v": {"b": true}, "t": 0},
