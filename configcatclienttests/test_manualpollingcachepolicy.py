@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 import unittest
 import requests
 
@@ -10,6 +11,7 @@ from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
 from configcatclient.constants import VALUE, FEATURE_FLAGS, STRING_VALUE
 from configcatclient.logger import Logger
+from configcatclient.utils import get_utc_now_seconds_since_epoch
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT, TEST_JSON_FORMAT
 
 # Python2/Python3 support
@@ -24,7 +26,6 @@ except ImportError:
 
 logging.basicConfig()
 log = Logger('configcat', Hooks())
-cache_key = 'cache_key'
 
 
 class ManualPollingCachePolicyTests(unittest.TestCase):
@@ -89,15 +90,18 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         with mock.patch.object(requests, 'get') as request_get:
             response_mock = Mock()
             request_get.return_value = response_mock
-            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='{ "s": "test"}'))
+            config_json_string = TEST_JSON_FORMAT.format(value='{"s": "test"}')
+            response_mock.json.return_value = json.loads(config_json_string)
+            response_mock.text = config_json_string
             response_mock.status_code = 200
-            response_mock.headers = {}
+            response_mock.headers = {'Etag': 'test-etag'}
 
             polling_mode = PollingMode.manual_poll()
             config_cache = InMemoryConfigCache()
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
             cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, config_cache, False)
 
+            start_time_milliseconds = int(get_utc_now_seconds_since_epoch() * 1000)
             cache_policy.refresh()
             config, _ = cache_policy.get_config()
             settings = config.get(FEATURE_FLAGS)
@@ -105,14 +109,33 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             self.assertEqual(1, request_get.call_count)
             self.assertEqual(1, len(config_cache._value))
 
-            response_mock.json.return_value = json.loads(TEST_JSON_FORMAT.format(value='{ "s": "test2"}'))
+            # Check cache content
+            cache_tokens = list(config_cache._value.values())[0].split('\n')
+            self.assertEqual(3, len(cache_tokens))
+            self.assertLessEqual(start_time_milliseconds, float(cache_tokens[0]))
+            self.assertGreaterEqual(int(get_utc_now_seconds_since_epoch() * 1000), float(cache_tokens[0]))
+            self.assertEqual('test-etag', cache_tokens[1])
+            self.assertEqual(config_json_string, cache_tokens[2])
 
+            config_json_string = TEST_JSON_FORMAT.format(value='{"s": "test2"}')
+            response_mock.json.return_value = json.loads(config_json_string)
+            response_mock.text = config_json_string
+
+            start_time_milliseconds = get_utc_now_seconds_since_epoch()
             cache_policy.refresh()
             config, _ = cache_policy.get_config()
             settings = config.get(FEATURE_FLAGS)
             self.assertEqual('test2', settings.get('testKey').get(VALUE).get(STRING_VALUE))
             self.assertEqual(2, request_get.call_count)
             self.assertEqual(1, len(config_cache._value))
+
+            # Check cache content
+            cache_tokens = list(config_cache._value.values())[0].split('\n')
+            self.assertEqual(3, len(cache_tokens))
+            self.assertLessEqual(start_time_milliseconds, float(cache_tokens[0]))
+            self.assertGreaterEqual(int(get_utc_now_seconds_since_epoch() * 1000), float(cache_tokens[0]))
+            self.assertEqual('test-etag', cache_tokens[1])
+            self.assertEqual(config_json_string, cache_tokens[2])
 
             cache_policy.close()
 

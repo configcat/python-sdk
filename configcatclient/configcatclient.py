@@ -366,9 +366,6 @@ class ConfigCatClient(object):
 
         return self._config_service.get_config()
 
-    def __get_cache_key(self):
-        return hashlib.sha1(('python_' + CONFIG_FILE_NAME + '_' + self._sdk_key).encode('utf-8')).hexdigest()
-
     def __evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
         user = user if user is not None else self._default_user
         log_entries = []

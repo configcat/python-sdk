@@ -1,4 +1,5 @@
 CONFIG_FILE_NAME = 'config_v6'
+SERIALIZATION_FORMAT_VERSION = 'v2'
 
 # Config
 PREFERENCES = 'p'
