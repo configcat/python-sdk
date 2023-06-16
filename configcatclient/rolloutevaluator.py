@@ -133,8 +133,8 @@ class RolloutEvaluator(object):
         if visited_keys is None:
             visited_keys = []
         if key in visited_keys:
-            error = 'Failed to evaluate setting \'%s\'. Dependency loop detected between the following depending ' \
-                    'keys: %s.'
+            error = 'Cannot evaluate targeting rules for \'%s\' (circular dependency detected between the following ' \
+                    'depending keys: %s). Please check your feature flag definition and eliminate the circular dependency.'
             error_args = (key, ' -> '.join("'{}'".format(s) for s in list(visited_keys) + [key]))
             self.log.error(error, *error_args, event_id=2003)
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
@@ -177,8 +177,7 @@ class RolloutEvaluator(object):
                     self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
                     return return_value, return_variation_id, None, None, None
 
-            log_entries.append('Evaluating get_value(\'%s\').' % key)
-            log_entries.append('User object:\n%s' % str(user))
+            log_entries.append("Evaluating '%s' for User '%s'." % (key, str(user)))
 
             # Evaluate targeting rules (logically connected by OR)
             for targeting_rule in targeting_rules:

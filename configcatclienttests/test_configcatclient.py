@@ -10,10 +10,11 @@ from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
 from configcatclient.constants import VALUE, COMPARATOR, COMPARISON_ATTRIBUTE, SERVED_VALUE, STRING_VALUE, CONDITIONS
 from configcatclient.user import User
-from configcatclient.configcatoptions import ConfigCatOptions
+from configcatclient.configcatoptions import ConfigCatOptions, Hooks
 from configcatclient.pollingmode import PollingMode
 from configcatclient.utils import get_utc_now
-from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT, TEST_SDK_KEY, TEST_SDK_KEY1, TEST_SDK_KEY2
+from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT, TEST_SDK_KEY, TEST_SDK_KEY1, TEST_SDK_KEY2, \
+    HookCallbacks
 
 # Python2/Python3 support
 try:
@@ -310,33 +311,46 @@ class ConfigCatClientTests(unittest.TestCase):
 
             client.close()
 
-    def test_dependent_flag_loop(self):
-        dependent_loop_json = json.loads(r'''{
+    def test_circular_dependency(self):
+        circular_dependency_json = json.loads(r'''{
             "p": {
                 "u": "https://cdn-global.configcat.com",
                 "r": 0
             },
             "f": {
-                "key1": { "v": { "b": true },
-                   "r": [{"c": [{"d": {"f": "key2", "c": 0, "v": {"b": true}}}], "s": {"v": {"b": false}}}]
+                "key1": { "v": { "s": "value1" },
+                   "r": [
+                     {"c": [{"d": {"f": "key2", "c": 0, "v": {"s": "fourth"}}}], "s": {"v": {"s": "first"}}},
+                     {"c": [{"d": {"f": "key3", "c": 0, "v": {"s": "value3"}}}], "s": {"v": {"s": "second"}}}
+                   ]
                 },
-                "key2": { "v": { "b": true }, 
-                    "r": [{"c": [{"d": {"f": "key1", "c": 0, "v": {"b": true}}}], "s": {"v": {"b": false}}}] 
-                }
+                "key2": { "v": { "s": "value2" }, 
+                    "r": [
+                      {"c": [{"d": {"f": "key1", "c": 0, "v": {"s": "value1"}}}], "s": {"v": {"s": "third"}}},
+                      {"c": [{"d": {"f": "key3", "c": 0, "v": {"s": "value3"}}}], "s": {"v": {"s": "fourth"}}}
+                    ] 
+                },
+                "key3": { "v": { "s": "value3" }}                 
             }
         }''')
 
         with mock.patch.object(requests, 'get') as request_get:
             response_mock = Mock()
             request_get.return_value = response_mock
-            response_mock.json.return_value = dependent_loop_json
+            response_mock.json.return_value = circular_dependency_json
             response_mock.status_code = 200
             response_mock.headers = {}
 
-            client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
+            hook_callbacks = HookCallbacks()
+            hooks = Hooks(on_error=hook_callbacks.on_error)
+            client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                        hooks=hooks))
             client.force_refresh()
 
-            self.assertEqual(False, client.get_value('key1', False))
+            self.assertEqual('first', client.get_value('key1', 'default'))
+            self.assertTrue("circular dependency detected "
+                            "between the following depending keys: 'key1' -> 'key2' -> 'key1'" in hook_callbacks.error)
+
             client.close()
 
 
