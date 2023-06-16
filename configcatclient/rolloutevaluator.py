@@ -333,7 +333,8 @@ class RolloutEvaluator(object):
 
             # Evaluate segment rules (logically connected by AND)
             for segment_comparison_rule in segment_comparison_rules:
-                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt, log_entries):
+                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt,
+                                                                log_entries):
                     return True
             return False
 
@@ -479,8 +480,11 @@ class RolloutEvaluator(object):
 
                     if len(user_value) >= length:
                         comparison_string = comparison[underscore_index + 1:]
-                        if (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string) \
-                                or (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_string):
+                        if (
+                            (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string)
+                            or
+                            (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_string)
+                        ):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
                                                                        comparison))
                             return True
