@@ -2,8 +2,7 @@ from threading import Lock
 
 from . import utils
 from .configservice import ConfigService
-from .constants import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, CONFIG_FILE_NAME, FEATURE_FLAGS, \
-    SERVED_VALUE
+from .constants import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, FEATURE_FLAGS, SERVED_VALUE
 from .evaluationdetails import EvaluationDetails
 from .interfaces import ConfigCatClientException
 from .logger import Logger
@@ -13,7 +12,6 @@ from .configcatoptions import ConfigCatOptions, Hooks
 from .overridedatasource import OverrideBehaviour
 from .refreshresult import RefreshResult
 from .rolloutevaluator import RolloutEvaluator, get_value
-import hashlib
 from collections import namedtuple
 import copy
 from .utils import method_is_called_from, get_date_time
