@@ -11,31 +11,6 @@ from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUT
 from .user import User
 
 
-def has_user_based_targeting_rule(targeting_rules):
-    """
-    Checks if there is any targeting rule that uses a user.
-    Returns True if there is at least one percentage option, comparison value or segment condition.
-    For dependent flag condition, a user is not necessarily required.
-    Returns False if the targeting rules only has dependent flag conditions.
-    """
-    for targeting_rule in targeting_rules:
-        percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
-        if len(percentage_options) > 0:
-            return True
-
-        conditions = targeting_rule.get(CONDITIONS, [])
-        for condition in conditions:
-            comparison_rule = condition.get(COMPARISON_RULE, [])
-            if len(comparison_rule) > 0:
-                return True
-
-            segment_condition = condition.get(SEGMENT_CONDITION, [])
-            if len(segment_condition) > 0:
-                return True
-
-    return False
-
-
 def sha256(value, salt, context_salt):
     """
     Calculates the SHA256 hash of the given value with the given salt and context_salt.
@@ -155,6 +130,7 @@ class RolloutEvaluator(object):
         targeting_rules = setting_descriptor.get(TARGETING_RULES, [])
         percentage_rule_attribute = setting_descriptor.get(PERCENTAGE_RULE_ATTRIBUTE)
 
+        # TODO: How to handle this case in evaluation logging?
         user_has_invalid_type = user is not None and type(user) is not User
         if user_has_invalid_type:
             self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
@@ -163,63 +139,78 @@ class RolloutEvaluator(object):
             user = None
 
         try:
-            if user is None:
-                if has_user_based_targeting_rule(targeting_rules):
-                    if not user_has_invalid_type:
-                        self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
-                                         '(User Object is missing). '
-                                         'You should pass a User Object to the evaluation methods like `get_value()` '
-                                         'in order to make targeting work properly. '
-                                         'Read more: https://configcat.com/docs/advanced/user-object/',
-                                         key, event_id=3001)
-                    return_value = get_value(setting_descriptor)
-                    return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-                    self.log.info('%s', 'Returning [%s]' % str(return_value), event_id=5000)
-                    return return_value, return_variation_id, None, None, None
-
-            log_entries.append("Evaluating '%s' for User '%s'." % (key, str(user)))
+            log_entries.append("Evaluating '{}'".format(key) + (" for User '{}'".format(user) if user is not None else ''))
 
             # Evaluate targeting rules (logically connected by OR)
+            has_conditions = False
             for targeting_rule in targeting_rules:
                 conditions = targeting_rule.get(CONDITIONS, [])
                 percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
 
                 if len(conditions) > 0:
+                    if not has_conditions:
+                        log_entries.append('  Evaluating targeting rules and applying the first match if any:')
+                        has_conditions = True
+
+                    served_value = targeting_rule.get(SERVED_VALUE)
+                    value = get_value(served_value) if served_value is not None else None
+
                     # Evaluate targeting rule conditions (logically connected by AND)
-                    if self.evaluate_conditions(conditions, user, key, salt, config, log_entries, visited_keys):
+                    if self.evaluate_conditions(conditions, user, key, salt, config, log_entries, visited_keys, value):
                         served_value = targeting_rule.get(SERVED_VALUE)
                         if served_value is not None:
-                            value = get_value(served_value)
                             variation_id = served_value.get(VARIATION_ID, default_variation_id)
-                            log_entries.append('Returning %s' % value)
+                            log_entries.append("  Returning '%s'." % value)
                             return value, variation_id, targeting_rule, None, None
                     else:
                         continue
 
                 # Evaluate variations
                 if len(percentage_options) > 0:
+                    if user is None:
+                        self.log.warning('Cannot evaluate %% options for setting \'%s\' '
+                                         '(User Object is missing). '
+                                         'You should pass a User Object to the evaluation methods like `get_value()` '
+                                         'in order to make targeting work properly. '
+                                         'Read more: https://configcat.com/docs/advanced/user-object/',
+                                         key, event_id=3001)
+
+                        log_entries.append('  Skipping % options because the User Object is missing.')
+                        continue
+
+                    user_attribute_name = percentage_rule_attribute if percentage_rule_attribute is not None else 'Identifier'
                     user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None \
                         else user.get_identifier()
                     if percentage_rule_attribute is not None and user_key is None:
-                        log_entries.append('Evaluating %% options => SKIP rule. Validation error: User object does not '
-                                           'contain the attribute `%s` specified in the percentage rule attribute.' %
-                                           percentage_rule_attribute)
+                        log_entries.append(
+                            '  Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
+                        log_entries.append(
+                            '  The current targeting rule is ignored and the evaluation continues with the next rule.')
                         continue
+
                     hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
                     hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
                     bucket = 0
+                    index = 1
                     for percentage_option in percentage_options or []:
                         bucket += percentage_option.get(PERCENTAGE, 0)
                         if hash_val < bucket:
                             percentage_value = get_value(percentage_option)
                             variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
-                            log_entries.append('Evaluating %% options. Returning %s' % percentage_value)
+                            log_entries.append('  Evaluating %% options based on the User.%s attribute:' % user_attribute_name)
+                            log_entries.append('  - Computing hash in the [0..99] range from User.%s => %s '
+                                               '(this value is sticky and consistent across all SDKs)' %
+                                               (user_attribute_name, hash_val))
+                            log_entries.append("  - Hash value %s selects %% option %s (%s%%), '%s'" %
+                                               (hash_val, index, bucket, percentage_value))
+                            log_entries.append("  Returning '%s'." % percentage_value)
                             return percentage_value, variation_id, None, percentage_option, None
+                        index += 1
 
             return_value = get_value(setting_descriptor)
             return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
-            log_entries.append('Returning %s' % return_value)
+            log_entries.append("  Returning '%s'." % return_value)
             return return_value, return_variation_id, None, None, None
         except Exception as e:
             error = 'Failed to evaluate setting \'%s\'. (%s)' \
@@ -228,13 +219,32 @@ class RolloutEvaluator(object):
             self.log.error(error, *error_args, event_id=2001)
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
-    def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value):
-        return 'Evaluating rule: [%s:%s] [%s] [%s] => match' \
-               % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value)
+    def _trunc_if_needed(self, comparator, comparison_value):
+        if '(hashed)' in self.COMPARATOR_TEXTS[comparator]:
+            if isinstance(comparison_value, list):
+                return [item[:10] + '...' for item in comparison_value]
+            else:
+                return comparison_value[:10] + '...'
+        else:
+            return comparison_value
 
-    def _format_no_match_rule(self, comparison_attribute, user_value, comparator, comparison_value):
-        return 'Evaluating rule: [%s:%s] [%s] [%s] => no match' \
-               % (comparison_attribute, user_value, self.COMPARATOR_TEXTS[comparator], comparison_value)
+    def _format_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
+        return "  - IF User.%s %s %s THEN %s => MATCH, applying rule" \
+               % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
+                  self._trunc_if_needed(comparator, comparison_value),
+                  "'" + str(value) + "'" if value is not None else '% option')
+
+    def _format_no_match_rule(self, comparison_attribute, user_value, comparator, comparison_value, value):
+        return '  - IF User.%s %s %s THEN %s => no match' \
+               % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
+                  self._trunc_if_needed(comparator, comparison_value),
+                  "'" + str(value) + "'" if value is not None else '% option')
+
+    def _format_no_user_rule(self, comparison_attribute, comparator, comparison_value, value):
+        return '  - IF User.%s %s %s THEN %s => cannot evaluate, User Object is missing' \
+               % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
+                  self._trunc_if_needed(comparator, comparison_value),
+                  "'" + str(value) + "'" if value is not None else '% option')
 
     def _format_validation_error_rule(self, comparison_attribute, user_value, comparator, comparison_value, error):
         return 'Evaluating rule: [%s:%s] [%s] [%s] => SKIP rule. Validation error: %s' \
@@ -252,7 +262,7 @@ class RolloutEvaluator(object):
                % (dependency_key, dependency_value, self.DEPENDENCY_COMPARATOR_TEXTS[dependency_comparator],
                   dependency_comparison_value)
 
-    def evaluate_conditions(self, conditions, user, key, salt, config, log_entries, visited_keys):
+    def evaluate_conditions(self, conditions, user, key, salt, config, log_entries, visited_keys, value):
         segments = config.get(SEGMENTS, [])
 
         for condition in conditions:
@@ -261,19 +271,19 @@ class RolloutEvaluator(object):
             dependent_flag_condition = condition.get(DEPENDENT_FLAG_CONDITION)
 
             if comparison_rule is not None:
-                if not self._evaluate_comparison_rule_condition(comparison_rule, user, key, salt, log_entries):
+                if not self._evaluate_comparison_rule_condition(comparison_rule, user, key, key, salt, log_entries, value):
                     return False
             elif segment_condition is not None:
-                if not self._evaluate_segment_condition(segment_condition, user, salt, segments, log_entries):
+                if not self._evaluate_segment_condition(segment_condition, user, key, salt, segments, log_entries, value):
                     return False
             elif dependent_flag_condition is not None:
                 if not self._evaluate_dependent_flag_condition(dependent_flag_condition, user, config, log_entries,
-                                                               visited_keys):
+                                                               visited_keys, value):
                     return False
 
         return True
 
-    def _evaluate_dependent_flag_condition(self, dependent_flag_condition, user, config, log_entries, visited_keys):
+    def _evaluate_dependent_flag_condition(self, dependent_flag_condition, user, config, log_entries, visited_keys, value):
         dependency_key = dependent_flag_condition.get(DEPENDENCY_SETTING_KEY)
         dependency_comparator = dependent_flag_condition.get(DEPENDENCY_COMPARATOR)
 
@@ -307,7 +317,7 @@ class RolloutEvaluator(object):
                                                                 dependency_comparator, dependency_comparison_value))
         return False
 
-    def _evaluate_segment_condition(self, segment_condition, user, salt, segments, log_entries):
+    def _evaluate_segment_condition(self, segment_condition, user, key, salt, segments, log_entries, value):
         segment_index = segment_condition.get(SEGMENT_INDEX)
         segment = segments[segment_index]
         segment_name = segment.get(SEGMENT_NAME, '')
@@ -316,65 +326,78 @@ class RolloutEvaluator(object):
 
         # IS IN SEGMENT
         if segment_comparator == 0:
-            log_entries.append('Evaluating user [%s] [%s]:' %
+            log_entries.append("  - IF User %s '%s'" %
                                (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
 
             # Evaluate segment rules (logically connected by AND)
             for segment_comparison_rule in segment_comparison_rules:
-                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt,
-                                                                log_entries):
+                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, key, segment_name, salt,
+                                                                log_entries, value):
                     return False
             return True
         # IS NOT IN SEGMENT
         elif segment_comparator == 1:
-            log_entries.append('Evaluating user [%s] [%s]:' %
+            log_entries.append("  - IF User %s '%s'" %
                                (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
 
             # Evaluate segment rules (logically connected by AND)
             for segment_comparison_rule in segment_comparison_rules:
-                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, segment_name, salt,
-                                                                log_entries):
+                if not self._evaluate_comparison_rule_condition(segment_comparison_rule, user, key, segment_name, salt,
+                                                                log_entries, value):
                     return True
             return False
 
         return False
 
-    def _evaluate_comparison_rule_condition(self, comparison_rule, user, context_salt, salt, log_entries):  # noqa: C901
+    def _evaluate_comparison_rule_condition(self, comparison_rule, user, key, context_salt, salt, log_entries, value):  # noqa: C901, E501
         comparison_attribute = comparison_rule.get(COMPARISON_ATTRIBUTE)
         comparator = comparison_rule.get(COMPARATOR)
         comparison_value = comparison_rule.get(self.COMPARISON_VALUES[comparator])
 
+        if user is None:
+            self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
+                             '(User Object is missing). '
+                             'You should pass a User Object to the evaluation methods like `get_value()` '
+                             'in order to make targeting work properly. '
+                             'Read more: https://configcat.com/docs/advanced/user-object/',
+                             key, event_id=3001)
+
+            log_entries.append(
+                self._format_no_user_rule(comparison_attribute, comparator, comparison_value, value)
+            )
+            log_entries.append('    The current targeting rule is ignored and the evaluation continues with the next rule.')
+            return False
+
         user_value = user.get_attribute(comparison_attribute)
         if user_value is None or not user_value:
             log_entries.append(
-                self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value)
-            )
+                self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value, value))
             return False
 
         # IS ONE OF
         if comparator == 0:
             if str(user_value) in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
         # IS NOT ONE OF
         elif comparator == 1:
             if str(user_value) not in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
         # CONTAINS ANY OF
         elif comparator == 2:
             for comparison in comparison_value:
                 if str(comparison) in str(user_value):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value))
+                                                               comparison_value, value))
                     return True
         # NOT CONTAINS ANY OF
         elif comparator == 3:
             if not any(str(comparison) in str(user_value) for comparison in comparison_value):
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
         # IS ONE OF, IS NOT ONE OF (Semantic version)
         elif 4 <= comparator <= 5:
@@ -384,7 +407,7 @@ class RolloutEvaluator(object):
                     match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + x) or match
                 if (match and comparator == 4) or (not match and comparator == 5):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value))
+                                                               comparison_value, value))
                     return True
             except ValueError as e:
                 message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
@@ -399,7 +422,7 @@ class RolloutEvaluator(object):
                         self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()
                 ):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value))
+                                                               comparison_value, value))
                     return True
             except ValueError as e:
                 message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
@@ -420,7 +443,7 @@ class RolloutEvaluator(object):
                         or (comparator == 14 and user_value_float > comparison_value_float) \
                         or (comparator == 15 and user_value_float >= comparison_value_float):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value))
+                                                               comparison_value, value))
                     return True
             except Exception as e:
                 message = self._format_validation_error_rule(comparison_attribute, user_value, comparator,
@@ -432,13 +455,13 @@ class RolloutEvaluator(object):
         elif comparator == 16:
             if sha256(user_value, salt, context_salt) in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
         # IS NOT ONE OF (hashed)
         elif comparator == 17:
             if sha256(user_value, salt, context_salt) not in [x.strip() for x in comparison_value]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
         # BEFORE, AFTER (UTC DateTime)
         elif 18 <= comparator <= 19:
@@ -449,7 +472,7 @@ class RolloutEvaluator(object):
                 if (comparator == 18 and user_value_float < comparison_value_float) \
                         or (comparator == 19 and user_value_float > comparison_value_float):
                     log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                               comparison_value))
+                                                               comparison_value, value))
                     return True
 
             except Exception as e:
@@ -462,13 +485,13 @@ class RolloutEvaluator(object):
         elif comparator == 20:
             if sha256(user_value, salt, context_salt) == comparison_value:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
         # NOT EQUALS (hashed)
         elif comparator == 21:
             if sha256(user_value, salt, context_salt) != comparison_value:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
         # STARTS WITH ANY OF, ENDS WITH ANY OF (hashed)
         elif 22 <= comparator <= 23:
@@ -485,7 +508,7 @@ class RolloutEvaluator(object):
                             (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_string)
                         ):
                             log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                                       comparison))
+                                                                       comparison_value, value))
                             return True
 
             except Exception as e:
@@ -498,14 +521,14 @@ class RolloutEvaluator(object):
         elif comparator == 24:
             if comparison_value in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
         # ARRAY NOT CONTAINS (hashed)
         elif comparator == 25:
             if comparison_value not in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
                 log_entries.append(self._format_match_rule(comparison_attribute, user_value, comparator,
-                                                           comparison_value))
+                                                           comparison_value, value))
                 return True
 
-        log_entries.append(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value))
+        log_entries.append(self._format_no_match_rule(comparison_attribute, user_value, comparator, comparison_value, value))
         return False

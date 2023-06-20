@@ -30,4 +30,4 @@ class User(object):
             'Country': self.__data.get('Country'),
             'Custom': self.__custom,
         }
-        return json.dumps(dump, indent=4)
+        return json.dumps(dump)
