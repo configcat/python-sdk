@@ -227,7 +227,7 @@ class EvaluationLogTests(unittest.TestCase):
     def test_options_based_on_custom_attr(self):
         client = configcatclient.get(
             'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/x0tcrFMkl02A65D8GD20Eg',
-            configcatclient.ConfigCatOptions(base_url='https://test-cdn-global.configcat.com')
+            configcatclient.ConfigCatOptions(base_url='https://test-cdn-eu.configcat.com')
         )
 
         client.get_value('string75Cat0Dog25Falcon0HorseCustomAttr', False)
