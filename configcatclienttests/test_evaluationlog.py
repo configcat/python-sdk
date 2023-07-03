@@ -1,5 +1,6 @@
 import logging
 import unittest
+import re
 
 import configcatclient
 from configcatclient.user import User
@@ -35,6 +36,11 @@ class MockLogHandler(logging.Handler):
             self.warning_logs.append(record.getMessage())
         elif record.levelno == logging.INFO:
             self.info_logs.append(record.getMessage())
+
+
+# Remove the u prefix from unicode strings on python 2.7. When we only support python 3 this can be removed.
+def remove_unicode_prefix(string):
+    return re.sub(r"u'(.*?)'", r"'\1'", string)
 
 
 class EvaluationLogTests(unittest.TestCase):
@@ -99,7 +105,7 @@ class EvaluationLogTests(unittest.TestCase):
             TARGETING_IS_NOT_POSSIBLE_NO_USER.format('stringContainsDogDefaultCat')
         )
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             "[5000] Evaluating 'stringContainsDogDefaultCat'\n"
             "  Evaluating targeting rules and applying the first match if any:\n"
             "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN 'Dog' => cannot evaluate, User Object is missing\n"
@@ -110,7 +116,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('stringContainsDogDefaultCat', False, User('12345'))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'stringContainsDogDefaultCat\' for User \'{"Identifier": "12345", "Email": null, "Country": null, "Custom": null}\'\n'
             "  Evaluating targeting rules and applying the first match if any:\n"
             "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN 'Dog' => no match\n"
@@ -120,7 +126,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('stringContainsDogDefaultCat', False, User('12345', email='joe@example.com'))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'stringContainsDogDefaultCat\' for User \'{"Identifier": "12345", "Email": "joe@example.com", "Country": null, "Custom": null}\'\n'
             "  Evaluating targeting rules and applying the first match if any:\n"
             "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN 'Dog' => no match\n"
@@ -130,7 +136,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('stringContainsDogDefaultCat', False, User('12345', email='joe@configcat.com'))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'stringContainsDogDefaultCat\' for User \'{"Identifier": "12345", "Email": "joe@configcat.com", "Country": null, "Custom": null}\'\n'
             "  Evaluating targeting rules and applying the first match if any:\n"
             "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN 'Dog' => MATCH, applying rule\n"
@@ -149,7 +155,7 @@ class EvaluationLogTests(unittest.TestCase):
             TARGETING_IS_NOT_POSSIBLE_NO_USER.format('stringIsInDogDefaultCat')
         )
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             "[5000] Evaluating 'stringIsInDogDefaultCat'\n"
             "  Evaluating targeting rules and applying the first match if any:\n"
             "  - IF User.Email IS ONE OF (hashed) ['a79a58142e...', '8af1824d6c...'] THEN 'Dog' => cannot evaluate, User Object is missing\n"
@@ -162,7 +168,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('stringIsInDogDefaultCat', False, User('12345'))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'stringIsInDogDefaultCat\' for User \'{"Identifier": "12345", "Email": null, "Country": null, "Custom": null}\'\n'
             "  Evaluating targeting rules and applying the first match if any:\n"
             "  - IF User.Email IS ONE OF (hashed) ['a79a58142e...', '8af1824d6c...'] THEN 'Dog' => no match\n"
@@ -173,7 +179,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('stringIsInDogDefaultCat', False, User('12345', custom={'Custom1': 'user'}))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'stringIsInDogDefaultCat\' for User \'{"Identifier": "12345", "Email": null, "Country": null, "Custom": {"Custom1": "user"}}\'\n'
             "  Evaluating targeting rules and applying the first match if any:\n"
             "  - IF User.Email IS ONE OF (hashed) ['a79a58142e...', '8af1824d6c...'] THEN 'Dog' => no match\n"
@@ -184,7 +190,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('stringIsInDogDefaultCat', False, User('12345', custom={'Custom1': 'admin'}))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'stringIsInDogDefaultCat\' for User \'{"Identifier": "12345", "Email": null, "Country": null, "Custom": {"Custom1": "admin"}}\'\n'
             "  Evaluating targeting rules and applying the first match if any:\n"
             "  - IF User.Email IS ONE OF (hashed) ['a79a58142e...', '8af1824d6c...'] THEN 'Dog' => no match\n"
@@ -279,7 +285,7 @@ class EvaluationLogTests(unittest.TestCase):
             OPTIONS_IS_NOT_POSSIBLE_NO_USER.format('integer25One25Two25Three25FourAdvancedRules')
         )
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             "[5000] Evaluating 'integer25One25Two25Three25FourAdvancedRules'\n"
             '  Evaluating targeting rules and applying the first match if any:\n'
             "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN '5' => cannot evaluate, User Object is missing\n"
@@ -291,7 +297,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('integer25One25Two25Three25FourAdvancedRules', 42, User('12345'))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'integer25One25Two25Three25FourAdvancedRules\' for User \'{"Identifier": "12345", "Email": null, "Country": null, "Custom": null}\'\n'
             '  Evaluating targeting rules and applying the first match if any:\n'
             "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN '5' => no match\n"
@@ -304,7 +310,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('integer25One25Two25Three25FourAdvancedRules', 42, User('12345', email='joe@example.com'))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'integer25One25Two25Three25FourAdvancedRules\' for User \'{"Identifier": "12345", "Email": "joe@example.com", "Country": null, "Custom": null}\'\n'
             '  Evaluating targeting rules and applying the first match if any:\n'
             "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN '5' => no match\n"
@@ -317,7 +323,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.get_value('integer25One25Two25Three25FourAdvancedRules', 42, User('12345', email='joe@configcat.com'))
         self.assertEqual(
-            self.log_handler.info_logs[0],
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'integer25One25Two25Three25FourAdvancedRules\' for User \'{"Identifier": "12345", "Email": "joe@configcat.com", "Country": null, '
             '"Custom": null}\'\n'
             '  Evaluating targeting rules and applying the first match if any:\n'
