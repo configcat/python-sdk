@@ -1,9 +1,11 @@
+import logging
 from threading import Lock
 
 from . import utils
 from .configservice import ConfigService
 from .constants import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, FEATURE_FLAGS, SERVED_VALUE
 from .evaluationdetails import EvaluationDetails
+from .logbuilder import LogBuilder
 from .interfaces import ConfigCatClientException
 from .logger import Logger
 from .configfetcher import ConfigFetcher
@@ -366,17 +368,20 @@ class ConfigCatClient(object):
 
     def __evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
         user = user if user is not None else self._default_user
-        log_entries = []
+
+        # Skip building the evaluation log if it won't be logged.
+        log_builder = LogBuilder() if self.log.isEnabledFor(logging.INFO) else None
+
         value, variation_id, rule, percentage_rule, error = self._rollout_evaluator.evaluate(
             key=key,
             user=user,
             default_value=default_value,
             default_variation_id=default_variation_id,
             config=config,
-            log_entries=log_entries)
+            log_builder=log_builder)
 
-        if len(log_entries) > 0:
-            self.log.info('%s', '\n'.join(log_entries), event_id=5000)
+        if log_builder:
+            self.log.info(str(log_builder), event_id=5000)
 
         details = EvaluationDetails(key=key,
                                     value=value,

@@ -34,15 +34,15 @@ PERCENTAGE_OPTIONS = 'p'
 # Condition
 COMPARISON_RULE = 't'
 SEGMENT_CONDITION = 's'  # Segment targeting rule
-DEPENDENT_FLAG_CONDITION = 'd'  # Prerequisite flag targeting rule
+PREREQUISITE_FLAG_CONDITION = 'd'  # Prerequisite flag targeting rule
 
 # Segment Condition
 SEGMENT_INDEX = 's'
 SEGMENT_COMPARATOR = 'c'
 
-# Dependent Flag Condition
-DEPENDENCY_SETTING_KEY = 'f'
-DEPENDENCY_COMPARATOR = 'c'
+# Prerequisite Flag Condition
+PREREQUISITE_FLAG_KEY = 'f'
+PREREQUISITE_COMPARATOR = 'c'
 
 # Percentage Option
 PERCENTAGE = 'p'

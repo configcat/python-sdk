@@ -38,8 +38,8 @@ class RolloutTests(unittest.TestCase):
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LP0_4hhbQkmVVJcsbO_2Lw',
                           self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
-    def test_matrix_dependent_flag(self):
-        self._test_matrix('./testmatrix_dependent_flag.csv',
+    def test_matrix_prerequisite_flag(self):
+        self._test_matrix('./testmatrix_prerequisite_flag.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA',
                           self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
