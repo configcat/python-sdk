@@ -209,7 +209,8 @@ class RolloutEvaluator(object):
                             percentage_value = get_value(percentage_option)
                             variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
                             if log_builder:
-                                log_builder.new_line('Evaluating %% options based on the User.%s attribute:' % user_attribute_name)
+                                log_builder.new_line('Evaluating %% options based on the User.%s attribute:' %
+                                                     user_attribute_name)
                                 log_builder.new_line('- Computing hash in the [0..99] range from User.%s => %s '
                                                      '(this value is sticky and consistent across all SDKs)' %
                                                      (user_attribute_name, hash_val))
@@ -249,7 +250,7 @@ class RolloutEvaluator(object):
                % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
                   self._trunc_if_needed(comparator, comparison_value), error)
 
-    def evaluate_conditions(self, conditions, user, key, salt, config, log_builder, visited_keys, value):
+    def evaluate_conditions(self, conditions, user, key, salt, config, log_builder, visited_keys, value):  # noqa: C901
         segments = config.get(SEGMENTS, [])
 
         first_condition = True
@@ -293,8 +294,8 @@ class RolloutEvaluator(object):
                     condition_result = False
                     break
             elif prerequisite_flag_condition is not None:
-                result, error = self._evaluate_prerequisite_flag_condition(prerequisite_flag_condition, user, config, log_builder,
-                                                                           visited_keys)
+                result, error = self._evaluate_prerequisite_flag_condition(prerequisite_flag_condition, user, config,
+                                                                           log_builder, visited_keys)
                 if not result:
                     condition_result = False
                     break
@@ -317,7 +318,7 @@ class RolloutEvaluator(object):
 
         return condition_result
 
-    def _evaluate_prerequisite_flag_condition(self, prerequisite_flag_condition, user, config, log_builder, visited_keys):
+    def _evaluate_prerequisite_flag_condition(self, prerequisite_flag_condition, user, config, log_builder, visited_keys):  # noqa: C901, E501
         prerequisite_key = prerequisite_flag_condition.get(PREREQUISITE_FLAG_KEY)
         prerequisite_comparator = prerequisite_flag_condition.get(PREREQUISITE_COMPARATOR)
 
@@ -330,7 +331,8 @@ class RolloutEvaluator(object):
 
         if log_builder:
             log_builder.append("flag '%s' %s '%s'" %
-                               (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator], str(prerequisite_comparison_value)))
+                               (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
+                                str(prerequisite_comparison_value)))
             log_builder.new_line('(').increase_indent()
             log_builder.new_line("Evaluating prerequisite flag '%s':" % prerequisite_key)
 
@@ -342,7 +344,8 @@ class RolloutEvaluator(object):
         if log_builder:
             log_builder.new_line("Prerequisite flag evaluation result: '%s'" % str(prerequisite_value))
             log_builder.new_line("Condition: (Flag '%s' %s '%s') evaluates to " %
-                                 (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator], str(prerequisite_comparison_value)))
+                                 (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
+                                  str(prerequisite_comparison_value)))
 
         # EQUALS
         if prerequisite_comparator == 0:
@@ -359,7 +362,7 @@ class RolloutEvaluator(object):
 
         return prerequisite_condition_result, None
 
-    def _evaluate_segment_condition(self, segment_condition, user, key, salt, segments, log_builder):
+    def _evaluate_segment_condition(self, segment_condition, user, key, salt, segments, log_builder):  # noqa: C901
         segment_index = segment_condition.get(SEGMENT_INDEX)
         segment = segments[segment_index]
         segment_name = segment.get(SEGMENT_NAME, '')
@@ -373,7 +376,8 @@ class RolloutEvaluator(object):
                              'in order to make targeting work properly. '
                              'Read more: https://configcat.com/docs/advanced/user-object/',
                              key, event_id=3001)
-            log_builder and log_builder.append("User %s '%s' " % (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
+            if log_builder:
+                log_builder.append("User %s '%s' " % (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
             return False, 'cannot evaluate, User Object is missing'
 
         # IS IN SEGMENT, IS NOT IN SEGMENT
@@ -400,8 +404,8 @@ class RolloutEvaluator(object):
                     if log_builder:
                         log_builder.new_line('AND ')
 
-                result, error = self._evaluate_comparison_rule_condition(segment_comparison_rule, user, key, segment_name, salt,
-                                                                         log_builder)
+                result, error = self._evaluate_comparison_rule_condition(segment_comparison_rule, user, key,
+                                                                         segment_name, salt, log_builder)
                 if log_builder:
                     log_builder.append('=> {}'.format(result))
                     if not result:
@@ -413,11 +417,13 @@ class RolloutEvaluator(object):
 
             if log_builder:
                 log_builder.decrease_indent()
-                segment_evaluation_result = segment_condition_result if segment_comparator == SegmentComparator.IS_IN else not segment_condition_result
+                segment_evaluation_result = segment_condition_result if segment_comparator == SegmentComparator.IS_IN \
+                    else not segment_condition_result
                 log_builder.new_line('Segment evaluation result: User IS%sIN SEGMENT.' %
                                      (' ' if segment_evaluation_result else ' NOT '))
                 log_builder.new_line("Condition (User %s '%s') evaluates to %s." %
-                                     (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name, segment_condition_result))
+                                     (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator],
+                                      segment_name, segment_condition_result))
                 log_builder.decrease_indent().new_line(')')
             return segment_condition_result, error
 
