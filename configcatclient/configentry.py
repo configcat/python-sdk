@@ -5,10 +5,6 @@ from . import utils
 
 
 class ConfigEntry(object):
-    CONFIG = 'config'
-    ETAG = 'etag'
-    FETCH_TIME = 'fetch_time'
-
     def __init__(self, config=None, etag='', config_json_string='{}', fetch_time=utils.distant_past):
         self.config = config if config is not None else {}
         self.etag = etag

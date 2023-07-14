@@ -349,7 +349,7 @@ class ConfigCatClientTests(unittest.TestCase):
 
             self.assertEqual('first', client.get_value('key1', 'default'))
             self.assertTrue("circular dependency detected "
-                            "between the following depending keys: 'key1' -> 'key2' -> 'key1'" in hook_callbacks.error)
+                            "between the following depending flags: 'key1' -> 'key2' -> 'key1'" in hook_callbacks.error)
 
             client.close()
 

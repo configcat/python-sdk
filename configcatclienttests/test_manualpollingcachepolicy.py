@@ -121,7 +121,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             response_mock.json.return_value = json.loads(config_json_string)
             response_mock.text = config_json_string
 
-            start_time_milliseconds = get_utc_now_seconds_since_epoch()
+            start_time_milliseconds = int(get_utc_now_seconds_since_epoch() * 1000)
             cache_policy.refresh()
             config, _ = cache_policy.get_config()
             settings = config.get(FEATURE_FLAGS)
