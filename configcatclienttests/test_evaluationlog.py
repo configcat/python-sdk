@@ -334,6 +334,50 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.close()
 
+    def test_options_within_targeting_rule(self):
+        client = configcatclient.get(
+            'configcat-sdk-1/pCDbCNTRQEOE2b2xikWfkQ/xUqZMLx8d02UDWE0QMdUgA',
+            configcatclient.ConfigCatOptions(base_url='https://test-cdn-eu.configcat.com')
+        )
+
+        a= client.get_value('stringContainsString75Cat0Dog25Falcon0HorseDefaultCat', 'default')
+        self.assertEqual(
+            self.log_handler.warning_logs[0],
+            TARGETING_IS_NOT_POSSIBLE_NO_USER.format('stringContainsString75Cat0Dog25Falcon0HorseDefaultCat')
+        )
+        self.assertEqual(
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
+            "[5000] Evaluating 'stringContainsString75Cat0Dog25Falcon0HorseDefaultCat'\n"
+            '  Evaluating targeting rules and applying the first match if any:\n'
+            "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN % options => cannot evaluate, User Object is missing\n"
+            '    The current targeting rule is ignored and the evaluation continues with the next rule.\n'
+            "  Returning 'Cat'."
+        )
+        self.log_handler.clear()
+
+        client.get_value('stringContainsString75Cat0Dog25Falcon0HorseDefaultCat', 'default', User('12345'))
+        self.assertEqual(
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
+            '[5000] Evaluating \'stringContainsString75Cat0Dog25Falcon0HorseDefaultCat\' for User \'{"Identifier": "12345", "Email": null, "Country": null, "Custom": null}\'\n'
+            '  Evaluating targeting rules and applying the first match if any:\n'
+            "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN % options => no match\n"
+            "  Returning 'Cat'."
+        )
+        self.log_handler.clear()
+
+        client.get_value('stringContainsString75Cat0Dog25Falcon0HorseDefaultCat', 'default', User('12345', email='joe@configcat.com', country='US'))
+        self.assertEqual(
+            remove_unicode_prefix(self.log_handler.info_logs[0]),
+            '[5000] Evaluating \'stringContainsString75Cat0Dog25Falcon0HorseDefaultCat\' for User \'{"Identifier": "12345", "Email": "joe@configcat.com", "Country": "US", "Custom": null}\'\n'
+            '  Evaluating targeting rules and applying the first match if any:\n'
+            "  - IF User.Email CONTAINS ANY OF ['@configcat.com'] THEN % options => MATCH, applying rule\n"
+            '    Evaluating % options based on the User.Country attribute:\n'
+            '    - Computing hash in the [0..99] range from User.Country => 63 (this value is sticky and consistent across all SDKs)\n'
+            "    - Hash value 63 selects % option 1 (75%), 'Cat'\n"
+            "  Returning 'Cat'."
+        )
+        self.log_handler.clear()
+
     def test_and_rules(self):
         client = configcatclient.get(
             'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/FfwncdJg1kq0lBqxhYC_7g',
@@ -462,9 +506,9 @@ class EvaluationLogTests(unittest.TestCase):
             "      Condition: (Flag 'mainFeature' EQUALS 'target') evaluates to True.\n"
             "    )\n"
             "    THEN % option => MATCH, applying rule\n"
-            "  Evaluating % options based on the User.Identifier attribute:\n"
-            "  - Computing hash in the [0..99] range from User.Identifier => 78 (this value is sticky and consistent across all SDKs)\n"
-            "  - Hash value 78 selects % option 4 (100%), 'Horse'\n"
+            "    Evaluating % options based on the User.Identifier attribute:\n"
+            "    - Computing hash in the [0..99] range from User.Identifier => 78 (this value is sticky and consistent across all SDKs)\n"
+            "    - Hash value 78 selects % option 4 (100%), 'Horse'\n"
             "  Returning 'Horse'."
         )
         self.log_handler.clear()

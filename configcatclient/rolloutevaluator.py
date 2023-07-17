@@ -177,6 +177,9 @@ class RolloutEvaluator(object):
 
                 # Evaluate variations
                 if len(percentage_options) > 0:
+                    if len(conditions) > 0 and log_builder:
+                        log_builder.increase_indent()
+
                     if user is None:
                         self.log.warning('Cannot evaluate %% options for setting \'%s\' '
                                          '(User Object is missing). '
@@ -185,17 +188,22 @@ class RolloutEvaluator(object):
                                          'Read more: https://configcat.com/docs/advanced/user-object/',
                                          key, event_id=3001)
 
-                        log_builder and log_builder.new_line('Skipping % options because the User Object is missing.')
+                        if log_builder:
+                            log_builder.new_line('Skipping % options because the User Object is missing.')
+                            if len(conditions) > 0:
+                                log_builder.decrease_indent()
                         continue
 
                     user_attribute_name = percentage_rule_attribute if percentage_rule_attribute is not None else 'Identifier'
                     user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None \
                         else user.get_identifier()
                     if percentage_rule_attribute is not None and user_key is None:
-                        log_builder and log_builder.new_line(
-                            'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
-                        log_builder and log_builder.new_line(
-                            'The current targeting rule is ignored and the evaluation continues with the next rule.')
+                        if log_builder:
+                            log_builder.new_line(
+                                'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
+                            log_builder.new_line('The current targeting rule is ignored and the evaluation continues with the next rule.')
+                            if len(conditions) > 0:
+                                log_builder.decrease_indent()
                         continue
 
                     hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
@@ -216,6 +224,8 @@ class RolloutEvaluator(object):
                                                      (user_attribute_name, hash_val))
                                 log_builder.new_line("- Hash value %s selects %% option %s (%s%%), '%s'" %
                                                      (hash_val, index, bucket, percentage_value))
+                                if len(conditions) > 0:
+                                    log_builder.decrease_indent()
                                 is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
                             return percentage_value, variation_id, None, percentage_option, None
                         index += 1
@@ -305,13 +315,13 @@ class RolloutEvaluator(object):
                 log_builder.new_line()
             if error:
                 log_builder.append('THEN %s => %s' % (
-                    "'" + str(value) + "'" if value is not None else '% option',
+                    "'" + str(value) + "'" if value is not None else '% options',
                     error))
                 log_builder.new_line(
                     'The current targeting rule is ignored and the evaluation continues with the next rule.')
             else:
                 log_builder.append('THEN %s => %s' % (
-                    "'" + str(value) + "'" if value is not None else '% option',
+                    "'" + str(value) + "'" if value is not None else '% options',
                     'MATCH, applying rule' if condition_result else 'no match'))
             if len(conditions) > 0:
                 log_builder.decrease_indent()
