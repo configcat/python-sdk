@@ -201,7 +201,8 @@ class RolloutEvaluator(object):
                         if log_builder:
                             log_builder.new_line(
                                 'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
-                            log_builder.new_line('The current targeting rule is ignored and the evaluation continues with the next rule.')
+                            log_builder.new_line(
+                                'The current targeting rule is ignored and the evaluation continues with the next rule.')
                             if len(conditions) > 0:
                                 log_builder.decrease_indent()
                         continue
