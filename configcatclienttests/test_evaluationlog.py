@@ -505,7 +505,7 @@ class EvaluationLogTests(unittest.TestCase):
             "      Prerequisite flag evaluation result: 'target'\n"
             "      Condition: (Flag 'mainFeature' EQUALS 'target') evaluates to True.\n"
             "    )\n"
-            "    THEN % option => MATCH, applying rule\n"
+            "    THEN % options => MATCH, applying rule\n"
             "    Evaluating % options based on the User.Identifier attribute:\n"
             "    - Computing hash in the [0..99] range from User.Identifier => 78 (this value is sticky and consistent across all SDKs)\n"
             "    - Hash value 78 selects % option 4 (100%), 'Horse'\n"
