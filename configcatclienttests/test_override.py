@@ -36,7 +36,7 @@ class OverrideTests(unittest.TestCase):
     def test_file(self):
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                    flag_overrides=LocalFileFlagOverrides(
-                                       file_path=path.join(OverrideTests.script_dir, 'test.json'),
+                                       file_path=path.join(OverrideTests.script_dir, 'data/test.json'),
                                        override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
@@ -50,7 +50,7 @@ class OverrideTests(unittest.TestCase):
     def test_simple_file(self):
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                    flag_overrides=LocalFileFlagOverrides(
-                                       file_path=path.join(OverrideTests.script_dir, 'test-simple.json'),
+                                       file_path=path.join(OverrideTests.script_dir, 'data/test-simple.json'),
                                        override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 

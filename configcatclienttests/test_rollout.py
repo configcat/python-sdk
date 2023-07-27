@@ -14,42 +14,42 @@ class RolloutTests(unittest.TestCase):
     variation_test_type = "variation_test"
 
     def test_matrix_text(self):
-        self._test_matrix('./testmatrix.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A', self.value_test_type)
+        self._test_matrix('data/testmatrix.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A', self.value_test_type)
 
     def test_matrix_semantic(self):
-        self._test_matrix('./testmatrix_semantic.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA', self.value_test_type)
+        self._test_matrix('data/testmatrix_semantic.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA', self.value_test_type)
 
     def test_matrix_semantic_2(self):
-        self._test_matrix('./testmatrix_semantic_2.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w', self.value_test_type)
+        self._test_matrix('data/testmatrix_semantic_2.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w', self.value_test_type)
 
     def test_matrix_number(self):
-        self._test_matrix('./testmatrix_number.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw', self.value_test_type)
+        self._test_matrix('data/testmatrix_number.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw', self.value_test_type)
 
     def test_matrix_sensitive(self):
-        self._test_matrix('./testmatrix_sensitive.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA', self.value_test_type)
+        self._test_matrix('data/testmatrix_sensitive.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA', self.value_test_type)
 
     def test_matrix_comparators_v6(self):
-        self._test_matrix('./testmatrix_comparators_v6.csv',
+        self._test_matrix('data/testmatrix_comparators_v6.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/Lv2mD9Tgx0Km27nuHjw_FA',
                           self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
     def test_matrix_segments(self):
-        self._test_matrix('./testmatrix_segments.csv',
+        self._test_matrix('data/testmatrix_segments.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LP0_4hhbQkmVVJcsbO_2Lw',
                           self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
     def test_matrix_prerequisite_flag(self):
-        self._test_matrix('./testmatrix_prerequisite_flag.csv',
+        self._test_matrix('data/testmatrix_prerequisite_flag.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA',
                           self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
     def test_matrix_and_or(self):
-        self._test_matrix('./testmatrix_and_or.csv',
+        self._test_matrix('data/testmatrix_and_or.csv',
                           'configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/FfwncdJg1kq0lBqxhYC_7g',
                           self.value_test_type, base_url='https://test-cdn-eu.configcat.com')
 
     def test_matrix_variation_id(self):
-        self._test_matrix('./testmatrix_variationId.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
+        self._test_matrix('data/testmatrix_variationId.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
 
     def _test_matrix(self, file_path, sdk_key, type, base_url=None):
         script_dir = path.dirname(__file__)
@@ -110,19 +110,19 @@ class RolloutTests(unittest.TestCase):
 
 '''
     def test_create_matrix_text(self):
-        self._test_create_matrix('./testmatrix.csv', './testmatrix_out.csv',
+        self._test_create_matrix('data/testmatrix.csv', 'data/testmatrix_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
     
     def test_create_matrix_semantic(self):
-        self._test_create_matrix('./testmatrix_semantic.csv', './testmatrix_semantic_out.csv',
+        self._test_create_matrix('data/testmatrix_semantic.csv', 'data/testmatrix_semantic_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA')
 
     def test_create_matrix_semnatic_2(self):
-        self._test_create_matrix('./testmatrix_input_semantic_2.csv', './testmatrix_semantic_2.csv',
+        self._test_create_matrix('data/testmatrix_input_semantic_2.csv', 'data/testmatrix_semantic_2.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w')
 
     def test_create_matrix_number(self):
-        self._test_create_matrix('./testmatrix_number.csv', './testmatrix_number_out.csv',
+        self._test_create_matrix('data/testmatrix_number.csv', 'data/testmatrix_number_out.csv',
                                  'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw')
 
     def _test_create_matrix(self, file_path, out_file_path, sdk_key):

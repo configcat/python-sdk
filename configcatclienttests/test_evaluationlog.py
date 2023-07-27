@@ -201,6 +201,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.close()
 
+    @unittest.skip('waiting for the new config.json release')
     def test_options_based_on_user_id(self):
         client = configcatclient.get('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
 
@@ -272,6 +273,7 @@ class EvaluationLogTests(unittest.TestCase):
 
         client.close()
 
+    @unittest.skip('waiting for the new config.json release')
     def test_options_after_targeting_rule(self):
         client = configcatclient.get('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
 
@@ -393,7 +395,7 @@ class EvaluationLogTests(unittest.TestCase):
             remove_unicode_prefix(self.log_handler.info_logs[0]),
             "[5000] Evaluating 'emailAnd'\n"
             '  Evaluating targeting rules and applying the first match if any:\n'
-            "  - IF User.Email STARTS WITH ANY OF (hashed) ['4_82d1be67...'] => False, skipping the remaining AND conditions\n"
+            "  - IF User.Email STARTS WITH ANY OF (hashed) ['4_985cf0de...'] => False, skipping the remaining AND conditions\n"
             "    THEN 'Dog' => cannot evaluate, User Object is missing\n"
             '    The current targeting rule is ignored and the evaluation continues with the next rule.\n'
             "  Returning 'Cat'."
@@ -405,9 +407,9 @@ class EvaluationLogTests(unittest.TestCase):
             remove_unicode_prefix(self.log_handler.info_logs[0]),
             '[5000] Evaluating \'emailAnd\' for User \'{"Identifier": "12345", "Email": "jane@example.com", "Country": null, "Custom": null}\'\n'
             '  Evaluating targeting rules and applying the first match if any:\n'
-            "  - IF User.Email STARTS WITH ANY OF (hashed) ['4_82d1be67...'] => True\n"
+            "  - IF User.Email STARTS WITH ANY OF (hashed) ['4_985cf0de...'] => True\n"
             "    AND User.Email CONTAINS ANY OF ['@'] => True\n"
-            "    AND User.Email ENDS WITH (hashed) ['20_1d54924...'] => False, skipping the remaining AND conditions\n"
+            "    AND User.Email ENDS WITH (hashed) ['20_37bff8e...'] => False, skipping the remaining AND conditions\n"
             "    THEN 'Dog' => no match\n"
             "  Returning 'Cat'."
         )
@@ -484,22 +486,22 @@ class EvaluationLogTests(unittest.TestCase):
             "    (\n"
             "      Evaluating prerequisite flag 'mainFeature':\n"
             "      Evaluating targeting rules and applying the first match if any:\n"
-            "      - IF User.Email ENDS WITH (hashed) ['21_ff4f72a...'] => False, skipping the remaining AND conditions\n"
+            "      - IF User.Email ENDS WITH (hashed) ['21_afedf39...'] => False, skipping the remaining AND conditions\n"
             "        THEN 'private' => no match\n"
-            "      - IF User.Country IS ONE OF (hashed) ['391ea48edd...'] => True\n"
-            "        AND User IS NOT IN SEGMENT 'Beta'\n"
+            "      - IF User.Country IS ONE OF (hashed) ['f17aae9d1a...'] => True\n"
+            "        AND User IS NOT IN SEGMENT 'Beta Users'\n"
             "        (\n"
-            "          Evaluating segment 'Beta':\n"
-            "          - IF User.Email IS ONE OF (hashed) ['8ce91ec158...', '45086cef41...'] => False, skipping the remaining AND conditions\n"
+            "          Evaluating segment 'Beta Users':\n"
+            "          - IF User.Email IS ONE OF (hashed) ['3b10c030fb...', '63aadd8165...'] => False, skipping the remaining AND conditions\n"
             "          Segment evaluation result: User IS NOT IN SEGMENT.\n"
-            "          Condition (User IS NOT IN SEGMENT 'Beta') evaluates to True.\n"
+            "          Condition (User IS NOT IN SEGMENT 'Beta Users') evaluates to True.\n"
             "        ) => True\n"
-            "        AND User IS NOT IN SEGMENT 'Deve'\n"
+            "        AND User IS NOT IN SEGMENT 'Developers'\n"
             "        (\n"
-            "          Evaluating segment 'Deve':\n"
-            "          - IF User.Email IS ONE OF (hashed) ['4c87c42ca5...', '5f7e0f5f0f...'] => False, skipping the remaining AND conditions\n"
+            "          Evaluating segment 'Developers':\n"
+            "          - IF User.Email IS ONE OF (hashed) ['b3892c655a...', '026df07501...'] => False, skipping the remaining AND conditions\n"
             "          Segment evaluation result: User IS NOT IN SEGMENT.\n"
-            "          Condition (User IS NOT IN SEGMENT 'Deve') evaluates to True.\n"
+            "          Condition (User IS NOT IN SEGMENT 'Developers') evaluates to True.\n"
             "        ) => True\n"
             "        THEN 'target' => MATCH, applying rule\n"
             "      Prerequisite flag evaluation result: 'target'\n"

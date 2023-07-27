@@ -338,6 +338,8 @@ class ConfigCatClient(object):
         self._hooks.clear()
 
     def __get_config(self):
+        # TODO: handle salt, segments in case of remote over local, local over remote.
+        #       Change the segment operator to not store an index but the object ref itself.
         if self._override_data_source:
             behaviour = self._override_data_source.get_behaviour()
 

@@ -21,15 +21,16 @@ COMPARATOR = 'c'
 
 # Feature flag (Evaluation Formula)
 SETTING_TYPE = 't'  # 0 = bool, 1 = string, 2 = int, 3 = double
-PERCENTAGE_RULE_ATTRIBUTE = 'p'  # Percentage rule evaluation hashes this attribute of the User object to calculate the buckets
+PERCENTAGE_RULE_ATTRIBUTE = 'a'  # Percentage rule evaluation hashes this attribute of the User object to calculate the buckets
 TARGETING_RULES = 'r'  # Targeting Rules (Logically connected by OR)
+PERCENTAGE_OPTIONS = 'p'  # Percentage Options without conditions
 VALUE = 'v'
 VARIATION_ID = 'i'
 
 # Targeting Rule (Evaluation Rule)
 CONDITIONS = 'c'
 SERVED_VALUE = 's'  # Value and Variation ID
-PERCENTAGE_OPTIONS = 'p'
+TARGETING_RULE_PERCENTAGE_OPTIONS = 'p'
 
 # Condition
 COMPARISON_RULE = 't'

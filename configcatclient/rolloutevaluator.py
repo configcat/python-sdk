@@ -9,7 +9,7 @@ from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUT
     COMPARATOR, PERCENTAGE, SERVED_VALUE, CONDITIONS, PERCENTAGE_OPTIONS, PERCENTAGE_RULE_ATTRIBUTE, \
     COMPARISON_RULE, STRING_LIST_VALUE, DOUBLE_VALUE, STRING_VALUE, FEATURE_FLAGS, PREFERENCES, SALT, SEGMENTS, \
     SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, SEGMENT_INDEX, SEGMENT_COMPARATOR, SEGMENT_RULES, SEGMENT_NAME, \
-    PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, BOOL_VALUE, INT_VALUE
+    PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, BOOL_VALUE, INT_VALUE, TARGETING_RULE_PERCENTAGE_OPTIONS
 from .user import User
 
 
@@ -118,7 +118,7 @@ class RolloutEvaluator(object):
             error = 'Cannot evaluate targeting rules for \'%s\' (circular dependency detected between the following ' \
                     'depending flags: %s). Please check your feature flag definition and eliminate the circular dependency.'
             error_args = (key, ' -> '.join("'{}'".format(s) for s in list(visited_keys) + [key]))
-            self.log.error(error, *error_args, event_id=2003)
+            self.log.warning(error, *error_args, event_id=3005)
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
         visited_keys.append(key)
         is_root_flag_evaluation = len(visited_keys) == 1
@@ -152,21 +152,17 @@ class RolloutEvaluator(object):
                 log_builder.increase_indent()
 
             # Evaluate targeting rules (logically connected by OR)
-            has_conditions = False
+            if log_builder and len(targeting_rules) > 0:
+                log_builder.new_line('Evaluating targeting rules and applying the first match if any:')
             for targeting_rule in targeting_rules:
                 conditions = targeting_rule.get(CONDITIONS, [])
-                percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
 
                 if len(conditions) > 0:
-                    if not has_conditions:
-                        log_builder and log_builder.new_line('Evaluating targeting rules and applying the first match if any:')
-                        has_conditions = True
-
                     served_value = targeting_rule.get(SERVED_VALUE)
                     value = get_value(served_value) if served_value is not None else None
 
                     # Evaluate targeting rule conditions (logically connected by AND)
-                    if self.evaluate_conditions(conditions, user, key, salt, config, log_builder, visited_keys, value):
+                    if self._evaluate_conditions(conditions, user, key, salt, config, log_builder, visited_keys, value):
                         served_value = targeting_rule.get(SERVED_VALUE)
                         if served_value is not None:
                             variation_id = served_value.get(VARIATION_ID, default_variation_id)
@@ -175,61 +171,28 @@ class RolloutEvaluator(object):
                     else:
                         continue
 
-                # Evaluate variations
-                if len(percentage_options) > 0:
-                    if len(conditions) > 0 and log_builder:
-                        log_builder.increase_indent()
+                # Evaluate percentage options of the targeting rule
+                log_builder and log_builder.increase_indent()
+                percentage_options = targeting_rule.get(TARGETING_RULE_PERCENTAGE_OPTIONS, [])
+                percentage_evaluation_result, percentage_value, percentage_variation_id, percentage_option = \
+                    self._evaluate_percentage_options(percentage_options, key, user, percentage_rule_attribute,
+                                                      default_variation_id, log_builder)
 
-                    if user is None:
-                        self.log.warning('Cannot evaluate %% options for setting \'%s\' '
-                                         '(User Object is missing). '
-                                         'You should pass a User Object to the evaluation methods like `get_value()` '
-                                         'in order to make targeting work properly. '
-                                         'Read more: https://configcat.com/docs/advanced/user-object/',
-                                         key, event_id=3001)
+                log_builder and log_builder.decrease_indent()
+                if percentage_evaluation_result:
+                    log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
+                    return percentage_value, percentage_variation_id, None, percentage_option, None
+                else:
+                    continue
 
-                        if log_builder:
-                            log_builder.new_line('Skipping % options because the User Object is missing.')
-                            if len(conditions) > 0:
-                                log_builder.decrease_indent()
-                        continue
-
-                    user_attribute_name = percentage_rule_attribute if percentage_rule_attribute is not None else 'Identifier'
-                    user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None \
-                        else user.get_identifier()
-                    if percentage_rule_attribute is not None and user_key is None:
-                        if log_builder:
-                            log_builder.new_line(
-                                'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
-                            log_builder.new_line(
-                                'The current targeting rule is ignored and the evaluation continues with the next rule.')
-                            if len(conditions) > 0:
-                                log_builder.decrease_indent()
-                        continue
-
-                    hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
-                    hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
-
-                    bucket = 0
-                    index = 1
-                    for percentage_option in percentage_options or []:
-                        bucket += percentage_option.get(PERCENTAGE, 0)
-                        if hash_val < bucket:
-                            percentage_value = get_value(percentage_option)
-                            variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
-                            if log_builder:
-                                log_builder.new_line('Evaluating %% options based on the User.%s attribute:' %
-                                                     user_attribute_name)
-                                log_builder.new_line('- Computing hash in the [0..99] range from User.%s => %s '
-                                                     '(this value is sticky and consistent across all SDKs)' %
-                                                     (user_attribute_name, hash_val))
-                                log_builder.new_line("- Hash value %s selects %% option %s (%s%%), '%s'" %
-                                                     (hash_val, index, bucket, percentage_value))
-                                if len(conditions) > 0:
-                                    log_builder.decrease_indent()
-                                is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
-                            return percentage_value, variation_id, None, percentage_option, None
-                        index += 1
+            # Evaluate percentage options
+            percentage_options = setting_descriptor.get(PERCENTAGE_OPTIONS, [])
+            percentage_evaluation_result, percentage_value, percentage_variation_id, percentage_option = \
+                self._evaluate_percentage_options(percentage_options, key, user, percentage_rule_attribute,
+                                                  default_variation_id, log_builder)
+            if percentage_evaluation_result:
+                log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
+                return percentage_value, percentage_variation_id, None, percentage_option, None
 
             return_value = get_value(setting_descriptor)
             return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
@@ -261,7 +224,60 @@ class RolloutEvaluator(object):
                % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
                   self._trunc_if_needed(comparator, comparison_value), error)
 
-    def evaluate_conditions(self, conditions, user, key, salt, config, log_builder, visited_keys, value):  # noqa: C901
+    def _evaluate_percentage_options(self, percentage_options, key, user, percentage_rule_attribute, default_variation_id, log_builder):
+        """
+        returns: evaluation_result, percentage_value, percentage_variation_id, percentage_option
+        """
+        if len(percentage_options) == 0:
+            return False, None, None, None
+
+        if user is None:
+            self.log.warning('Cannot evaluate %% options for setting \'%s\' '
+                             '(User Object is missing). '
+                             'You should pass a User Object to the evaluation methods like `get_value()` '
+                             'in order to make targeting work properly. '
+                             'Read more: https://configcat.com/docs/advanced/user-object/',
+                             key, event_id=3001)
+
+            if log_builder:
+                log_builder.new_line('Skipping % options because the User Object is missing.')
+            return False, None, None, None
+
+        user_attribute_name = percentage_rule_attribute if percentage_rule_attribute is not None else 'Identifier'
+        user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None \
+            else user.get_identifier()
+        if percentage_rule_attribute is not None and user_key is None:
+            if log_builder:
+                log_builder.new_line(
+                    'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
+                log_builder.new_line(
+                    'The current targeting rule is ignored and the evaluation continues with the next rule.')
+            return False, None, None, None
+
+        hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
+        hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
+
+        bucket = 0
+        index = 1
+        for percentage_option in percentage_options or []:
+            bucket += percentage_option.get(PERCENTAGE, 0)
+            if hash_val < bucket:
+                percentage_value = get_value(percentage_option)
+                variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
+                if log_builder:
+                    log_builder.new_line('Evaluating %% options based on the User.%s attribute:' %
+                                         user_attribute_name)
+                    log_builder.new_line('- Computing hash in the [0..99] range from User.%s => %s '
+                                         '(this value is sticky and consistent across all SDKs)' %
+                                         (user_attribute_name, hash_val))
+                    log_builder.new_line("- Hash value %s selects %% option %s (%s%%), '%s'" %
+                                         (hash_val, index, bucket, percentage_value))
+                return True, percentage_value, variation_id, percentage_option
+            index += 1
+
+        return False, None, None, None
+
+    def _evaluate_conditions(self, conditions, user, key, salt, config, log_builder, visited_keys, value):  # noqa: C901
         segments = config.get(SEGMENTS, [])
 
         first_condition = True

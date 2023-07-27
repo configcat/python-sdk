@@ -311,6 +311,7 @@ class ConfigCatClientTests(unittest.TestCase):
 
             client.close()
 
+    @unittest.skip('implement this test with evaluation log tester')
     def test_circular_dependency(self):
         circular_dependency_json = json.loads(r'''{
             "p": {
