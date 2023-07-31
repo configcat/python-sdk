@@ -311,49 +311,6 @@ class ConfigCatClientTests(unittest.TestCase):
 
             client.close()
 
-    @unittest.skip('implement this test with evaluation log tester')
-    def test_circular_dependency(self):
-        circular_dependency_json = json.loads(r'''{
-            "p": {
-                "u": "https://cdn-global.configcat.com",
-                "r": 0
-            },
-            "f": {
-                "key1": { "v": { "s": "value1" },
-                   "r": [
-                     {"c": [{"d": {"f": "key2", "c": 0, "v": {"s": "fourth"}}}], "s": {"v": {"s": "first"}}},
-                     {"c": [{"d": {"f": "key3", "c": 0, "v": {"s": "value3"}}}], "s": {"v": {"s": "second"}}}
-                   ]
-                },
-                "key2": { "v": { "s": "value2" }, 
-                    "r": [
-                      {"c": [{"d": {"f": "key1", "c": 0, "v": {"s": "value1"}}}], "s": {"v": {"s": "third"}}},
-                      {"c": [{"d": {"f": "key3", "c": 0, "v": {"s": "value3"}}}], "s": {"v": {"s": "fourth"}}}
-                    ] 
-                },
-                "key3": { "v": { "s": "value3" }}                 
-            }
-        }''')
-
-        with mock.patch.object(requests, 'get') as request_get:
-            response_mock = Mock()
-            request_get.return_value = response_mock
-            response_mock.json.return_value = circular_dependency_json
-            response_mock.status_code = 200
-            response_mock.headers = {}
-
-            hook_callbacks = HookCallbacks()
-            hooks = Hooks(on_error=hook_callbacks.on_error)
-            client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                                        hooks=hooks))
-            client.force_refresh()
-
-            self.assertEqual('first', client.get_value('key1', 'default'))
-            self.assertTrue("circular dependency detected "
-                            "between the following depending flags: 'key1' -> 'key2' -> 'key1'" in hook_callbacks.error)
-
-            client.close()
-
 
 if __name__ == '__main__':
     unittest.main()
