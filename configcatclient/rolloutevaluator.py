@@ -224,7 +224,8 @@ class RolloutEvaluator(object):
                % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
                   self._trunc_if_needed(comparator, comparison_value), error)
 
-    def _evaluate_percentage_options(self, percentage_options, key, user, percentage_rule_attribute, default_variation_id, log_builder):
+    def _evaluate_percentage_options(self, percentage_options, key, user, percentage_rule_attribute, default_variation_id,
+                                     log_builder):
         """
         returns: evaluation_result, percentage_value, percentage_variation_id, percentage_option
         """
