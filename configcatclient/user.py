@@ -29,7 +29,10 @@ class User(object):
         dump = OrderedDict([
             ('Identifier', self.__identifier),
             ('Email', self.__data.get('Email')),
-            ('Country', self.__data.get('Country')),
-            ('Custom', self.__custom)
+            ('Country', self.__data.get('Country'))
         ])
-        return json.dumps(dump)
+        if self.__custom:
+            dump.update(self.__custom)
+
+        filtered_dump = OrderedDict([(k, v) for k, v in dump.items() if v is not None])
+        return json.dumps(filtered_dump, separators=(',', ':'))

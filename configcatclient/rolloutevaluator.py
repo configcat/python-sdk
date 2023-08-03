@@ -3,6 +3,7 @@ from enum import IntEnum
 import hashlib
 import semver
 
+from .evaluationcontext import EvaluationContext
 from .logger import Logger
 
 from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUTE, \
@@ -68,7 +69,9 @@ class RolloutEvaluator(object):
         'EQUALS (hashed)',
         'NOT EQUALS (hashed)',
         'STARTS WITH ANY OF (hashed)',
-        'ENDS WITH (hashed)',
+        'NOT STARTS WITH ANY OF (hashed)',
+        'ENDS WITH ANY OF (hashed)',
+        'NOT ENDS WITH ANY OF (hashed)',
         'ARRAY CONTAINS (hashed)',
         'ARRAY NOT CONTAINS (hashed)'
     ]
@@ -96,7 +99,9 @@ class RolloutEvaluator(object):
         STRING_VALUE,       # EQUALS (hashed)
         STRING_VALUE,       # NOT EQUALS (hashed)
         STRING_LIST_VALUE,  # STARTS WITH ANY OF (hashed)
-        STRING_LIST_VALUE,  # ENDS WITH (hashed)
+        STRING_LIST_VALUE,  # NOT STARTS WITH ANY OF (hashed)
+        STRING_LIST_VALUE,  # ENDS WITH ANY OF(hashed)
+        STRING_LIST_VALUE,  # NOT ENDS WITH ANY OF(hashed)
         STRING_VALUE,       # ARRAY CONTAINS (hashed)
         STRING_VALUE        # ARRAY NOT CONTAINS (hashed)
     ]
@@ -111,15 +116,8 @@ class RolloutEvaluator(object):
         returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error
         """
 
-        # Circular dependency check
         if visited_keys is None:
             visited_keys = []
-        if key in visited_keys:
-            error = 'Cannot evaluate targeting rules for \'%s\' (circular dependency detected between the following ' \
-                    'depending flags: %s). Please check your feature flag definition and eliminate the circular dependency.'
-            error_args = (key, ' -> '.join("'{}'".format(s) for s in list(visited_keys) + [key]))
-            self.log.warning(error, *error_args, event_id=3005)
-            return default_value, default_variation_id, None, None, Logger.format(error, error_args)
         visited_keys.append(key)
         is_root_flag_evaluation = len(visited_keys) == 1
 
@@ -146,6 +144,8 @@ class RolloutEvaluator(object):
                              key, event_id=4001)
             user = None
 
+        context = EvaluationContext(key, user, visited_keys)
+
         try:
             if log_builder and is_root_flag_evaluation:
                 log_builder.append("Evaluating '{}'".format(key) + (" for User '{}'".format(user) if user is not None else ''))
@@ -162,7 +162,7 @@ class RolloutEvaluator(object):
                     value = get_value(served_value) if served_value is not None else None
 
                     # Evaluate targeting rule conditions (logically connected by AND)
-                    if self._evaluate_conditions(conditions, user, key, salt, config, log_builder, visited_keys, value):
+                    if self._evaluate_conditions(conditions, context, salt, config, log_builder, value):
                         served_value = targeting_rule.get(SERVED_VALUE)
                         if served_value is not None:
                             variation_id = served_value.get(VARIATION_ID, default_variation_id)
@@ -175,20 +175,25 @@ class RolloutEvaluator(object):
                 log_builder and log_builder.increase_indent()
                 percentage_options = targeting_rule.get(TARGETING_RULE_PERCENTAGE_OPTIONS, [])
                 percentage_evaluation_result, percentage_value, percentage_variation_id, percentage_option = \
-                    self._evaluate_percentage_options(percentage_options, key, user, percentage_rule_attribute,
+                    self._evaluate_percentage_options(percentage_options, context, percentage_rule_attribute,
                                                       default_variation_id, log_builder)
 
-                log_builder and log_builder.decrease_indent()
                 if percentage_evaluation_result:
-                    log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
+                    if log_builder:
+                        log_builder.decrease_indent()
+                        is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
                     return percentage_value, percentage_variation_id, None, percentage_option, None
                 else:
+                    if log_builder:
+                        log_builder.new_line(
+                            'The current targeting rule is ignored and the evaluation continues with the next rule.')
+                        log_builder.decrease_indent()
                     continue
 
             # Evaluate percentage options
             percentage_options = setting_descriptor.get(PERCENTAGE_OPTIONS, [])
             percentage_evaluation_result, percentage_value, percentage_variation_id, percentage_option = \
-                self._evaluate_percentage_options(percentage_options, key, user, percentage_rule_attribute,
+                self._evaluate_percentage_options(percentage_options, context, percentage_rule_attribute,
                                                   default_variation_id, log_builder)
             if percentage_evaluation_result:
                 log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
@@ -215,7 +220,7 @@ class RolloutEvaluator(object):
         return comparison_value
 
     def _format_rule(self, comparison_attribute, comparator, comparison_value):
-        return 'User.%s %s %s ' \
+        return 'User.%s %s %s' \
                % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
                   self._trunc_if_needed(comparator, comparison_value))
 
@@ -224,21 +229,25 @@ class RolloutEvaluator(object):
                % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
                   self._trunc_if_needed(comparator, comparison_value), error)
 
-    def _evaluate_percentage_options(self, percentage_options, key, user, percentage_rule_attribute, default_variation_id,
-                                     log_builder):
+    def _evaluate_percentage_options(self, percentage_options, context, percentage_rule_attribute, default_variation_id, log_builder):  # noqa: C901, E501
         """
         returns: evaluation_result, percentage_value, percentage_variation_id, percentage_option
         """
         if len(percentage_options) == 0:
             return False, None, None, None
 
+        user = context.user
+        key = context.key
+
         if user is None:
-            self.log.warning('Cannot evaluate %% options for setting \'%s\' '
-                             '(User Object is missing). '
-                             'You should pass a User Object to the evaluation methods like `get_value()` '
-                             'in order to make targeting work properly. '
-                             'Read more: https://configcat.com/docs/advanced/user-object/',
-                             key, event_id=3001)
+            if not context.is_missing_user_object_logged:
+                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
+                                 '(User Object is missing). '
+                                 'You should pass a User Object to the evaluation methods like `get_value()` '
+                                 'in order to make targeting work properly. '
+                                 'Read more: https://configcat.com/docs/advanced/user-object/',
+                                 key, event_id=3001)
+                context.is_missing_user_object_logged = True
 
             if log_builder:
                 log_builder.new_line('Skipping % options because the User Object is missing.')
@@ -248,11 +257,17 @@ class RolloutEvaluator(object):
         user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None \
             else user.get_identifier()
         if percentage_rule_attribute is not None and user_key is None:
+            if not context.is_missing_user_object_attribute_logged:
+                self.log.warning('Cannot evaluate %% options for setting \'%s\' '
+                                 '(the User.%s attribute is missing). You should set the User.%s attribute in order to make '
+                                 'targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/',
+                                 key, percentage_rule_attribute, percentage_rule_attribute,
+                                 event_id=3003)
+                context.is_missing_user_object_attribute_logged = True
+
             if log_builder:
                 log_builder.new_line(
                     'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
-                log_builder.new_line(
-                    'The current targeting rule is ignored and the evaluation continues with the next rule.')
             return False, None, None, None
 
         hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
@@ -261,7 +276,8 @@ class RolloutEvaluator(object):
         bucket = 0
         index = 1
         for percentage_option in percentage_options or []:
-            bucket += percentage_option.get(PERCENTAGE, 0)
+            percentage = percentage_option.get(PERCENTAGE, 0)
+            bucket += percentage
             if hash_val < bucket:
                 percentage_value = get_value(percentage_option)
                 variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
@@ -271,14 +287,14 @@ class RolloutEvaluator(object):
                     log_builder.new_line('- Computing hash in the [0..99] range from User.%s => %s '
                                          '(this value is sticky and consistent across all SDKs)' %
                                          (user_attribute_name, hash_val))
-                    log_builder.new_line("- Hash value %s selects %% option %s (%s%%), '%s'" %
-                                         (hash_val, index, bucket, percentage_value))
+                    log_builder.new_line("- Hash value %s selects %% option %s (%s%%), '%s'." %
+                                         (hash_val, index, percentage, percentage_value))
                 return True, percentage_value, variation_id, percentage_option
             index += 1
 
         return False, None, None, None
 
-    def _evaluate_conditions(self, conditions, user, key, salt, config, log_builder, visited_keys, value):  # noqa: C901
+    def _evaluate_conditions(self, conditions, context, salt, config, log_builder, value):  # noqa: C901
         segments = config.get(SEGMENTS, [])
 
         first_condition = True
@@ -299,9 +315,10 @@ class RolloutEvaluator(object):
                     log_builder.new_line('AND ')
 
             if comparison_rule is not None:
-                result, error = self._evaluate_comparison_rule_condition(comparison_rule, user, key, key, salt, log_builder)
+                result, error = self._evaluate_comparison_rule_condition(comparison_rule, context, context.key, salt,
+                                                                         log_builder)
                 if log_builder and len(conditions) > 1:
-                    log_builder.append('=> {}'.format(result))
+                    log_builder.append('=> {}'.format('true' if result else 'false'))
                     if not result:
                         log_builder.append(', skipping the remaining AND conditions')
 
@@ -309,10 +326,10 @@ class RolloutEvaluator(object):
                     condition_result = False
                     break
             elif segment_condition is not None:
-                result, error = self._evaluate_segment_condition(segment_condition, user, key, salt, segments, log_builder)
+                result, error = self._evaluate_segment_condition(segment_condition, context, salt, segments, log_builder)
                 if log_builder:
                     if len(conditions) > 1:
-                        log_builder.append(' => {}'.format(result))
+                        log_builder.append(' => {}'.format('true' if result else 'false'))
                         if not result:
                             log_builder.append(', skipping the remaining AND conditions')
                     elif error is None:
@@ -322,8 +339,8 @@ class RolloutEvaluator(object):
                     condition_result = False
                     break
             elif prerequisite_flag_condition is not None:
-                result, error = self._evaluate_prerequisite_flag_condition(prerequisite_flag_condition, user, config,
-                                                                           log_builder, visited_keys)
+                result, error = self._evaluate_prerequisite_flag_condition(prerequisite_flag_condition, context, config,
+                                                                           log_builder)
                 if not result:
                     condition_result = False
                     break
@@ -346,7 +363,7 @@ class RolloutEvaluator(object):
 
         return condition_result
 
-    def _evaluate_prerequisite_flag_condition(self, prerequisite_flag_condition, user, config, log_builder, visited_keys):  # noqa: C901, E501
+    def _evaluate_prerequisite_flag_condition(self, prerequisite_flag_condition, context, config, log_builder):  # noqa: C901, E501
         prerequisite_key = prerequisite_flag_condition.get(PREREQUISITE_FLAG_KEY)
         prerequisite_comparator = prerequisite_flag_condition.get(PREREQUISITE_COMPARATOR)
 
@@ -357,21 +374,36 @@ class RolloutEvaluator(object):
             log_builder and log_builder.new_line('Prerequisite comparison value error: %s' % str(e))
             return prerequisite_condition_result, None
 
+        prerequisite_condition = ("Flag '%s' %s '%s'" %
+                                  (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
+                                   str(prerequisite_comparison_value)))
+
+        # Circular dependency check
+        visited_keys = context.visited_keys
+        if prerequisite_key in visited_keys:
+            depending_flags = ' -> '.join("'{}'".format(s) for s in list(visited_keys) + [prerequisite_key])
+            error = 'Cannot evaluate condition (%s) for setting \'%s\' (circular dependency detected between the following ' \
+                    'depending flags: %s). Please check your feature flag definition and eliminate the circular dependency.'
+            error_args = (prerequisite_condition, context.key, depending_flags)
+            self.log.warning(error, *error_args, event_id=3005)
+            if log_builder:
+                log_builder.append(prerequisite_condition + ' ')
+
+            return prerequisite_condition_result, 'cannot evaluate, circular dependency detected'
+
         if log_builder:
-            log_builder.append("flag '%s' %s '%s'" %
-                               (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
-                                str(prerequisite_comparison_value)))
+            log_builder.append(prerequisite_condition)
             log_builder.new_line('(').increase_indent()
             log_builder.new_line("Evaluating prerequisite flag '%s':" % prerequisite_key)
 
-        prerequisite_value, _, _, _, error = self.evaluate(prerequisite_key, user, None, None, config,
-                                                           log_builder, visited_keys)
+        prerequisite_value, _, _, _, error = self.evaluate(prerequisite_key, context.user, None, None, config,
+                                                           log_builder, context.visited_keys)
         if error is not None:
             return prerequisite_condition_result, error
 
         if log_builder:
-            log_builder.new_line("Prerequisite flag evaluation result: '%s'" % str(prerequisite_value))
-            log_builder.new_line("Condition: (Flag '%s' %s '%s') evaluates to " %
+            log_builder.new_line("Prerequisite flag evaluation result: '%s'." % str(prerequisite_value))
+            log_builder.new_line("Condition (Flag '%s' %s '%s') evaluates to " %
                                  (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
                                   str(prerequisite_comparison_value)))
 
@@ -385,12 +417,15 @@ class RolloutEvaluator(object):
                 prerequisite_condition_result = True
 
         if log_builder:
-            log_builder.append('%s.' % prerequisite_condition_result)
+            log_builder.append('%s.' % 'true' if prerequisite_condition_result else 'false')
             log_builder.decrease_indent().new_line(')').new_line()
 
         return prerequisite_condition_result, None
 
-    def _evaluate_segment_condition(self, segment_condition, user, key, salt, segments, log_builder):  # noqa: C901
+    def _evaluate_segment_condition(self, segment_condition, context, salt, segments, log_builder):  # noqa: C901
+        user = context.user
+        key = context.key
+
         segment_index = segment_condition.get(SEGMENT_INDEX)
         segment = segments[segment_index]
         segment_name = segment.get(SEGMENT_NAME, '')
@@ -398,12 +433,14 @@ class RolloutEvaluator(object):
         segment_comparison_rules = segment.get(SEGMENT_RULES, [])
 
         if user is None:
-            self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
-                             '(User Object is missing). '
-                             'You should pass a User Object to the evaluation methods like `get_value()` '
-                             'in order to make targeting work properly. '
-                             'Read more: https://configcat.com/docs/advanced/user-object/',
-                             key, event_id=3001)
+            if not context.is_missing_user_object_logged:
+                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
+                                 '(User Object is missing). '
+                                 'You should pass a User Object to the evaluation methods like `get_value()` '
+                                 'in order to make targeting work properly. '
+                                 'Read more: https://configcat.com/docs/advanced/user-object/',
+                                 key, event_id=3001)
+                context.is_missing_user_object_logged = True
             if log_builder:
                 log_builder.append("User %s '%s' " % (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
             return False, 'cannot evaluate, User Object is missing'
@@ -432,10 +469,10 @@ class RolloutEvaluator(object):
                     if log_builder:
                         log_builder.new_line('AND ')
 
-                result, error = self._evaluate_comparison_rule_condition(segment_comparison_rule, user, key,
+                result, error = self._evaluate_comparison_rule_condition(segment_comparison_rule, context,
                                                                          segment_name, salt, log_builder)
                 if log_builder:
-                    log_builder.append('=> {}'.format(result))
+                    log_builder.append('=> {}'.format('true' if result else 'false'))
                     if not result:
                         log_builder.append(', skipping the remaining AND conditions')
 
@@ -451,16 +488,19 @@ class RolloutEvaluator(object):
                                      (' ' if segment_evaluation_result else ' NOT '))
                 log_builder.new_line("Condition (User %s '%s') evaluates to %s." %
                                      (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator],
-                                      segment_name, segment_condition_result))
+                                      segment_name, 'true' if segment_condition_result else 'false'))
                 log_builder.decrease_indent().new_line(')')
             return segment_condition_result, error
 
         return False, None
 
-    def _evaluate_comparison_rule_condition(self, comparison_rule, user, key, context_salt, salt, log_builder):  # noqa: C901, E501
+    def _evaluate_comparison_rule_condition(self, comparison_rule, context, context_salt, salt, log_builder):  # noqa: C901, E501
         """
         returns result of comparison rule condition, error
         """
+
+        user = context.user
+        key = context.key
 
         comparison_attribute = comparison_rule.get(COMPARISON_ATTRIBUTE)
         comparator = comparison_rule.get(COMPARATOR)
@@ -468,21 +508,29 @@ class RolloutEvaluator(object):
         error = None
 
         if log_builder:
-            log_builder.append(self._format_rule(comparison_attribute, comparator, comparison_value))
+            log_builder.append(self._format_rule(comparison_attribute, comparator, comparison_value) + ' ')
 
         if user is None:
-            self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
-                             '(User Object is missing). '
-                             'You should pass a User Object to the evaluation methods like `get_value()` '
-                             'in order to make targeting work properly. '
-                             'Read more: https://configcat.com/docs/advanced/user-object/',
-                             key, event_id=3001)
+            if not context.is_missing_user_object_logged:
+                self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
+                                 '(User Object is missing). '
+                                 'You should pass a User Object to the evaluation methods like `get_value()` '
+                                 'in order to make targeting work properly. '
+                                 'Read more: https://configcat.com/docs/advanced/user-object/',
+                                 key, event_id=3001)
+                context.is_missing_user_object_logged = True
             error = 'cannot evaluate, User Object is missing'
             return False, error
 
         user_value = user.get_attribute(comparison_attribute)
         if user_value is None or not user_value:
-            # TODO: Should we handle this as an error/warning?
+            self.log.warning('Cannot evaluate condition (%s) for setting \'%s\' '
+                             '(the User.%s attribute is missing). You should set the User.%s attribute in order to make '
+                             'targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/',
+                             self._format_rule(comparison_attribute, comparator, comparison_value), key,
+                             comparison_attribute, comparison_attribute,
+                             event_id=3003)
+            error = 'cannot evaluate, the User.{} attribute is missing'.format(comparison_attribute)
             return False, error
 
         # IS ONE OF
@@ -582,7 +630,7 @@ class RolloutEvaluator(object):
             if sha256(user_value, salt, context_salt) != comparison_value:
                 return True, error
         # STARTS WITH ANY OF, ENDS WITH ANY OF (hashed)
-        elif 22 <= comparator <= 23:
+        elif 22 <= comparator <= 25:
             try:
                 for comparison in comparison_value:
                     underscore_index = comparison.index('_')
@@ -593,7 +641,7 @@ class RolloutEvaluator(object):
                         if (
                             (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string)
                             or
-                            (comparator == 23 and sha256(user_value[-length:], salt, context_salt) == comparison_string)
+                            (comparator == 24 and sha256(user_value[-length:], salt, context_salt) == comparison_string)
                         ):
                             return True, error
 
@@ -603,11 +651,11 @@ class RolloutEvaluator(object):
                 self.log.warning(message)
                 return False, error
         # ARRAY CONTAINS (hashed)
-        elif comparator == 24:
+        elif comparator == 26:
             if comparison_value in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
                 return True, error
         # ARRAY NOT CONTAINS (hashed)
-        elif comparator == 25:
+        elif comparator == 27:
             if comparison_value not in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
                 return True, error
 

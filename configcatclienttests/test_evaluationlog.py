@@ -8,7 +8,6 @@ try:
 except ImportError:
     from io import StringIO
 
-import configcatclient
 from configcatclient import ConfigCatClient, ConfigCatOptions, PollingMode
 from configcatclient.localfiledatasource import LocalFileFlagOverrides
 from configcatclient.overridedatasource import OverrideBehaviour
@@ -57,7 +56,7 @@ class EvaluationLogTests(unittest.TestCase):
     def test_circular_dependency(self):
         self.assertTrue(self._evaluation_log('data/evaluation/circular_dependency.json'))
 
-    def _evaluation_log(self, file_path, generate_expected_log=False):
+    def _evaluation_log(self, file_path, test_filter=None, generate_expected_log=False):
         script_dir = os.path.dirname(__file__)
         file_path = os.path.join(script_dir, file_path)
         self.assertTrue(os.path.isfile(file_path))
@@ -100,6 +99,11 @@ class EvaluationLogTests(unittest.TestCase):
                 user = test.get('user')
                 expected_log_file = test.get('expectedLog')
                 test_name = expected_log_file[:-4]
+
+                # apply test filter
+                if test_filter and test_name not in test_filter:
+                    continue
+
                 expected_log_file_path = os.path.join(file_dir, expected_log_file)
                 user_object = None
                 if user:

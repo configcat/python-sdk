@@ -42,4 +42,4 @@ class UserTests(unittest.TestCase):
         self.assertEqual(user_id, user_json['Identifier'])
         self.assertEqual(email, user_json['Email'])
         self.assertEqual(country, user_json['Country'])
-        self.assertEqual(custom, user_json['Custom'])
+        self.assertEqual('test', user_json['custom'])
