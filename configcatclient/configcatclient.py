@@ -77,20 +77,22 @@ class ConfigCatClient(object):
         if sdk_key is None:
             raise ConfigCatClientException('SDK Key is required.')
 
-        is_valid_sdk_key = re.match('^.{22}/.{22}$', sdk_key) is not None or \
-            re.match('^configcat-sdk-1/.{22}/.{22}$', sdk_key) is not None or \
-            (options.base_url and re.match('^configcat-proxy/.+$', sdk_key) is not None)
-        if not is_valid_sdk_key:
-            raise ConfigCatClientException('SDK Key `%s` is invalid.' % sdk_key)
-
-        self._sdk_key = sdk_key
-        self._default_user = options.default_user
-        self._rollout_evaluator = RolloutEvaluator(self.log)
         if options.flag_overrides:
             self._override_data_source = options.flag_overrides.create_data_source(self.log)
         else:
             self._override_data_source = None
 
+        # In case of local only flag overrides mode, we accept any SDK Key format.
+        if self._override_data_source is None or self._override_data_source.get_behaviour() != OverrideBehaviour.LocalOnly:
+            is_valid_sdk_key = re.match('^.{22}/.{22}$', sdk_key) is not None or \
+                re.match('^configcat-sdk-1/.{22}/.{22}$', sdk_key) is not None or \
+                (options.base_url and re.match('^configcat-proxy/.+$', sdk_key) is not None)
+            if not is_valid_sdk_key:
+                raise ConfigCatClientException('SDK Key `%s` is invalid.' % sdk_key)
+
+        self._sdk_key = sdk_key
+        self._default_user = options.default_user
+        self._rollout_evaluator = RolloutEvaluator(self.log)
         config_cache = options.config_cache if options.config_cache is not None else NullConfigCache()
 
         if self._override_data_source and self._override_data_source.get_behaviour() == OverrideBehaviour.LocalOnly:

@@ -38,7 +38,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=path.join(OverrideTests.script_dir, 'data/test.json'),
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
+        client = ConfigCatClient.get(sdk_key='', options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
         self.assertFalse(client.get_value('disabledFeature', True))
@@ -52,7 +52,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=path.join(OverrideTests.script_dir, 'data/test-simple.json'),
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
+        client = ConfigCatClient.get(sdk_key='test', options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
         self.assertFalse(client.get_value('disabledFeature', True))
