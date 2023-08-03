@@ -629,7 +629,7 @@ class RolloutEvaluator(object):
         elif comparator == 21:
             if sha256(user_value, salt, context_salt) != comparison_value:
                 return True, error
-        # STARTS WITH ANY OF, ENDS WITH ANY OF (hashed)
+        # STARTS WITH ANY OF, NOT STARTS WITH ANY OF, ENDS WITH ANY OF, NOT ENDS WITH ANY OF (hashed)
         elif 22 <= comparator <= 25:
             try:
                 for comparison in comparison_value:
@@ -641,7 +641,11 @@ class RolloutEvaluator(object):
                         if (
                             (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string)
                             or
+                            (comparator == 23 and sha256(user_value[:length], salt, context_salt) != comparison_string)
+                            or
                             (comparator == 24 and sha256(user_value[-length:], salt, context_salt) == comparison_string)
+                            or
+                            (comparator == 25 and sha256(user_value[-length:], salt, context_salt) != comparison_string)
                         ):
                             return True, error
 
