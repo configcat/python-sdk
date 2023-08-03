@@ -50,22 +50,22 @@ class RolloutEvaluator(object):
         'IS NOT ONE OF',
         'CONTAINS ANY OF',
         'NOT CONTAINS ANY OF',
-        'IS ONE OF (SemVer)',
-        'IS NOT ONE OF (SemVer)',
-        '< (SemVer)',
-        '<= (SemVer)',
-        '> (SemVer)',
-        '>= (SemVer)',
-        '= (Number)',
-        '<> (Number)',
-        '< (Number)',
-        '<= (Number)',
-        '> (Number)',
-        '>= (Number)',
+        'IS ONE OF (semver)',
+        'IS NOT ONE OF (semver)',
+        '< (semver)',
+        '<= (semver)',
+        '> (semver)',
+        '>= (semver)',
+        '= (number)',
+        '<> (number)',
+        '< (number)',
+        '<= (number)',
+        '> (number)',
+        '>= (number)',
         'IS ONE OF (hashed)',
         'IS NOT ONE OF (hashed)',
-        'BEFORE (UTC DateTime)',
-        'AFTER (UTC DateTime)',
+        'BEFORE (UTC datetime)',
+        'AFTER (UTC datetime)',
         'EQUALS (hashed)',
         'NOT EQUALS (hashed)',
         'STARTS WITH ANY OF (hashed)',
@@ -80,22 +80,22 @@ class RolloutEvaluator(object):
         STRING_LIST_VALUE,  # IS NOT ONE OF
         STRING_LIST_VALUE,  # CONTAINS ANY OF
         STRING_LIST_VALUE,  # NOT CONTAINS ANY OF
-        STRING_LIST_VALUE,  # IS ONE OF (SemVer)
-        STRING_LIST_VALUE,  # IS NOT ONE OF (SemVer)
-        STRING_VALUE,       # < (SemVer)
-        STRING_VALUE,       # <= (SemVer)
-        STRING_VALUE,       # > (SemVer)
-        STRING_VALUE,       # >= (SemVer)
-        DOUBLE_VALUE,       # = (Number)
-        DOUBLE_VALUE,       # <> (Number)
-        DOUBLE_VALUE,       # < (Number)
-        DOUBLE_VALUE,       # <= (Number)
-        DOUBLE_VALUE,       # > (Number)
-        DOUBLE_VALUE,       # >= (Number)
+        STRING_LIST_VALUE,  # IS ONE OF (semver)
+        STRING_LIST_VALUE,  # IS NOT ONE OF (semver)
+        STRING_VALUE,       # < (semver)
+        STRING_VALUE,       # <= (semver)
+        STRING_VALUE,       # > (semver)
+        STRING_VALUE,       # >= (semver)
+        DOUBLE_VALUE,       # = (number)
+        DOUBLE_VALUE,       # <> (number)
+        DOUBLE_VALUE,       # < (number)
+        DOUBLE_VALUE,       # <= (number)
+        DOUBLE_VALUE,       # > (number)
+        DOUBLE_VALUE,       # >= (number)
         STRING_LIST_VALUE,  # IS ONE OF (hashed)
         STRING_LIST_VALUE,  # IS NOT ONE OF (hashed)
-        DOUBLE_VALUE,       # BEFORE (UTC DateTime)
-        DOUBLE_VALUE,       # AFTER (UTC DateTime)
+        DOUBLE_VALUE,       # BEFORE (UTC datetime)
+        DOUBLE_VALUE,       # AFTER (UTC datetime)
         STRING_VALUE,       # EQUALS (hashed)
         STRING_VALUE,       # NOT EQUALS (hashed)
         STRING_LIST_VALUE,  # STARTS WITH ANY OF (hashed)
@@ -579,7 +579,7 @@ class RolloutEvaluator(object):
                                                   comparison_value, error)
                 self.log.warning(message)
                 return False, error
-        # =, <>, <, <=, >, >= (Number)
+        # =, <>, <, <=, >, >= (number)
         elif 10 <= comparator <= 15:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
@@ -606,7 +606,7 @@ class RolloutEvaluator(object):
         elif comparator == 17:
             if sha256(user_value, salt, context_salt) not in [x.strip() for x in comparison_value]:
                 return True, error
-        # BEFORE, AFTER (UTC DateTime)
+        # BEFORE, AFTER (UTC datetime)
         elif 18 <= comparator <= 19:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
