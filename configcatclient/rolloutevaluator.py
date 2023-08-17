@@ -136,19 +136,24 @@ class RolloutEvaluator(object):
         targeting_rules = setting_descriptor.get(TARGETING_RULES, [])
         percentage_rule_attribute = setting_descriptor.get(PERCENTAGE_RULE_ATTRIBUTE)
 
-        # TODO: How to handle this case in evaluation logging?
-        user_has_invalid_type = user is not None and not isinstance(user, User)
+        context = EvaluationContext(key, user, visited_keys)
+
+        user_has_invalid_type = context.user is not None and not isinstance(context.user, User)
         if user_has_invalid_type:
             self.log.warning('Cannot evaluate targeting rules and %% options for setting \'%s\' '
-                             '(User Object is not an instance of User type).',
+                             '(User Object is not an instance of User type). '
+                             'You should pass a User Object to the evaluation methods like `get_value()` '
+                             'in order to make targeting work properly. '
+                             'Read more: https://configcat.com/docs/advanced/user-object/',
                              key, event_id=4001)
-            user = None
-
-        context = EvaluationContext(key, user, visited_keys)
+            # We set the user to None and won't log further missing user object warnings
+            context.user = None
+            context.is_missing_user_object_logged = True
 
         try:
             if log_builder and is_root_flag_evaluation:
-                log_builder.append("Evaluating '{}'".format(key) + (" for User '{}'".format(user) if user is not None else ''))
+                log_builder.append("Evaluating '{}'".format(key))
+                log_builder.append(" for User '{}'".format(context.user) if context.user is not None else '')
                 log_builder.increase_indent()
 
             # Evaluate targeting rules (logically connected by OR)
@@ -224,10 +229,18 @@ class RolloutEvaluator(object):
                % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
                   self._trunc_if_needed(comparator, comparison_value))
 
-    def _format_error_rule(self, comparison_attribute, comparator, comparison_value, error):
-        return 'Evaluating rule: User.%s %s %s => SKIP rule. %s' \
-               % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
-                  self._trunc_if_needed(comparator, comparison_value), error)
+    def _handle_invalid_user_attribute(self, comparison_attribute, comparator, comparison_value, key, validation_error):
+        """
+        returns: evaluation error message
+        """
+        error = 'cannot evaluate, the User.%s attribute is invalid (%s)' % (comparison_attribute, validation_error)
+        self.log.warning('Cannot evaluate condition (%s) for setting \'%s\' '
+                         '(%s). Please check the User.%s attribute and make sure that its value corresponds to the '
+                         '%s operator.',
+                         self._format_rule(comparison_attribute, comparator, comparison_value), key,
+                         validation_error, comparison_attribute, self.COMPARATOR_TEXTS[comparator],
+                         event_id=3004)
+        return error
 
     def _evaluate_percentage_options(self, percentage_options, context, percentage_rule_attribute, default_variation_id, log_builder):  # noqa: C901, E501
         """
@@ -559,11 +572,8 @@ class RolloutEvaluator(object):
                 if (match and comparator == 4) or (not match and comparator == 5):
                     return True, error
             except ValueError as e:
-                # TODO: how to handle this?
-                error = 'Validation error: ' + str(e)
-                message = self._format_error_rule(comparison_attribute, comparator,
-                                                  comparison_value, error)
-                self.log.warning(message)
+                validation_error = "'%s' is not a valid semantic version" % str(user_value).strip()
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key, validation_error)
                 return False, error
         # LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (Semantic version)
         elif 6 <= comparator <= 9:
@@ -571,33 +581,29 @@ class RolloutEvaluator(object):
                 if semver.VersionInfo.parse(str(user_value).strip()).match(
                         self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()
                 ):
-                    log_builder and log_builder.append(self._format_rule(comparison_attribute, comparator, comparison_value))
                     return True, error
             except ValueError as e:
-                error = 'Validation error: ' + str(e)
-                message = self._format_error_rule(comparison_attribute, comparator,
-                                                  comparison_value, error)
-                self.log.warning(message)
+                validation_error = "'%s' is not a valid semantic version" % str(user_value).strip()
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key, validation_error)
                 return False, error
         # =, <>, <, <=, >, >= (number)
         elif 10 <= comparator <= 15:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
-                comparison_value_float = float(str(comparison_value).replace(",", "."))
-
-                if (comparator == 10 and user_value_float == comparison_value_float) \
-                        or (comparator == 11 and user_value_float != comparison_value_float) \
-                        or (comparator == 12 and user_value_float < comparison_value_float) \
-                        or (comparator == 13 and user_value_float <= comparison_value_float) \
-                        or (comparator == 14 and user_value_float > comparison_value_float) \
-                        or (comparator == 15 and user_value_float >= comparison_value_float):
-                    log_builder and log_builder.append(self._format_rule(comparison_attribute, comparator, comparison_value))
-                    return True, error
-            except Exception as e:
-                error = 'Validation error: ' + str(e)
-                message = self._format_error_rule(comparison_attribute, comparator, comparison_value, error)
-                self.log.warning(message)
+            except ValueError as e:
+                validation_error = "'%s' is not a valid decimal number" % str(user_value)
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key, validation_error)
                 return False, error
+
+            comparison_value_float = float(str(comparison_value).replace(",", "."))
+
+            if (comparator == 10 and user_value_float == comparison_value_float) \
+                    or (comparator == 11 and user_value_float != comparison_value_float) \
+                    or (comparator == 12 and user_value_float < comparison_value_float) \
+                    or (comparator == 13 and user_value_float <= comparison_value_float) \
+                    or (comparator == 14 and user_value_float > comparison_value_float) \
+                    or (comparator == 15 and user_value_float >= comparison_value_float):
+                return True, error
         # IS ONE OF (hashed)
         elif comparator == 16:
             if sha256(user_value, salt, context_salt) in [x.strip() for x in comparison_value]:
@@ -610,17 +616,17 @@ class RolloutEvaluator(object):
         elif 18 <= comparator <= 19:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
-                comparison_value_float = float(str(comparison_value).replace(",", "."))
-
-                if (comparator == 18 and user_value_float < comparison_value_float) \
-                        or (comparator == 19 and user_value_float > comparison_value_float):
-                    return True, error
-
-            except Exception as e:
-                error = 'Validation error: ' + str(e)
-                message = self._format_error_rule(comparison_attribute, comparator, comparison_value, error)
-                self.log.warning(message)
+            except ValueError as e:
+                validation_error = "'%s' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)" % str(user_value)
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key, validation_error)
                 return False, error
+
+            comparison_value_float = float(str(comparison_value).replace(",", "."))
+
+            if (comparator == 18 and user_value_float < comparison_value_float) \
+                    or (comparator == 19 and user_value_float > comparison_value_float):
+                return True, error
+
         # EQUALS (hashed)
         elif comparator == 20:
             if sha256(user_value, salt, context_salt) == comparison_value:
@@ -631,29 +637,22 @@ class RolloutEvaluator(object):
                 return True, error
         # STARTS WITH ANY OF, NOT STARTS WITH ANY OF, ENDS WITH ANY OF, NOT ENDS WITH ANY OF (hashed)
         elif 22 <= comparator <= 25:
-            try:
-                for comparison in comparison_value:
-                    underscore_index = comparison.index('_')
-                    length = int(comparison[:underscore_index])
+            for comparison in comparison_value:
+                underscore_index = comparison.index('_')
+                length = int(comparison[:underscore_index])
 
-                    if len(user_value) >= length:
-                        comparison_string = comparison[underscore_index + 1:]
-                        if (
-                            (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string)
-                            or
-                            (comparator == 23 and sha256(user_value[:length], salt, context_salt) != comparison_string)
-                            or
-                            (comparator == 24 and sha256(user_value[-length:], salt, context_salt) == comparison_string)
-                            or
-                            (comparator == 25 and sha256(user_value[-length:], salt, context_salt) != comparison_string)
-                        ):
-                            return True, error
-
-            except Exception as e:
-                error = 'Validation error: ' + str(e)
-                message = self._format_error_rule(comparison_attribute, comparator, comparison_value, error)
-                self.log.warning(message)
-                return False, error
+                if len(user_value) >= length:
+                    comparison_string = comparison[underscore_index + 1:]
+                    if (
+                        (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string)
+                        or
+                        (comparator == 23 and sha256(user_value[:length], salt, context_salt) != comparison_string)
+                        or
+                        (comparator == 24 and sha256(user_value[-length:], salt, context_salt) == comparison_string)
+                        or
+                        (comparator == 25 and sha256(user_value[-length:], salt, context_salt) != comparison_string)
+                    ):
+                        return True, error
         # ARRAY CONTAINS (hashed)
         elif comparator == 26:
             if comparison_value in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:

@@ -56,6 +56,15 @@ class EvaluationLogTests(unittest.TestCase):
     def test_circular_dependency(self):
         self.assertTrue(self._evaluation_log('data/evaluation/circular_dependency.json'))
 
+    def test_semver_validation(self):
+        self.assertTrue(self._evaluation_log('data/evaluation/semver_validation.json'))
+
+    def test_epoch_date_validation(self):
+        self.assertTrue(self._evaluation_log('data/evaluation/epoch_date_validation.json'))
+
+    def test_number_validation(self):
+        self.assertTrue(self._evaluation_log('data/evaluation/number_validation.json'))
+
     def _evaluation_log(self, file_path, test_filter=None, generate_expected_log=False):
         script_dir = os.path.dirname(__file__)
         file_path = os.path.join(script_dir, file_path)
