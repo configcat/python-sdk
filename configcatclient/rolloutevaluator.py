@@ -571,9 +571,10 @@ class RolloutEvaluator(object):
                     match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + x) or match
                 if (match and comparator == 4) or (not match and comparator == 5):
                     return True, error
-            except ValueError as e:
+            except ValueError:
                 validation_error = "'%s' is not a valid semantic version" % str(user_value).strip()
-                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key, validation_error)
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
+                                                            validation_error)
                 return False, error
         # LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (Semantic version)
         elif 6 <= comparator <= 9:
@@ -582,17 +583,19 @@ class RolloutEvaluator(object):
                         self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()
                 ):
                     return True, error
-            except ValueError as e:
+            except ValueError:
                 validation_error = "'%s' is not a valid semantic version" % str(user_value).strip()
-                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key, validation_error)
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
+                                                            validation_error)
                 return False, error
         # =, <>, <, <=, >, >= (number)
         elif 10 <= comparator <= 15:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
-            except ValueError as e:
+            except ValueError:
                 validation_error = "'%s' is not a valid decimal number" % str(user_value)
-                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key, validation_error)
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
+                                                            validation_error)
                 return False, error
 
             comparison_value_float = float(str(comparison_value).replace(",", "."))
@@ -616,9 +619,11 @@ class RolloutEvaluator(object):
         elif 18 <= comparator <= 19:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
-            except ValueError as e:
-                validation_error = "'%s' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)" % str(user_value)
-                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key, validation_error)
+            except ValueError:
+                validation_error = "'%s' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)" % \
+                                   str(user_value)
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
+                                                            validation_error)
                 return False, error
 
             comparison_value_float = float(str(comparison_value).replace(",", "."))
