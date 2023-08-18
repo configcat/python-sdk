@@ -609,11 +609,11 @@ class RolloutEvaluator(object):
                 return True, error
         # IS ONE OF (hashed)
         elif comparator == 16:
-            if sha256(user_value, salt, context_salt) in [x.strip() for x in comparison_value]:
+            if sha256(user_value, salt, context_salt) in comparison_value:
                 return True, error
         # IS NOT ONE OF (hashed)
         elif comparator == 17:
-            if sha256(user_value, salt, context_salt) not in [x.strip() for x in comparison_value]:
+            if sha256(user_value, salt, context_salt) not in comparison_value:
                 return True, error
         # BEFORE, AFTER (UTC datetime)
         elif 18 <= comparator <= 19:
