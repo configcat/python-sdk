@@ -209,7 +209,7 @@ class RolloutEvaluator(object):
             log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % return_value)
             return return_value, return_variation_id, None, None, None
         except Exception as e:
-            error = 'Failed to evaluate setting \'%s\'. (%s)' \
+            error = 'Failed to evaluate setting \'%s\'. (%s). ' \
                     'Returning the `%s` parameter that you specified in your application: \'%s\'. '
             error_args = (key, str(e), 'default_value', str(default_value))
             self.log.error(error, *error_args, event_id=2001)
