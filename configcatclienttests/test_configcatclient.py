@@ -8,13 +8,14 @@ import requests
 
 from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
+from configcatclient.configentry import ConfigEntry
 from configcatclient.constants import VALUE, COMPARATOR, COMPARISON_ATTRIBUTE, SERVED_VALUE, STRING_VALUE, CONDITIONS
 from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions, Hooks
 from configcatclient.pollingmode import PollingMode
-from configcatclient.utils import get_utc_now
+from configcatclient.utils import get_utc_now, get_utc_now_seconds_since_epoch
 from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT, TEST_SDK_KEY, TEST_SDK_KEY1, TEST_SDK_KEY2, \
-    HookCallbacks
+    HookCallbacks, TEST_JSON_FORMAT, SingleValueConfigCache
 
 # Python2/Python3 support
 try:
@@ -106,6 +107,38 @@ class ConfigCatClientTests(unittest.TestCase):
         client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                                                     config_cache=ConfigCacheMock()))
         self.assertEqual(True, client.get_value('testBoolKey', False))
+        client.close()
+
+    def test_incorrect_json(self):
+        config_json_string = r'''{
+           "f": {
+             "testKey":  {
+               "t": 0,
+               "r": [ {
+                 "c": [ { "t": { "a": "Custom1", "c": 19, "d": "wrong_utc_timestamp" } } ],
+                 "s": { "v": { "b": true } }
+               } ],
+               "v": { "b": false }
+             }
+           }
+        }'''
+        config_cache = SingleValueConfigCache(ConfigEntry(
+            config=json.loads(config_json_string),
+            etag='test-etag',
+            config_json_string=config_json_string,
+            fetch_time=get_utc_now_seconds_since_epoch()).serialize()
+        )
+
+        hook_callbacks = HookCallbacks()
+        hooks = Hooks(
+            on_error=hook_callbacks.on_error
+        )
+        client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                    config_cache=config_cache,
+                                                                    hooks=hooks))
+        self.assertEqual(False, client.get_value('testKey', False, User('1234', custom={'Custom1': 1681118000.56})))
+        self.assertEqual(1, hook_callbacks.error_call_count)
+        self.assertTrue(hook_callbacks.error.startswith("Failed to evaluate setting 'testKey'."))
         client.close()
 
     def test_get_all_keys(self):
