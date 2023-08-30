@@ -5,7 +5,7 @@ from . import utils
 from .configservice import ConfigService
 from .constants import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, FEATURE_FLAGS, SERVED_VALUE
 from .evaluationdetails import EvaluationDetails
-from .logbuilder import LogBuilder
+from .evaluationlogbuilder import EvaluationLogBuilder
 from .interfaces import ConfigCatClientException
 from .logger import Logger
 from .configfetcher import ConfigFetcher
@@ -373,7 +373,7 @@ class ConfigCatClient(object):
         user = user if user is not None else self._default_user
 
         # Skip building the evaluation log if it won't be logged.
-        log_builder = LogBuilder() if self.log.isEnabledFor(logging.INFO) else None
+        log_builder = EvaluationLogBuilder() if self.log.isEnabledFor(logging.INFO) else None
 
         value, variation_id, rule, percentage_rule, error = self._rollout_evaluator.evaluate(
             key=key,

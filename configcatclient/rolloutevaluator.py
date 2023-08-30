@@ -4,6 +4,7 @@ import hashlib
 import semver
 
 from .evaluationcontext import EvaluationContext
+from .evaluationlogbuilder import EvaluationLogBuilder
 from .logger import Logger
 
 from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUTE, \
@@ -215,19 +216,11 @@ class RolloutEvaluator(object):
             self.log.error(error, *error_args, event_id=2001)
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
-    def _trunc_if_needed(self, comparator, comparison_value):
-        if '(hashed)' in self.COMPARATOR_TEXTS[comparator]:
-            if isinstance(comparison_value, list):
-                return [item[:10] + '...' for item in comparison_value]
-
-            return comparison_value[:10] + '...'
-
-        return comparison_value
-
     def _format_rule(self, comparison_attribute, comparator, comparison_value):
+        comparator_text = self.COMPARATOR_TEXTS[comparator]
         return 'User.%s %s %s' \
-               % (comparison_attribute, self.COMPARATOR_TEXTS[comparator],
-                  self._trunc_if_needed(comparator, comparison_value))
+               % (comparison_attribute, comparator_text,
+                  EvaluationLogBuilder.trunc_comparison_value_if_needed(comparator_text, comparison_value))
 
     def _handle_invalid_user_attribute(self, comparison_attribute, comparator, comparison_value, key, validation_error):
         """
