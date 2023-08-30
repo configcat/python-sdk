@@ -199,19 +199,19 @@ class ConfigCatClient(object):
         settings = config.get(FEATURE_FLAGS, {})
         try:
             for key, value in list(settings.items()):
-                    if variation_id == value.get(VARIATION_ID):
-                        return KeyValue(key, get_value(value))
+                if variation_id == value.get(VARIATION_ID):
+                    return KeyValue(key, get_value(value))
 
-                    targeting_rules = value.get(TARGETING_RULES, [])
-                    for targeting_rule in targeting_rules:
-                        served_value = targeting_rule.get(SERVED_VALUE)
-                        if served_value is not None and variation_id == served_value.get(VARIATION_ID):
-                            return KeyValue(key, get_value(served_value))
+                targeting_rules = value.get(TARGETING_RULES, [])
+                for targeting_rule in targeting_rules:
+                    served_value = targeting_rule.get(SERVED_VALUE)
+                    if served_value is not None and variation_id == served_value.get(VARIATION_ID):
+                        return KeyValue(key, get_value(served_value))
 
-                        rollout_percentage_items = targeting_rule.get(PERCENTAGE_OPTIONS, [])
-                        for rollout_percentage_item in rollout_percentage_items:
-                            if variation_id == rollout_percentage_item.get(VARIATION_ID):
-                                return KeyValue(key, get_value(rollout_percentage_item))
+                    rollout_percentage_items = targeting_rule.get(PERCENTAGE_OPTIONS, [])
+                    for rollout_percentage_item in rollout_percentage_items:
+                        if variation_id == rollout_percentage_item.get(VARIATION_ID):
+                            return KeyValue(key, get_value(rollout_percentage_item))
         except Exception:
             self.log.exception('Error occurred in the `' + __name__ + '` method. Returning None.', event_id=1002)
             return None
