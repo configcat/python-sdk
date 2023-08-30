@@ -73,9 +73,9 @@ class EvaluationLogTests(unittest.TestCase):
         self.assertEqual('[<4 hashed values>]', EvaluationLogBuilder.trunc_comparison_value_if_needed('(hashed)', ['1', '2', '3', '4']))
         self.assertEqual("['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']",
                          EvaluationLogBuilder.trunc_comparison_value_if_needed('', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']))
-        self.assertEqual("['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', ... (1 more value)]",
+        self.assertEqual("['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', ... <1 more value>]",
                          EvaluationLogBuilder.trunc_comparison_value_if_needed('', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']))
-        self.assertEqual("['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', ... (2 more values)]",
+        self.assertEqual("['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', ... <2 more values>]",
                          EvaluationLogBuilder.trunc_comparison_value_if_needed('', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']))
 
     def _evaluation_log(self, file_path, test_filter=None, generate_expected_log=False):

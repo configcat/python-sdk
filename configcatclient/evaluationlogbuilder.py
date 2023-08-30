@@ -20,9 +20,9 @@ class EvaluationLogBuilder(object):
             if length > limit:
                 remaining = length - limit
                 if remaining == 1:
-                    more_text = "(1 more value)"
+                    more_text = "<1 more value>"
                 else:
-                    more_text = "({} more values)".format(remaining)
+                    more_text = "<{} more values>".format(remaining)
 
                 return str(comparison_value[:limit])[:-1] + ', ... ' + more_text + ']'
 
