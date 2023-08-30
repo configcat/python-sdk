@@ -114,7 +114,7 @@ class RolloutEvaluator(object):
 
     def evaluate(self, key, user, default_value, default_variation_id, config, log_builder, visited_keys=None):  # noqa: C901
         """
-        returns value, variation_id, matched_evaluation_rule, matched_evaluation_percentage_rule, error
+        returns value, variation_id, matched_targeting_rule, matched_percentage_rule, error
         """
 
         if visited_keys is None:
@@ -188,7 +188,7 @@ class RolloutEvaluator(object):
                     if log_builder:
                         log_builder.decrease_indent()
                         is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
-                    return percentage_value, percentage_variation_id, None, percentage_option, None
+                    return percentage_value, percentage_variation_id, targeting_rule, percentage_option, None
                 else:
                     if log_builder:
                         log_builder.new_line(
