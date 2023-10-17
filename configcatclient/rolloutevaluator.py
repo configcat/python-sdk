@@ -1,3 +1,4 @@
+import json
 from enum import IntEnum
 
 import hashlib
@@ -39,72 +40,107 @@ def get_value(dictionary):
     raise ValueError('Unknown value type.')
 
 
+class PrerequisiteComparator(IntEnum):
+    EQUALS = 0
+    NOT_EQUALS = 1
+
+
 class SegmentComparator(IntEnum):
     IS_IN = 0
     IS_NOT_IN = 1
 
 
+class Comparator(IntEnum):
+    IS_ONE_OF = 0
+    IS_NOT_ONE_OF = 1
+    CONTAINS_ANY_OF = 2
+    NOT_CONTAINS_ANY_OF = 3
+    IS_ONE_OF_SEMVER = 4
+    IS_NOT_ONE_OF_SEMVER = 5
+    LESS_THAN_SEMVER = 6
+    LESS_THAN_OR_EQUAL_SEMVER = 7
+    GREATER_THAN_SEMVER = 8
+    GREATER_THAN_OR_EQUAL_SEMVER = 9
+    EQUALS_NUMBER = 10
+    NOT_EQUALS_NUMBER = 11
+    LESS_THAN_NUMBER = 12
+    LESS_THAN_OR_EQUAL_NUMBER = 13
+    GREATER_THAN_NUMBER = 14
+    GREATER_THAN_OR_EQUAL_NUMBER = 15
+    IS_ONE_OF_HASHED = 16
+    IS_NOT_ONE_OF_HASHED = 17
+    BEFORE_DATETIME = 18
+    AFTER_DATETIME = 19
+    EQUALS_HASHED = 20
+    NOT_EQUALS_HASHED = 21
+    STARTS_WITH_ANY_OF_HASHED = 22
+    NOT_STARTS_WITH_ANY_OF_HASHED = 23
+    ENDS_WITH_ANY_OF_HASHED = 24
+    NOT_ENDS_WITH_ANY_OF_HASHED = 25
+    ARRAY_CONTAINS_ANY_OF_HASHED = 26
+    ARRAY_NOT_CONTAINS_ANY_OF_HASHED = 27
+
+
 class RolloutEvaluator(object):
-    SEMANTIC_VERSION_COMPARATORS = ['<', '<=', '>', '>=']
     COMPARATOR_TEXTS = [
-        'IS ONE OF',
-        'IS NOT ONE OF',
-        'CONTAINS ANY OF',
-        'NOT CONTAINS ANY OF',
-        'IS ONE OF (semver)',
-        'IS NOT ONE OF (semver)',
-        '< (semver)',
-        '<= (semver)',
-        '> (semver)',
-        '>= (semver)',
-        '= (number)',
-        '<> (number)',
-        '< (number)',
-        '<= (number)',
-        '> (number)',
-        '>= (number)',
-        'IS ONE OF (hashed)',
-        'IS NOT ONE OF (hashed)',
-        'BEFORE (UTC datetime)',
-        'AFTER (UTC datetime)',
-        'EQUALS (hashed)',
-        'NOT EQUALS (hashed)',
-        'STARTS WITH ANY OF (hashed)',
-        'NOT STARTS WITH ANY OF (hashed)',
-        'ENDS WITH ANY OF (hashed)',
-        'NOT ENDS WITH ANY OF (hashed)',
-        'ARRAY CONTAINS (hashed)',
-        'ARRAY NOT CONTAINS (hashed)'
+        'IS ONE OF',                 # IS_ONE_OF
+        'IS NOT ONE OF',             # IS_NOT_ONE_OF
+        'CONTAINS ANY OF',           # CONTAINS_ANY_OF
+        'NOT CONTAINS ANY OF',       # NOT_CONTAINS_ANY_OF
+        'IS ONE OF',                 # IS_ONE_OF_SEMVER
+        'IS NOT ONE OF',             # IS_NOT_ONE_OF_SEMVER
+        '<',                         # LESS_THAN_SEMVER
+        '<=',                        # LESS_THAN_OR_EQUAL_SEMVER
+        '>',                         # GREATER_THAN_SEMVER
+        '>=',                        # GREATER_THAN_OR_EQUAL_SEMVER
+        '=',                         # EQUALS_NUMBER
+        '!=',                        # NOT_EQUALS_NUMBER
+        '<',                         # LESS_THAN_NUMBER
+        '<=',                        # LESS_THAN_OR_EQUAL_NUMBER
+        '>',                         # GREATER_THAN_NUMBER
+        '>=',                        # GREATER_THAN_OR_EQUAL_NUMBER
+        'IS ONE OF',                 # IS_ONE_OF_HASHED
+        'IS NOT ONE OF',             # IS_NOT_ONE_OF_HASHED
+        'BEFORE',                    # BEFORE_DATETIME
+        'AFTER',                     # AFTER_DATETIME
+        'EQUALS',                    # EQUALS_HASHED
+        'NOT EQUALS',                # NOT_EQUALS_HASHED
+        'STARTS WITH ANY OF',        # STARTS_WITH_ANY_OF_HASHED
+        'NOT STARTS WITH ANY OF',    # NOT_STARTS_WITH_ANY_OF_HASHED
+        'ENDS WITH ANY OF',          # ENDS_WITH_ANY_OF_HASHED
+        'NOT ENDS WITH ANY OF',      # NOT_ENDS_WITH_ANY_OF_HASHED
+        'ARRAY CONTAINS ANY OF',     # ARRAY_CONTAINS_ANY_OF_HASHED
+        'ARRAY NOT CONTAINS ANY OF'  # ARRAY_NOT_CONTAINS_ANY_OF_HASHED
     ]
     COMPARISON_VALUES = [
-        STRING_LIST_VALUE,  # IS ONE OF
-        STRING_LIST_VALUE,  # IS NOT ONE OF
-        STRING_LIST_VALUE,  # CONTAINS ANY OF
-        STRING_LIST_VALUE,  # NOT CONTAINS ANY OF
-        STRING_LIST_VALUE,  # IS ONE OF (semver)
-        STRING_LIST_VALUE,  # IS NOT ONE OF (semver)
-        STRING_VALUE,       # < (semver)
-        STRING_VALUE,       # <= (semver)
-        STRING_VALUE,       # > (semver)
-        STRING_VALUE,       # >= (semver)
-        DOUBLE_VALUE,       # = (number)
-        DOUBLE_VALUE,       # <> (number)
-        DOUBLE_VALUE,       # < (number)
-        DOUBLE_VALUE,       # <= (number)
-        DOUBLE_VALUE,       # > (number)
-        DOUBLE_VALUE,       # >= (number)
-        STRING_LIST_VALUE,  # IS ONE OF (hashed)
-        STRING_LIST_VALUE,  # IS NOT ONE OF (hashed)
-        DOUBLE_VALUE,       # BEFORE (UTC datetime)
-        DOUBLE_VALUE,       # AFTER (UTC datetime)
-        STRING_VALUE,       # EQUALS (hashed)
-        STRING_VALUE,       # NOT EQUALS (hashed)
-        STRING_LIST_VALUE,  # STARTS WITH ANY OF (hashed)
-        STRING_LIST_VALUE,  # NOT STARTS WITH ANY OF (hashed)
-        STRING_LIST_VALUE,  # ENDS WITH ANY OF(hashed)
-        STRING_LIST_VALUE,  # NOT ENDS WITH ANY OF(hashed)
-        STRING_VALUE,       # ARRAY CONTAINS (hashed)
-        STRING_VALUE        # ARRAY NOT CONTAINS (hashed)
+        STRING_LIST_VALUE,  # IS_ONE_OF
+        STRING_LIST_VALUE,  # IS_NOT_ONE_OF
+        STRING_LIST_VALUE,  # CONTAINS_ANY_OF
+        STRING_LIST_VALUE,  # NOT_CONTAINS_ANY_OF
+        STRING_LIST_VALUE,  # IS_ONE_OF_SEMVER
+        STRING_LIST_VALUE,  # IS_NOT_ONE_OF_SEMVER
+        STRING_VALUE,       # LESS_THAN_SEMVER
+        STRING_VALUE,       # LESS_THAN_OR_EQUAL_SEMVER
+        STRING_VALUE,       # GREATER_THAN_SEMVER
+        STRING_VALUE,       # GREATER_THAN_OR_EQUAL_SEMVER
+        DOUBLE_VALUE,       # EQUALS_NUMBER
+        DOUBLE_VALUE,       # NOT_EQUALS_NUMBER
+        DOUBLE_VALUE,       # LESS_THAN_NUMBER
+        DOUBLE_VALUE,       # LESS_THAN_OR_EQUAL_NUMBER
+        DOUBLE_VALUE,       # GREATER_THAN_NUMBER
+        DOUBLE_VALUE,       # GREATER_THAN_OR_EQUAL_NUMBER
+        STRING_LIST_VALUE,  # IS_ONE_OF_HASHED
+        STRING_LIST_VALUE,  # IS_NOT_ONE_OF_HASHED
+        DOUBLE_VALUE,       # BEFORE_DATETIME
+        DOUBLE_VALUE,       # AFTER_DATETIME
+        STRING_VALUE,       # EQUALS_HASHED
+        STRING_VALUE,       # NOT_EQUALS_HASHED
+        STRING_LIST_VALUE,  # STARTS_WITH_ANY_OF_HASHED
+        STRING_LIST_VALUE,  # NOT_STARTS_WITH_ANY_OF_HASHED
+        STRING_LIST_VALUE,  # ENDS_WITH_ANY_OF_HASHED
+        STRING_LIST_VALUE,  # NOT_ENDS_WITH_ANY_OF_HASHED
+        STRING_LIST_VALUE,  # ARRAY_CONTAINS_ANY_OF_HASHED
+        STRING_LIST_VALUE   # ARRAY_NOT_CONTAINS_ANY_OF_HASHED
     ]
     SEGMENT_COMPARATOR_TEXTS = ['IS IN SEGMENT', 'IS NOT IN SEGMENT']
     PREREQUISITE_COMPARATOR_TEXTS = ['EQUALS', 'DOES NOT EQUAL']
@@ -119,8 +155,7 @@ class RolloutEvaluator(object):
 
         if visited_keys is None:
             visited_keys = []
-        visited_keys.append(key)
-        is_root_flag_evaluation = len(visited_keys) == 1
+        is_root_flag_evaluation = len(visited_keys) == 0
 
         settings = config.get(FEATURE_FLAGS, {})
         salt = config.get(PREFERENCES, {}).get(SALT, '')
@@ -218,9 +253,9 @@ class RolloutEvaluator(object):
 
     def _format_rule(self, comparison_attribute, comparator, comparison_value):
         comparator_text = self.COMPARATOR_TEXTS[comparator]
-        return 'User.%s %s %s' \
+        return "User.%s %s %s" \
                % (comparison_attribute, comparator_text,
-                  EvaluationLogBuilder.trunc_comparison_value_if_needed(comparator_text, comparison_value))
+                  EvaluationLogBuilder.trunc_comparison_value_if_needed(comparator, comparison_value))
 
     def _handle_invalid_user_attribute(self, comparison_attribute, comparator, comparison_value, key, validation_error):
         """
@@ -229,10 +264,9 @@ class RolloutEvaluator(object):
         error = 'cannot evaluate, the User.%s attribute is invalid (%s)' % (comparison_attribute, validation_error)
         self.log.warning('Cannot evaluate condition (%s) for setting \'%s\' '
                          '(%s). Please check the User.%s attribute and make sure that its value corresponds to the '
-                         '%s operator.',
+                         'comparison operator.',
                          self._format_rule(comparison_attribute, comparator, comparison_value), key,
-                         validation_error, comparison_attribute, self.COMPARATOR_TEXTS[comparator],
-                         event_id=3004)
+                         validation_error, comparison_attribute, event_id=3004)
         return error
 
     def _evaluate_percentage_options(self, percentage_options, context, percentage_rule_attribute, default_variation_id, log_builder):  # noqa: C901, E501
@@ -386,6 +420,7 @@ class RolloutEvaluator(object):
 
         # Circular dependency check
         visited_keys = context.visited_keys
+        visited_keys.append(context.key)
         if prerequisite_key in visited_keys:
             depending_flags = ' -> '.join("'{}'".format(s) for s in list(visited_keys) + [prerequisite_key])
             error = 'Cannot evaluate condition (%s) for setting \'%s\' (circular dependency detected between the following ' \
@@ -394,6 +429,9 @@ class RolloutEvaluator(object):
             self.log.warning(error, *error_args, event_id=3005)
             if log_builder:
                 log_builder.append(prerequisite_condition + ' ')
+
+            if visited_keys:
+                visited_keys.pop()
 
             return prerequisite_condition_result, 'cannot evaluate, circular dependency detected'
 
@@ -404,6 +442,10 @@ class RolloutEvaluator(object):
 
         prerequisite_value, _, _, _, error = self.evaluate(prerequisite_key, context.user, None, None, config,
                                                            log_builder, context.visited_keys)
+
+        if visited_keys:
+            visited_keys.pop()
+
         if error is not None:
             return prerequisite_condition_result, error
 
@@ -414,16 +456,16 @@ class RolloutEvaluator(object):
                                   str(prerequisite_comparison_value)))
 
         # EQUALS
-        if prerequisite_comparator == 0:
+        if prerequisite_comparator == PrerequisiteComparator.EQUALS:
             if prerequisite_value == prerequisite_comparison_value:
                 prerequisite_condition_result = True
         # DOES NOT EQUAL
-        elif prerequisite_comparator == 1:
+        elif prerequisite_comparator == PrerequisiteComparator.NOT_EQUALS:
             if prerequisite_value != prerequisite_comparison_value:
                 prerequisite_condition_result = True
 
         if log_builder:
-            log_builder.append('%s.' % 'true' if prerequisite_condition_result else 'false')
+            log_builder.append('%s.' % ('true' if prerequisite_condition_result else 'false'))
             log_builder.decrease_indent().new_line(')').new_line()
 
         return prerequisite_condition_result, None
@@ -540,29 +582,30 @@ class RolloutEvaluator(object):
             return False, error
 
         # IS ONE OF
-        if comparator == 0:
+        if comparator == Comparator.IS_ONE_OF:
             if str(user_value) in [x.strip() for x in comparison_value]:
                 return True, error
         # IS NOT ONE OF
-        elif comparator == 1:
+        elif comparator == Comparator.IS_NOT_ONE_OF:
             if str(user_value) not in [x.strip() for x in comparison_value]:
                 return True, error
         # CONTAINS ANY OF
-        elif comparator == 2:
+        elif comparator == Comparator.CONTAINS_ANY_OF:
             for comparison in comparison_value:
                 if str(comparison) in str(user_value):
                     return True, error
         # NOT CONTAINS ANY OF
-        elif comparator == 3:
+        elif comparator == Comparator.NOT_CONTAINS_ANY_OF:
             if not any(str(comparison) in str(user_value) for comparison in comparison_value):
                 return True, error
         # IS ONE OF, IS NOT ONE OF (Semantic version)
-        elif 4 <= comparator <= 5:
+        elif Comparator.IS_ONE_OF_SEMVER <= comparator <= Comparator.IS_NOT_ONE_OF_SEMVER:
             try:
                 match = False
                 for x in filter(None, [x.strip() for x in comparison_value]):
                     match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + x) or match
-                if (match and comparator == 4) or (not match and comparator == 5):
+                if (match and comparator == Comparator.IS_ONE_OF_SEMVER) \
+                        or (not match and comparator == Comparator.IS_NOT_ONE_OF_SEMVER):
                     return True, error
             except ValueError:
                 validation_error = "'%s' is not a valid semantic version" % str(user_value).strip()
@@ -570,10 +613,10 @@ class RolloutEvaluator(object):
                                                             validation_error)
                 return False, error
         # LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (Semantic version)
-        elif 6 <= comparator <= 9:
+        elif Comparator.LESS_THAN_SEMVER <= comparator <= Comparator.GREATER_THAN_OR_EQUAL_SEMVER:
             try:
                 if semver.VersionInfo.parse(str(user_value).strip()).match(
-                        self.SEMANTIC_VERSION_COMPARATORS[comparator - 6] + str(comparison_value).strip()
+                        self.COMPARATOR_TEXTS[comparator] + str(comparison_value).strip()
                 ):
                     return True, error
             except ValueError:
@@ -582,7 +625,7 @@ class RolloutEvaluator(object):
                                                             validation_error)
                 return False, error
         # =, <>, <, <=, >, >= (number)
-        elif 10 <= comparator <= 15:
+        elif Comparator.EQUALS_NUMBER <= comparator <= Comparator.GREATER_THAN_OR_EQUAL_NUMBER:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
             except ValueError:
@@ -593,23 +636,23 @@ class RolloutEvaluator(object):
 
             comparison_value_float = float(str(comparison_value).replace(",", "."))
 
-            if (comparator == 10 and user_value_float == comparison_value_float) \
-                    or (comparator == 11 and user_value_float != comparison_value_float) \
-                    or (comparator == 12 and user_value_float < comparison_value_float) \
-                    or (comparator == 13 and user_value_float <= comparison_value_float) \
-                    or (comparator == 14 and user_value_float > comparison_value_float) \
-                    or (comparator == 15 and user_value_float >= comparison_value_float):
+            if (comparator == Comparator.EQUALS_NUMBER and user_value_float == comparison_value_float) \
+                    or (comparator == Comparator.NOT_EQUALS_NUMBER and user_value_float != comparison_value_float) \
+                    or (comparator == Comparator.LESS_THAN_NUMBER and user_value_float < comparison_value_float) \
+                    or (comparator == Comparator.LESS_THAN_OR_EQUAL_NUMBER and user_value_float <= comparison_value_float) \
+                    or (comparator == Comparator.GREATER_THAN_NUMBER and user_value_float > comparison_value_float) \
+                    or (comparator == Comparator.GREATER_THAN_OR_EQUAL_NUMBER and user_value_float >= comparison_value_float):
                 return True, error
         # IS ONE OF (hashed)
-        elif comparator == 16:
+        elif comparator == Comparator.IS_ONE_OF_HASHED:
             if sha256(user_value, salt, context_salt) in comparison_value:
                 return True, error
         # IS NOT ONE OF (hashed)
-        elif comparator == 17:
+        elif comparator == Comparator.IS_NOT_ONE_OF_HASHED:
             if sha256(user_value, salt, context_salt) not in comparison_value:
                 return True, error
         # BEFORE, AFTER (UTC datetime)
-        elif 18 <= comparator <= 19:
+        elif Comparator.BEFORE_DATETIME <= comparator <= Comparator.AFTER_DATETIME:
             try:
                 user_value_float = float(str(user_value).replace(",", "."))
             except ValueError:
@@ -621,20 +664,20 @@ class RolloutEvaluator(object):
 
             comparison_value_float = float(str(comparison_value).replace(",", "."))
 
-            if (comparator == 18 and user_value_float < comparison_value_float) \
-                    or (comparator == 19 and user_value_float > comparison_value_float):
+            if (comparator == Comparator.BEFORE_DATETIME and user_value_float < comparison_value_float) \
+                    or (comparator == Comparator.AFTER_DATETIME and user_value_float > comparison_value_float):
                 return True, error
 
         # EQUALS (hashed)
-        elif comparator == 20:
+        elif comparator == Comparator.EQUALS_HASHED:
             if sha256(user_value, salt, context_salt) == comparison_value:
                 return True, error
         # NOT EQUALS (hashed)
-        elif comparator == 21:
+        elif comparator == Comparator.NOT_EQUALS_HASHED:
             if sha256(user_value, salt, context_salt) != comparison_value:
                 return True, error
         # STARTS WITH ANY OF, NOT STARTS WITH ANY OF, ENDS WITH ANY OF, NOT ENDS WITH ANY OF (hashed)
-        elif 22 <= comparator <= 25:
+        elif Comparator.STARTS_WITH_ANY_OF_HASHED <= comparator <= Comparator.NOT_ENDS_WITH_ANY_OF_HASHED:
             for comparison in comparison_value:
                 underscore_index = comparison.index('_')
                 length = int(comparison[:underscore_index])
@@ -642,22 +685,37 @@ class RolloutEvaluator(object):
                 if len(user_value) >= length:
                     comparison_string = comparison[underscore_index + 1:]
                     if (
-                        (comparator == 22 and sha256(user_value[:length], salt, context_salt) == comparison_string)
-                        or
-                        (comparator == 23 and sha256(user_value[:length], salt, context_salt) != comparison_string)
-                        or
-                        (comparator == 24 and sha256(user_value[-length:], salt, context_salt) == comparison_string)
-                        or
-                        (comparator == 25 and sha256(user_value[-length:], salt, context_salt) != comparison_string)
+                            (comparator == Comparator.STARTS_WITH_ANY_OF_HASHED
+                             and sha256(user_value[:length], salt, context_salt) == comparison_string)
+                            or
+                            (comparator == Comparator.NOT_STARTS_WITH_ANY_OF_HASHED
+                             and sha256(user_value[:length], salt, context_salt) != comparison_string)
+                            or
+                            (comparator == Comparator.ENDS_WITH_ANY_OF_HASHED
+                             and sha256(user_value[-length:], salt, context_salt) == comparison_string)
+                            or
+                            (comparator == Comparator.NOT_ENDS_WITH_ANY_OF_HASHED
+                             and sha256(user_value[-length:], salt, context_salt) != comparison_string)
                     ):
                         return True, error
-        # ARRAY CONTAINS (hashed)
-        elif comparator == 26:
-            if comparison_value in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
-                return True, error
-        # ARRAY NOT CONTAINS (hashed)
-        elif comparator == 27:
-            if comparison_value not in [sha256(x.strip(), salt, context_salt) for x in str(user_value).split(',')]:
-                return True, error
+        # ARRAY CONTAINS ANY OF, ARRAY NOT CONTAINS ANY OF (hashed)
+        elif Comparator.ARRAY_CONTAINS_ANY_OF_HASHED <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF_HASHED:
+            try:
+                user_value_list = json.loads(user_value)
+                if not isinstance(user_value_list, list):
+                    raise ValueError()
+            except ValueError:
+                validation_error = "'%s' is not a valid JSON string array" % str(user_value)
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
+                                                            validation_error)
+                return False, error
+
+            for comparison in comparison_value:
+                if comparator == Comparator.ARRAY_CONTAINS_ANY_OF_HASHED:
+                    if comparison in [sha256(x.strip(), salt, context_salt) for x in user_value_list]:
+                        return True, error
+                else:
+                    if comparison not in [sha256(x.strip(), salt, context_salt) for x in user_value_list]:
+                        return True, error
 
         return False, error

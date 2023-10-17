@@ -1,18 +1,31 @@
+from configcatclient.utils import get_date_time
+
+
 class EvaluationLogBuilder(object):
     def __init__(self):
         self.indent_level = 0
         self.text = ''
 
     @staticmethod
-    def trunc_comparison_value_if_needed(comparator_text, comparison_value):
-        if '(hashed)' in comparator_text:
+    def trunc_comparison_value_if_needed(comparator, comparison_value):
+        from configcatclient.rolloutevaluator import Comparator
+        if comparator in [Comparator.IS_ONE_OF_HASHED,
+                          Comparator.IS_NOT_ONE_OF_HASHED,
+                          Comparator.EQUALS_HASHED,
+                          Comparator.NOT_EQUALS_HASHED,
+                          Comparator.STARTS_WITH_ANY_OF_HASHED,
+                          Comparator.NOT_STARTS_WITH_ANY_OF_HASHED,
+                          Comparator.ENDS_WITH_ANY_OF_HASHED,
+                          Comparator.NOT_ENDS_WITH_ANY_OF_HASHED,
+                          Comparator.ARRAY_CONTAINS_ANY_OF_HASHED,
+                          Comparator.ARRAY_NOT_CONTAINS_ANY_OF_HASHED]:
             if isinstance(comparison_value, list):
                 length = len(comparison_value)
                 if length > 1:
                     return '[<{} hashed values>]'.format(length)
                 return '[<{} hashed value>]'.format(length)
 
-            return '<hashed value>'
+            return "'<hashed value>'"
 
         if isinstance(comparison_value, list):
             limit = 10
@@ -26,7 +39,13 @@ class EvaluationLogBuilder(object):
 
                 return str(comparison_value[:limit])[:-1] + ', ... ' + more_text + ']'
 
-        return str(comparison_value)
+            return str(comparison_value)
+
+        if comparator in [Comparator.BEFORE_DATETIME, Comparator.AFTER_DATETIME]:
+            time = get_date_time(comparison_value)
+            return "'%s' (%sZ UTC)" % (str(comparison_value), time.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3])
+
+        return "'%s'" % str(comparison_value)
 
     def increase_indent(self):
         self.indent_level += 1
