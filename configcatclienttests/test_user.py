@@ -1,5 +1,7 @@
 import unittest
 import json
+from datetime import datetime
+
 from configcatclient.user import User
 
 
@@ -43,3 +45,10 @@ class UserTests(unittest.TestCase):
         self.assertEqual(email, user_json['Email'])
         self.assertEqual(country, user_json['Country'])
         self.assertEqual('test', user_json['custom'])
+
+    def test_attribute_value_from_datetime(self):
+        self.assertEqual(User.attribute_value_from_datetime(datetime(2023, 9, 19, 11, 1, 35)), '1695121295.0')
+        self.assertEqual(User.attribute_value_from_datetime(datetime(2023, 9, 19, 11, 1, 35, 510886)), '1695121295.510886')
+
+    def test_attribute_value_from_list(self):
+        self.assertEqual(User.attribute_value_from_list(['a', 'b', 'c']), '["a", "b", "c"]')

@@ -3,6 +3,9 @@ import json
 __PREDEFINED__ = ['Identifier', 'Email', 'Country']
 
 from collections import OrderedDict
+from datetime import datetime
+
+from configcatclient import utils
 
 
 class User(object):
@@ -36,3 +39,17 @@ class User(object):
 
         filtered_dump = OrderedDict([(k, v) for k, v in dump.items() if v is not None])
         return json.dumps(filtered_dump, separators=(',', ':'))
+
+    @staticmethod
+    def attribute_value_from_datetime(value):
+        if value is None or not isinstance(value, datetime):
+            return None
+
+        return str(utils.get_seconds_since_epoch(value))
+
+    @staticmethod
+    def attribute_value_from_list(value):
+        if value is None or not isinstance(value, list):
+            return None
+
+        return json.dumps(value)
