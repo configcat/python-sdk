@@ -406,6 +406,11 @@ class RolloutEvaluator(object):
         prerequisite_key = prerequisite_flag_condition.get(PREREQUISITE_FLAG_KEY)
         prerequisite_comparator = prerequisite_flag_condition.get(PREREQUISITE_COMPARATOR)
 
+        # Check if the prerequisite key exists
+        settings = config.get(FEATURE_FLAGS, {})
+        if prerequisite_key is None or settings.get(prerequisite_key) is None:
+            raise KeyError('Prerequisite flag key is missing or invalid.')
+
         prerequisite_condition_result = False
         try:
             prerequisite_comparison_value = get_value(prerequisite_flag_condition)

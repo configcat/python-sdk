@@ -179,6 +179,39 @@ class OverrideTests(unittest.TestCase):
         client.close()
 
     @parameterized.expand([
+        ('stringDependsOnString', '1', 'john@sensitivecompany.com', None, 'Dog'),
+        ('stringDependsOnString', '1', 'john@sensitivecompany.com', OverrideBehaviour.RemoteOverLocal, 'Dog'),
+        ('stringDependsOnString', '1', 'john@sensitivecompany.com', OverrideBehaviour.LocalOverRemote, 'Dog'),
+        ('stringDependsOnString', '1', 'john@sensitivecompany.com', OverrideBehaviour.LocalOnly, None),
+        ('stringDependsOnString', '2', 'john@notsensitivecompany.com', None, 'Cat'),
+        ('stringDependsOnString', '2', 'john@notsensitivecompany.com', OverrideBehaviour.RemoteOverLocal, 'Cat'),
+        ('stringDependsOnString', '2', 'john@notsensitivecompany.com', OverrideBehaviour.LocalOverRemote, 'Dog'),
+        ('stringDependsOnString', '2', 'john@notsensitivecompany.com', OverrideBehaviour.LocalOnly, None),
+        ('stringDependsOnInt', '1', 'john@sensitivecompany.com', None, 'Dog'),
+        ('stringDependsOnInt', '1', 'john@sensitivecompany.com', OverrideBehaviour.RemoteOverLocal, 'Dog'),
+        ('stringDependsOnInt', '1', 'john@sensitivecompany.com', OverrideBehaviour.LocalOverRemote, 'Cat'),
+        ('stringDependsOnInt', '1', 'john@sensitivecompany.com', OverrideBehaviour.LocalOnly, None),
+        ('stringDependsOnInt', '2', 'john@notsensitivecompany.com', None, 'Cat'),
+        ('stringDependsOnInt', '2', 'john@notsensitivecompany.com', OverrideBehaviour.RemoteOverLocal, 'Cat'),
+        ('stringDependsOnInt', '2', 'john@notsensitivecompany.com', OverrideBehaviour.LocalOverRemote, 'Dog'),
+        ('stringDependsOnInt', '2', 'john@notsensitivecompany.com', OverrideBehaviour.LocalOnly, None)
+    ])
+    def test_prerequisite_flag_override(self, key, user_id, email, override_behaviour, expected_value):
+        # The flag override alters the definition of the following flags:
+        # * 'mainStringFlag': to check the case where a prerequisite flag is overridden (dependent flag: 'stringDependsOnString')
+        # * 'stringDependsOnInt': to check the case where a dependent flag is overridden (prerequisite flag: 'mainIntFlag')
+        options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                   flag_overrides=None if override_behaviour is None else LocalFileFlagOverrides(
+                                       file_path=path.join(OverrideTests.script_dir, 'data/test_override_flagdependency_v6.json'),
+                                       override_behaviour=override_behaviour))
+        client = ConfigCatClient.get(sdk_key='configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg', options=options)
+        client.force_refresh()
+        value = client.get_value(key, None, User(user_id, email))
+
+        self.assertEqual(expected_value, value)
+        client.close()
+
+    @parameterized.expand([
         ('developerAndBetaUserSegment', '1', 'john@example.com', None, False),
         ('developerAndBetaUserSegment', '1', 'john@example.com', OverrideBehaviour.RemoteOverLocal, False),
         ('developerAndBetaUserSegment', '1', 'john@example.com', OverrideBehaviour.LocalOverRemote, True),
