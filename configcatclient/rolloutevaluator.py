@@ -10,9 +10,10 @@ from .logger import Logger
 
 from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUTE, \
     COMPARATOR, PERCENTAGE, SERVED_VALUE, CONDITIONS, PERCENTAGE_OPTIONS, PERCENTAGE_RULE_ATTRIBUTE, \
-    COMPARISON_RULE, STRING_LIST_VALUE, DOUBLE_VALUE, STRING_VALUE, FEATURE_FLAGS, PREFERENCES, SALT, SEGMENTS, \
-    SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, SEGMENT_INDEX, SEGMENT_COMPARATOR, SEGMENT_RULES, SEGMENT_NAME, \
-    PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, BOOL_VALUE, INT_VALUE, TARGETING_RULE_PERCENTAGE_OPTIONS
+    COMPARISON_RULE, STRING_LIST_VALUE, DOUBLE_VALUE, STRING_VALUE, FEATURE_FLAGS, \
+    SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, SEGMENT_COMPARATOR, SEGMENT_RULES, SEGMENT_NAME, \
+    PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, BOOL_VALUE, INT_VALUE, TARGETING_RULE_PERCENTAGE_OPTIONS, \
+    INLINE_SEGMENT, INLINE_SALT
 from .user import User
 
 
@@ -158,7 +159,6 @@ class RolloutEvaluator(object):
         is_root_flag_evaluation = len(visited_keys) == 0
 
         settings = config.get(FEATURE_FLAGS, {})
-        salt = config.get(PREFERENCES, {}).get(SALT, '')
         setting_descriptor = settings.get(key)
 
         if setting_descriptor is None:
@@ -169,6 +169,7 @@ class RolloutEvaluator(object):
             self.log.error(error, *error_args, event_id=1001)
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
+        salt = setting_descriptor.get(INLINE_SALT, '')
         targeting_rules = setting_descriptor.get(TARGETING_RULES, [])
         percentage_rule_attribute = setting_descriptor.get(PERCENTAGE_RULE_ATTRIBUTE)
 
@@ -335,8 +336,6 @@ class RolloutEvaluator(object):
         return False, None, None, None
 
     def _evaluate_conditions(self, conditions, context, salt, config, log_builder, value):  # noqa: C901
-        segments = config.get(SEGMENTS, [])
-
         first_condition = True
         condition_result = True
         error = None
@@ -366,7 +365,7 @@ class RolloutEvaluator(object):
                     condition_result = False
                     break
             elif segment_condition is not None:
-                result, error = self._evaluate_segment_condition(segment_condition, context, salt, segments, log_builder)
+                result, error = self._evaluate_segment_condition(segment_condition, context, salt, log_builder)
                 if log_builder:
                     if len(conditions) > 1:
                         log_builder.append(' => {}'.format('true' if result else 'false'))
@@ -470,12 +469,11 @@ class RolloutEvaluator(object):
 
         return prerequisite_condition_result, None
 
-    def _evaluate_segment_condition(self, segment_condition, context, salt, segments, log_builder):  # noqa: C901
+    def _evaluate_segment_condition(self, segment_condition, context, salt, log_builder):  # noqa: C901
         user = context.user
         key = context.key
 
-        segment_index = segment_condition.get(SEGMENT_INDEX)
-        segment = segments[segment_index]
+        segment = segment_condition[INLINE_SEGMENT]
         segment_name = segment.get(SEGMENT_NAME, '')
         segment_comparator = segment_condition.get(SEGMENT_COMPARATOR)
         segment_comparison_rules = segment.get(SEGMENT_RULES, [])

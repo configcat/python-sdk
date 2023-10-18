@@ -5,6 +5,7 @@ from platform import python_version
 from requests import HTTPError
 from requests import Timeout
 
+from .config import extend_config_with_inline_salt_and_segment
 from .configentry import ConfigEntry
 from .constants import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
@@ -169,6 +170,7 @@ class ConfigFetcher(object):
                 if response_etag is None:
                     response_etag = ''
                 config = response.json()
+                extend_config_with_inline_salt_and_segment(config)
                 return FetchResponse.success(
                     ConfigEntry(config, response_etag, response.text, get_utc_now_seconds_since_epoch()))
             elif response.status_code == 304:

@@ -26,6 +26,7 @@ TARGETING_RULES = 'r'  # Targeting Rules (Logically connected by OR)
 PERCENTAGE_OPTIONS = 'p'  # Percentage Options without conditions
 VALUE = 'v'
 VARIATION_ID = 'i'
+INLINE_SALT = 'inline_salt'
 
 # Targeting Rule (Evaluation Rule)
 CONDITIONS = 'c'
@@ -40,6 +41,7 @@ PREREQUISITE_FLAG_CONDITION = 'd'  # Prerequisite flag targeting rule
 # Segment Condition
 SEGMENT_INDEX = 's'
 SEGMENT_COMPARATOR = 'c'
+INLINE_SEGMENT = 'inline_segment'
 
 # Prerequisite Flag Condition
 PREREQUISITE_FLAG_KEY = 'f'

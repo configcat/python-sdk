@@ -1,3 +1,4 @@
+from .config import extend_config_with_inline_salt_and_segment
 from .constants import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
@@ -54,6 +55,7 @@ class LocalFileDataSource(OverrideDataSource):
 
                             self._config[FEATURE_FLAGS][key] = {VALUE: {value_type: value}}
                     else:
+                        extend_config_with_inline_salt_and_segment(data)
                         self._config = data
         except OSError:
             self.log.exception('Failed to read the local config file \'%s\'.', self._file_path, event_id=1302)

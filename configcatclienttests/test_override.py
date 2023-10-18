@@ -4,11 +4,13 @@ from os import path
 import tempfile
 import json
 import time
+from parameterized import parameterized
 
 from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryFlagOverrides
 from configcatclient.localfiledatasource import LocalFileFlagOverrides
 from configcatclient.overridedatasource import OverrideBehaviour
+from configcatclient.user import User
 from configcatclienttests.mocks import MockResponse, TEST_SDK_KEY
 from configcatclient.configcatoptions import ConfigCatOptions
 from configcatclient.pollingmode import PollingMode
@@ -174,6 +176,32 @@ class OverrideTests(unittest.TestCase):
         self.assertFalse(client.get_value('fakeKey', True))
         self.assertEqual('test', client.get_value('fakeKey2', 'default'))
         self.assertTrue(client.get_value('nonexisting', False))
+        client.close()
+
+    @parameterized.expand([
+        ('developerAndBetaUserSegment', '1', 'john@example.com', None, False),
+        ('developerAndBetaUserSegment', '1', 'john@example.com', OverrideBehaviour.RemoteOverLocal, False),
+        ('developerAndBetaUserSegment', '1', 'john@example.com', OverrideBehaviour.LocalOverRemote, True),
+        ('developerAndBetaUserSegment', '1', 'john@example.com', OverrideBehaviour.LocalOnly, True),
+        ('notDeveloperAndNotBetaUserSegment', '2', 'kate@example.com', None, True),
+        ('notDeveloperAndNotBetaUserSegment', '2', 'kate@example.com', OverrideBehaviour.RemoteOverLocal, True),
+        ('notDeveloperAndNotBetaUserSegment', '2', 'kate@example.com', OverrideBehaviour.LocalOverRemote, True),
+        ('notDeveloperAndNotBetaUserSegment', '2', 'kate@example.com', OverrideBehaviour.LocalOnly, None)
+    ])
+    def test_config_salt_segment_override(self, key, user_id, email, override_behaviour, expected_value):
+        # The flag override uses a different config json salt than the downloaded one and
+        # overrides the following segments:
+        # * 'Beta Users': User.Email IS ONE OF ['jane@example.com']
+        # * 'Developers': User.Email IS ONE OF ['john@example.com']
+        options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                   flag_overrides=None if override_behaviour is None else LocalFileFlagOverrides(
+                                       file_path=path.join(OverrideTests.script_dir, 'data/test_override_segments_v6.json'),
+                                       override_behaviour=override_behaviour))
+        client = ConfigCatClient.get(sdk_key='configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/h99HYXWWNE2bH8eWyLAVMA', options=options)
+        client.force_refresh()
+        value = client.get_value(key, None, User(user_id, email))
+
+        self.assertEqual(expected_value, value)
         client.close()
 
 
