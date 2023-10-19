@@ -10,8 +10,8 @@ from .logger import Logger
 
 from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUTE, \
     COMPARATOR, PERCENTAGE, SERVED_VALUE, CONDITIONS, PERCENTAGE_OPTIONS, PERCENTAGE_RULE_ATTRIBUTE, \
-    COMPARISON_RULE, STRING_LIST_VALUE, DOUBLE_VALUE, STRING_VALUE, FEATURE_FLAGS, \
-    SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, SEGMENT_COMPARATOR, SEGMENT_RULES, SEGMENT_NAME, \
+    USER_CONDITION, STRING_LIST_VALUE, DOUBLE_VALUE, STRING_VALUE, FEATURE_FLAGS, \
+    SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, SEGMENT_COMPARATOR, SEGMENT_CONDITIONS, SEGMENT_NAME, \
     PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, BOOL_VALUE, INT_VALUE, TARGETING_RULE_PERCENTAGE_OPTIONS, \
     INLINE_SEGMENT, INLINE_SALT
 from .user import User
@@ -339,7 +339,7 @@ class RolloutEvaluator(object):
         condition_result = True
         error = None
         for condition in conditions:
-            comparison_rule = condition.get(COMPARISON_RULE)
+            user_condition = condition.get(USER_CONDITION)
             segment_condition = condition.get(SEGMENT_CONDITION)
             prerequisite_flag_condition = condition.get(PREREQUISITE_FLAG_CONDITION)
 
@@ -352,9 +352,9 @@ class RolloutEvaluator(object):
                 if log_builder:
                     log_builder.new_line('AND ')
 
-            if comparison_rule is not None:
-                result, error = self._evaluate_comparison_rule_condition(comparison_rule, context, context.key, salt,
-                                                                         log_builder)
+            if user_condition is not None:
+                result, error = self._evaluate_user_condition(user_condition, context, context.key, salt,
+                                                              log_builder)
                 if log_builder and len(conditions) > 1:
                     log_builder.append('=> {}'.format('true' if result else 'false'))
                     if not result:
@@ -480,7 +480,7 @@ class RolloutEvaluator(object):
         segment = segment_condition[INLINE_SEGMENT]
         segment_name = segment.get(SEGMENT_NAME, '')
         segment_comparator = segment_condition.get(SEGMENT_COMPARATOR)
-        segment_comparison_rules = segment.get(SEGMENT_RULES, [])
+        segment_conditions = segment.get(SEGMENT_CONDITIONS, [])
 
         if user is None:
             if not context.is_missing_user_object_logged:
@@ -506,10 +506,10 @@ class RolloutEvaluator(object):
             # Set initial condition result based on comparator
             segment_condition_result = segment_comparator == SegmentComparator.IS_IN
 
-            # Evaluate segment rules (logically connected by AND)
+            # Evaluate segment conditions (logically connected by AND)
             first_segment_rule = True
             error = None
-            for segment_comparison_rule in segment_comparison_rules:
+            for segment_condition in segment_conditions:
                 if first_segment_rule:
                     if log_builder:
                         log_builder.new_line('- IF ')
@@ -519,8 +519,7 @@ class RolloutEvaluator(object):
                     if log_builder:
                         log_builder.new_line('AND ')
 
-                result, error = self._evaluate_comparison_rule_condition(segment_comparison_rule, context,
-                                                                         segment_name, salt, log_builder)
+                result, error = self._evaluate_user_condition(segment_condition, context, segment_name, salt, log_builder)
                 if log_builder:
                     log_builder.append('=> {}'.format('true' if result else 'false'))
                     if not result:
@@ -544,17 +543,17 @@ class RolloutEvaluator(object):
 
         return False, None
 
-    def _evaluate_comparison_rule_condition(self, comparison_rule, context, context_salt, salt, log_builder):  # noqa: C901, E501
+    def _evaluate_user_condition(self, user_condition, context, context_salt, salt, log_builder):  # noqa: C901, E501
         """
-        returns result of comparison rule condition, error
+        returns result of user condition, error
         """
 
         user = context.user
         key = context.key
 
-        comparison_attribute = comparison_rule.get(COMPARISON_ATTRIBUTE)
-        comparator = comparison_rule.get(COMPARATOR)
-        comparison_value = comparison_rule.get(self.COMPARISON_VALUES[comparator])
+        comparison_attribute = user_condition.get(COMPARISON_ATTRIBUTE)
+        comparator = user_condition.get(COMPARATOR)
+        comparison_value = user_condition.get(self.COMPARISON_VALUES[comparator])
         error = None
 
         if log_builder:

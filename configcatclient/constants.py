@@ -13,9 +13,9 @@ SALT = 's'
 
 # Segment
 SEGMENT_NAME = 'n'  # The first 4 characters of the Segment's name
-SEGMENT_RULES = 'r'  # Logically connected by AND
+SEGMENT_CONDITIONS = 'r'  # The list of segment rule conditions (has a logical AND relation between the items).
 
-# Segment Rule (Comparison Rule)
+# Segment Condition (User Condition)
 COMPARISON_ATTRIBUTE = 'a'  # The attribute of the user object that should be used to evaluate this rule
 COMPARATOR = 'c'
 
@@ -34,7 +34,7 @@ SERVED_VALUE = 's'  # Value and Variation ID
 TARGETING_RULE_PERCENTAGE_OPTIONS = 'p'
 
 # Condition
-COMPARISON_RULE = 't'
+USER_CONDITION = 't'
 SEGMENT_CONDITION = 's'  # Segment targeting rule
 PREREQUISITE_FLAG_CONDITION = 'd'  # Prerequisite flag targeting rule
 
