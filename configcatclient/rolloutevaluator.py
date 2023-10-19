@@ -686,20 +686,21 @@ class RolloutEvaluator(object):
 
                 if len(user_value) >= length:
                     comparison_string = comparison[underscore_index + 1:]
-                    if (
-                            (comparator == Comparator.STARTS_WITH_ANY_OF_HASHED
-                             and sha256(user_value[:length], salt, context_salt) == comparison_string)
-                            or
-                            (comparator == Comparator.NOT_STARTS_WITH_ANY_OF_HASHED
-                             and sha256(user_value[:length], salt, context_salt) != comparison_string)
-                            or
+                    if (comparator == Comparator.STARTS_WITH_ANY_OF_HASHED
+                        and sha256(user_value[:length], salt, context_salt) == comparison_string) or \
                             (comparator == Comparator.ENDS_WITH_ANY_OF_HASHED
-                             and sha256(user_value[-length:], salt, context_salt) == comparison_string)
-                            or
-                            (comparator == Comparator.NOT_ENDS_WITH_ANY_OF_HASHED
-                             and sha256(user_value[-length:], salt, context_salt) != comparison_string)
-                    ):
+                             and sha256(user_value[-length:], salt, context_salt) == comparison_string):
                         return True, error
+                    elif (comparator == Comparator.NOT_STARTS_WITH_ANY_OF_HASHED
+                          and sha256(user_value[:length], salt, context_salt) == comparison_string) or \
+                            (comparator == Comparator.NOT_ENDS_WITH_ANY_OF_HASHED
+                             and sha256(user_value[-length:], salt, context_salt) == comparison_string):
+                        return False, None
+
+            # If no matches were found for the NOT_* conditions, then return True
+            if comparator in [Comparator.NOT_STARTS_WITH_ANY_OF_HASHED, Comparator.NOT_ENDS_WITH_ANY_OF_HASHED]:
+                return True, error
+
         # ARRAY CONTAINS ANY OF, ARRAY NOT CONTAINS ANY OF (hashed)
         elif Comparator.ARRAY_CONTAINS_ANY_OF_HASHED <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF_HASHED:
             try:
@@ -712,12 +713,15 @@ class RolloutEvaluator(object):
                                                             validation_error)
                 return False, error
 
-            for comparison in comparison_value:
-                if comparator == Comparator.ARRAY_CONTAINS_ANY_OF_HASHED:
-                    if comparison in [sha256(x.strip(), salt, context_salt) for x in user_value_list]:
+            hashed_user_values = [sha256(x.strip(), salt, context_salt) for x in user_value_list]
+            if comparator == Comparator.ARRAY_CONTAINS_ANY_OF_HASHED:
+                for comparison in comparison_value:
+                    if comparison in hashed_user_values:
                         return True, error
-                else:
-                    if comparison not in [sha256(x.strip(), salt, context_salt) for x in user_value_list]:
-                        return True, error
+            else:
+                for comparison in comparison_value:
+                    if comparison in hashed_user_values:
+                        return False, None
+                return True, error
 
         return False, error
