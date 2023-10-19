@@ -10,7 +10,7 @@ from configcatclient.configcatoptions import Hooks
 from configcatclient.configentry import ConfigEntry
 from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
-from configcatclient.constants import VALUE, FEATURE_FLAGS, STRING_VALUE, INT_VALUE
+from configcatclient.config import VALUE, FEATURE_FLAGS, STRING_VALUE, INT_VALUE
 from configcatclient.logger import Logger
 from configcatclient.utils import get_utc_now_seconds_since_epoch
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, ConfigFetcherWaitMock, \

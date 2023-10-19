@@ -2,7 +2,6 @@ import logging
 import unittest
 
 from configcatclient.configcatclient import ConfigCatClient
-from configcatclient.constants import BOOL_VALUE
 from configcatclienttests.mocks import ConfigCacheMock, TEST_SDK_KEY
 from configcatclient.configcatoptions import ConfigCatOptions
 from configcatclient.pollingmode import PollingMode

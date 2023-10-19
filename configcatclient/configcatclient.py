@@ -3,7 +3,7 @@ from threading import Lock
 
 from . import utils
 from .configservice import ConfigService
-from .constants import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, FEATURE_FLAGS, SERVED_VALUE
+from .config import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, FEATURE_FLAGS, SERVED_VALUE
 from .evaluationdetails import EvaluationDetails
 from .evaluationlogbuilder import EvaluationLogBuilder
 from .interfaces import ConfigCatClientException

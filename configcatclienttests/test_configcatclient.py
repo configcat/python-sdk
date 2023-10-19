@@ -9,13 +9,12 @@ import requests
 from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
 from configcatclient.configentry import ConfigEntry
-from configcatclient.constants import VALUE, COMPARATOR, COMPARISON_ATTRIBUTE, SERVED_VALUE, STRING_VALUE, CONDITIONS
+from configcatclient.config import VALUE, SERVED_VALUE, STRING_VALUE
 from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions, Hooks
 from configcatclient.pollingmode import PollingMode
 from configcatclient.utils import get_utc_now, get_utc_now_seconds_since_epoch
-from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT, TEST_SDK_KEY, TEST_SDK_KEY1, TEST_SDK_KEY2, \
-    HookCallbacks, TEST_JSON_FORMAT, SingleValueConfigCache
+from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT, TEST_SDK_KEY, HookCallbacks, SingleValueConfigCache
 
 # Python2/Python3 support
 try:

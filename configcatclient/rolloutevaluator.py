@@ -1,19 +1,18 @@
 import json
-from enum import IntEnum
 
 import hashlib
 import semver
 
+from .config import FEATURE_FLAGS, INLINE_SALT, TARGETING_RULES, PERCENTAGE_RULE_ATTRIBUTE, CONDITIONS, SERVED_VALUE, \
+    get_value, VARIATION_ID, TARGETING_RULE_PERCENTAGE_OPTIONS, PERCENTAGE_OPTIONS, PERCENTAGE, USER_CONDITION, \
+    SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, \
+    PrerequisiteComparator, INLINE_SEGMENT, SEGMENT_NAME, SEGMENT_COMPARATOR, SEGMENT_CONDITIONS, SegmentComparator, \
+    COMPARISON_ATTRIBUTE, COMPARATOR, Comparator, COMPARATOR_TEXTS, PREREQUISITE_COMPARATOR_TEXTS, \
+    SEGMENT_COMPARATOR_TEXTS, COMPARISON_VALUES
 from .evaluationcontext import EvaluationContext
 from .evaluationlogbuilder import EvaluationLogBuilder
 from .logger import Logger
 
-from .constants import TARGETING_RULES, VALUE, VARIATION_ID, COMPARISON_ATTRIBUTE, \
-    COMPARATOR, PERCENTAGE, SERVED_VALUE, CONDITIONS, PERCENTAGE_OPTIONS, PERCENTAGE_RULE_ATTRIBUTE, \
-    USER_CONDITION, STRING_LIST_VALUE, DOUBLE_VALUE, STRING_VALUE, FEATURE_FLAGS, \
-    SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, SEGMENT_COMPARATOR, SEGMENT_CONDITIONS, SEGMENT_NAME, \
-    PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, BOOL_VALUE, INT_VALUE, TARGETING_RULE_PERCENTAGE_OPTIONS, \
-    INLINE_SEGMENT, INLINE_SALT
 from .user import User
 
 
@@ -24,128 +23,7 @@ def sha256(value, salt, context_salt):
     return hashlib.sha256(value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
 
 
-def get_value(dictionary):
-    value = dictionary.get(VALUE)
-    if value is None:
-        raise ValueError('Value is missing.')
-
-    if value.get(BOOL_VALUE) is not None:
-        return value.get(BOOL_VALUE)
-    if value.get(STRING_VALUE) is not None:
-        return value.get(STRING_VALUE)
-    if value.get(INT_VALUE) is not None:
-        return value.get(INT_VALUE)
-    if value.get(DOUBLE_VALUE) is not None:
-        return value.get(DOUBLE_VALUE)
-
-    raise ValueError('Unknown value type.')
-
-
-class PrerequisiteComparator(IntEnum):
-    EQUALS = 0
-    NOT_EQUALS = 1
-
-
-class SegmentComparator(IntEnum):
-    IS_IN = 0
-    IS_NOT_IN = 1
-
-
-class Comparator(IntEnum):
-    IS_ONE_OF = 0
-    IS_NOT_ONE_OF = 1
-    CONTAINS_ANY_OF = 2
-    NOT_CONTAINS_ANY_OF = 3
-    IS_ONE_OF_SEMVER = 4
-    IS_NOT_ONE_OF_SEMVER = 5
-    LESS_THAN_SEMVER = 6
-    LESS_THAN_OR_EQUAL_SEMVER = 7
-    GREATER_THAN_SEMVER = 8
-    GREATER_THAN_OR_EQUAL_SEMVER = 9
-    EQUALS_NUMBER = 10
-    NOT_EQUALS_NUMBER = 11
-    LESS_THAN_NUMBER = 12
-    LESS_THAN_OR_EQUAL_NUMBER = 13
-    GREATER_THAN_NUMBER = 14
-    GREATER_THAN_OR_EQUAL_NUMBER = 15
-    IS_ONE_OF_HASHED = 16
-    IS_NOT_ONE_OF_HASHED = 17
-    BEFORE_DATETIME = 18
-    AFTER_DATETIME = 19
-    EQUALS_HASHED = 20
-    NOT_EQUALS_HASHED = 21
-    STARTS_WITH_ANY_OF_HASHED = 22
-    NOT_STARTS_WITH_ANY_OF_HASHED = 23
-    ENDS_WITH_ANY_OF_HASHED = 24
-    NOT_ENDS_WITH_ANY_OF_HASHED = 25
-    ARRAY_CONTAINS_ANY_OF_HASHED = 26
-    ARRAY_NOT_CONTAINS_ANY_OF_HASHED = 27
-
-
 class RolloutEvaluator(object):
-    COMPARATOR_TEXTS = [
-        'IS ONE OF',                 # IS_ONE_OF
-        'IS NOT ONE OF',             # IS_NOT_ONE_OF
-        'CONTAINS ANY OF',           # CONTAINS_ANY_OF
-        'NOT CONTAINS ANY OF',       # NOT_CONTAINS_ANY_OF
-        'IS ONE OF',                 # IS_ONE_OF_SEMVER
-        'IS NOT ONE OF',             # IS_NOT_ONE_OF_SEMVER
-        '<',                         # LESS_THAN_SEMVER
-        '<=',                        # LESS_THAN_OR_EQUAL_SEMVER
-        '>',                         # GREATER_THAN_SEMVER
-        '>=',                        # GREATER_THAN_OR_EQUAL_SEMVER
-        '=',                         # EQUALS_NUMBER
-        '!=',                        # NOT_EQUALS_NUMBER
-        '<',                         # LESS_THAN_NUMBER
-        '<=',                        # LESS_THAN_OR_EQUAL_NUMBER
-        '>',                         # GREATER_THAN_NUMBER
-        '>=',                        # GREATER_THAN_OR_EQUAL_NUMBER
-        'IS ONE OF',                 # IS_ONE_OF_HASHED
-        'IS NOT ONE OF',             # IS_NOT_ONE_OF_HASHED
-        'BEFORE',                    # BEFORE_DATETIME
-        'AFTER',                     # AFTER_DATETIME
-        'EQUALS',                    # EQUALS_HASHED
-        'NOT EQUALS',                # NOT_EQUALS_HASHED
-        'STARTS WITH ANY OF',        # STARTS_WITH_ANY_OF_HASHED
-        'NOT STARTS WITH ANY OF',    # NOT_STARTS_WITH_ANY_OF_HASHED
-        'ENDS WITH ANY OF',          # ENDS_WITH_ANY_OF_HASHED
-        'NOT ENDS WITH ANY OF',      # NOT_ENDS_WITH_ANY_OF_HASHED
-        'ARRAY CONTAINS ANY OF',     # ARRAY_CONTAINS_ANY_OF_HASHED
-        'ARRAY NOT CONTAINS ANY OF'  # ARRAY_NOT_CONTAINS_ANY_OF_HASHED
-    ]
-    COMPARISON_VALUES = [
-        STRING_LIST_VALUE,  # IS_ONE_OF
-        STRING_LIST_VALUE,  # IS_NOT_ONE_OF
-        STRING_LIST_VALUE,  # CONTAINS_ANY_OF
-        STRING_LIST_VALUE,  # NOT_CONTAINS_ANY_OF
-        STRING_LIST_VALUE,  # IS_ONE_OF_SEMVER
-        STRING_LIST_VALUE,  # IS_NOT_ONE_OF_SEMVER
-        STRING_VALUE,       # LESS_THAN_SEMVER
-        STRING_VALUE,       # LESS_THAN_OR_EQUAL_SEMVER
-        STRING_VALUE,       # GREATER_THAN_SEMVER
-        STRING_VALUE,       # GREATER_THAN_OR_EQUAL_SEMVER
-        DOUBLE_VALUE,       # EQUALS_NUMBER
-        DOUBLE_VALUE,       # NOT_EQUALS_NUMBER
-        DOUBLE_VALUE,       # LESS_THAN_NUMBER
-        DOUBLE_VALUE,       # LESS_THAN_OR_EQUAL_NUMBER
-        DOUBLE_VALUE,       # GREATER_THAN_NUMBER
-        DOUBLE_VALUE,       # GREATER_THAN_OR_EQUAL_NUMBER
-        STRING_LIST_VALUE,  # IS_ONE_OF_HASHED
-        STRING_LIST_VALUE,  # IS_NOT_ONE_OF_HASHED
-        DOUBLE_VALUE,       # BEFORE_DATETIME
-        DOUBLE_VALUE,       # AFTER_DATETIME
-        STRING_VALUE,       # EQUALS_HASHED
-        STRING_VALUE,       # NOT_EQUALS_HASHED
-        STRING_LIST_VALUE,  # STARTS_WITH_ANY_OF_HASHED
-        STRING_LIST_VALUE,  # NOT_STARTS_WITH_ANY_OF_HASHED
-        STRING_LIST_VALUE,  # ENDS_WITH_ANY_OF_HASHED
-        STRING_LIST_VALUE,  # NOT_ENDS_WITH_ANY_OF_HASHED
-        STRING_LIST_VALUE,  # ARRAY_CONTAINS_ANY_OF_HASHED
-        STRING_LIST_VALUE   # ARRAY_NOT_CONTAINS_ANY_OF_HASHED
-    ]
-    SEGMENT_COMPARATOR_TEXTS = ['IS IN SEGMENT', 'IS NOT IN SEGMENT']
-    PREREQUISITE_COMPARATOR_TEXTS = ['EQUALS', 'DOES NOT EQUAL']
-
     def __init__(self, log):
         self.log = log
 
@@ -252,7 +130,7 @@ class RolloutEvaluator(object):
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
     def _format_rule(self, comparison_attribute, comparator, comparison_value):
-        comparator_text = self.COMPARATOR_TEXTS[comparator]
+        comparator_text = COMPARATOR_TEXTS[comparator]
         return "User.%s %s %s" \
                % (comparison_attribute, comparator_text,
                   EvaluationLogBuilder.trunc_comparison_value_if_needed(comparator, comparison_value))
@@ -418,7 +296,7 @@ class RolloutEvaluator(object):
             return prerequisite_condition_result, None
 
         prerequisite_condition = ("Flag '%s' %s '%s'" %
-                                  (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
+                                  (prerequisite_key, PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
                                    str(prerequisite_comparison_value)))
 
         # Circular dependency check
@@ -455,7 +333,7 @@ class RolloutEvaluator(object):
         if log_builder:
             log_builder.new_line("Prerequisite flag evaluation result: '%s'." % str(prerequisite_value))
             log_builder.new_line("Condition (Flag '%s' %s '%s') evaluates to " %
-                                 (prerequisite_key, self.PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
+                                 (prerequisite_key, PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
                                   str(prerequisite_comparison_value)))
 
         # EQUALS
@@ -492,14 +370,14 @@ class RolloutEvaluator(object):
                                  key, event_id=3001)
                 context.is_missing_user_object_logged = True
             if log_builder:
-                log_builder.append("User %s '%s' " % (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
+                log_builder.append("User %s '%s' " % (SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
             return False, 'cannot evaluate, User Object is missing'
 
         # IS IN SEGMENT, IS NOT IN SEGMENT
         if segment_comparator in [SegmentComparator.IS_IN, SegmentComparator.IS_NOT_IN]:
             if log_builder:
                 log_builder.append("User %s '%s'" %
-                                   (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
+                                   (SEGMENT_COMPARATOR_TEXTS[segment_comparator], segment_name))
                 log_builder.new_line('(').increase_indent()
                 log_builder.new_line("Evaluating segment '%s':" % segment_name)
 
@@ -536,7 +414,7 @@ class RolloutEvaluator(object):
                 log_builder.new_line('Segment evaluation result: User IS%sIN SEGMENT.' %
                                      (' ' if segment_evaluation_result else ' NOT '))
                 log_builder.new_line("Condition (User %s '%s') evaluates to %s." %
-                                     (self.SEGMENT_COMPARATOR_TEXTS[segment_comparator],
+                                     (SEGMENT_COMPARATOR_TEXTS[segment_comparator],
                                       segment_name, 'true' if segment_condition_result else 'false'))
                 log_builder.decrease_indent().new_line(')')
             return segment_condition_result, error
@@ -553,7 +431,7 @@ class RolloutEvaluator(object):
 
         comparison_attribute = user_condition.get(COMPARISON_ATTRIBUTE)
         comparator = user_condition.get(COMPARATOR)
-        comparison_value = user_condition.get(self.COMPARISON_VALUES[comparator])
+        comparison_value = user_condition.get(COMPARISON_VALUES[comparator])
         error = None
 
         if log_builder:
@@ -617,7 +495,7 @@ class RolloutEvaluator(object):
         elif Comparator.LESS_THAN_SEMVER <= comparator <= Comparator.GREATER_THAN_OR_EQUAL_SEMVER:
             try:
                 if semver.VersionInfo.parse(str(user_value).strip()).match(
-                        self.COMPARATOR_TEXTS[comparator] + str(comparison_value).strip()
+                        COMPARATOR_TEXTS[comparator] + str(comparison_value).strip()
                 ):
                     return True, error
             except ValueError:

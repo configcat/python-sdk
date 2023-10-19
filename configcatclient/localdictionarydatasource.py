@@ -1,4 +1,4 @@
-from .constants import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE
+from .config import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 
 

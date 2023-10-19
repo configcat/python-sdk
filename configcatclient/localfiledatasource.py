@@ -1,5 +1,5 @@
-from .config import extend_config_with_inline_salt_and_segment
-from .constants import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE
+from .config import extend_config_with_inline_salt_and_segment, VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, \
+    INT_VALUE, DOUBLE_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
 import os

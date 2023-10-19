@@ -1,3 +1,4 @@
+from configcatclient.config import Comparator
 from configcatclient.utils import get_date_time
 
 
@@ -8,7 +9,6 @@ class EvaluationLogBuilder(object):
 
     @staticmethod
     def trunc_comparison_value_if_needed(comparator, comparison_value):
-        from configcatclient.rolloutevaluator import Comparator
         if comparator in [Comparator.IS_ONE_OF_HASHED,
                           Comparator.IS_NOT_ONE_OF_HASHED,
                           Comparator.EQUALS_HASHED,

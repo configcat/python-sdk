@@ -4,7 +4,7 @@ import unittest
 import requests
 
 from configcatclient.configcatclient import ConfigCatClient
-from configcatclient.constants import FEATURE_FLAGS, VALUE, COMPARATOR, COMPARISON_ATTRIBUTE, SERVED_VALUE, STRING_VALUE
+from configcatclient.config import FEATURE_FLAGS, VALUE, SERVED_VALUE, STRING_VALUE
 from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions, Hooks
 from configcatclient.pollingmode import PollingMode

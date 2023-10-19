@@ -7,7 +7,7 @@ from requests import Timeout
 
 from .config import extend_config_with_inline_salt_and_segment
 from .configentry import ConfigEntry
-from .constants import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
+from .config import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
 from .logger import Logger
 from .utils import get_utc_now_seconds_since_epoch

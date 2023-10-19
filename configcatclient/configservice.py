@@ -2,8 +2,8 @@ import hashlib
 from threading import Thread, Event, Lock
 
 from . import utils
+from .config import FEATURE_FLAGS, CONFIG_FILE_NAME, SERIALIZATION_FORMAT_VERSION
 from .configentry import ConfigEntry
-from .constants import CONFIG_FILE_NAME, FEATURE_FLAGS, SERIALIZATION_FORMAT_VERSION
 from .pollingmode import AutoPollingMode, LazyLoadingMode
 from .refreshresult import RefreshResult
 
