@@ -9,9 +9,9 @@
         "Identifier": "12345",
         "Email": "joe@example.com",
         "Country": "[\"USA\"]",
-        "Version": "1.0.0",
         "Date": "1693497500",
-        "Number": "1.0"
+        "Number": "1.0",
+        "Version": "1.0.0"
       },
       "returnValue": "default",
       "expectedLog": "allinone.txt"
