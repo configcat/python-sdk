@@ -205,7 +205,6 @@ class RolloutEvaluator(object):
 
                     # Evaluate targeting rule conditions (logically connected by AND)
                     if self._evaluate_conditions(conditions, context, salt, config, log_builder, value):
-                        served_value = targeting_rule.get(SERVED_VALUE)
                         if served_value is not None:
                             variation_id = served_value.get(VARIATION_ID, default_variation_id)
                             log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % value)
