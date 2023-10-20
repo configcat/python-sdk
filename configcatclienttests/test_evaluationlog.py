@@ -3,8 +3,7 @@ import logging
 import os
 import unittest
 import re
-
-from configcatclient.evaluationlogbuilder import EvaluationLogBuilder
+import sys
 
 try:
     from cStringIO import StringIO  # Python 2.7
@@ -146,6 +145,13 @@ class EvaluationLogTests(unittest.TestCase):
                     with open(expected_log_file_path, 'w') as file:
                         file.write(log)
                 else:
+                    # On Python 3.5 the order of the keys in the serialized user object is different.
+                    # So we use a different expected log file.
+                    if sys.version_info[:2] == (3, 5):
+                        expected_log_file_path_py35 = expected_log_file_path.replace('.txt', '_py35.txt')
+                        if os.path.isfile(expected_log_file_path_py35):
+                            expected_log_file_path = expected_log_file_path_py35
+
                     self.assertTrue(os.path.isfile(expected_log_file_path))
                     with open(expected_log_file_path, 'r') as file:
                         expected_log = file.read()
