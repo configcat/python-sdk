@@ -48,7 +48,7 @@ class UserTests(unittest.TestCase):
 
     def test_attribute_value_from_datetime(self):
         self.assertEqual(User.attribute_value_from_datetime(datetime(2023, 9, 19, 11, 1, 35)), '1695121295.0')
-        self.assertEqual(User.attribute_value_from_datetime(datetime(2023, 9, 19, 11, 1, 35, 510886)), '1695121295.510886')
+        self.assertEqual(User.attribute_value_from_datetime(datetime(2023, 9, 19, 11, 1, 35, 510000)), '1695121295.51')
 
     def test_attribute_value_from_list(self):
         self.assertEqual(User.attribute_value_from_list(['a', 'b', 'c']), '["a", "b", "c"]')

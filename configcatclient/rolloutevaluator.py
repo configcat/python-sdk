@@ -482,7 +482,7 @@ class RolloutEvaluator(object):
             try:
                 match = False
                 for x in filter(None, [x.strip() for x in comparison_value]):
-                    match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + x) or match
+                    match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + str(x)) or match
                 if (match and comparator == Comparator.IS_ONE_OF_SEMVER) \
                         or (not match and comparator == Comparator.IS_NOT_ONE_OF_SEMVER):
                     return True, error

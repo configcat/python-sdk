@@ -1,5 +1,5 @@
-from configcatclient.config import Comparator
-from configcatclient.utils import get_date_time
+from .config import Comparator
+from .utils import get_date_time
 
 
 class EvaluationLogBuilder(object):
