@@ -114,7 +114,7 @@ class ConfigCatClientTests(unittest.TestCase):
              "testKey":  {
                "t": 0,
                "r": [ {
-                 "c": [ { "t": { "a": "Custom1", "c": 19, "d": "wrong_utc_timestamp" } } ],
+                 "c": [ { "u": { "a": "Custom1", "c": 19, "d": "wrong_utc_timestamp" } } ],
                  "s": { "v": { "b": true } }
                } ],
                "v": { "b": false }

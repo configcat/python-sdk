@@ -36,9 +36,9 @@ SERVED_VALUE = 's'  # Value and Variation ID
 TARGETING_RULE_PERCENTAGE_OPTIONS = 'p'
 
 # Condition
-USER_CONDITION = 't'
+USER_CONDITION = 'u'
 SEGMENT_CONDITION = 's'  # Segment targeting rule
-PREREQUISITE_FLAG_CONDITION = 'd'  # Prerequisite flag targeting rule
+PREREQUISITE_FLAG_CONDITION = 'p'  # Prerequisite flag targeting rule
 
 # Segment Condition
 SEGMENT_INDEX = 's'

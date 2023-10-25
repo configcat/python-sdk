@@ -462,11 +462,11 @@ class RolloutEvaluator(object):
 
         # IS ONE OF
         if comparator == Comparator.IS_ONE_OF:
-            if str(user_value) in [x.strip() for x in comparison_value]:
+            if str(user_value) in comparison_value:
                 return True, error
         # IS NOT ONE OF
         elif comparator == Comparator.IS_NOT_ONE_OF:
-            if str(user_value) not in [x.strip() for x in comparison_value]:
+            if str(user_value) not in comparison_value:
                 return True, error
         # CONTAINS ANY OF
         elif comparator == Comparator.CONTAINS_ANY_OF:
