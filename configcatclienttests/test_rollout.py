@@ -35,26 +35,23 @@ class RolloutTests(unittest.TestCase):
 
     def test_matrix_comparators_v6(self):
         self._test_matrix('data/testmatrix_comparators_v6.csv',
-                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ',
-                          self.value_test_type)
+                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ', self.value_test_type)
 
     def test_matrix_segments(self):
         self._test_matrix('data/testmatrix_segments.csv',
-                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/h99HYXWWNE2bH8eWyLAVMA',
-                          self.value_test_type)
+                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/h99HYXWWNE2bH8eWyLAVMA', self.value_test_type)
 
     def test_matrix_prerequisite_flag(self):
         self._test_matrix('data/testmatrix_prerequisite_flag.csv',
-                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg',
-                          self.value_test_type)
+                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg', self.value_test_type)
 
     def test_matrix_and_or(self):
         self._test_matrix('data/testmatrix_and_or.csv',
-                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/ByMO9yZNn02kXcm72lnY1A',
-                          self.value_test_type)
+                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/ByMO9yZNn02kXcm72lnY1A', self.value_test_type)
 
     def test_matrix_variation_id(self):
-        self._test_matrix('data/testmatrix_variationId.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
+        self._test_matrix('data/testmatrix_variationId.csv',
+                          'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
 
     def _test_matrix(self, file_path, sdk_key, type, base_url=None):
         script_dir = path.dirname(__file__)

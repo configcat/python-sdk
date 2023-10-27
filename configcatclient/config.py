@@ -116,37 +116,53 @@ class Comparator(IntEnum):
     NOT_ENDS_WITH_ANY_OF_HASHED = 25
     ARRAY_CONTAINS_ANY_OF_HASHED = 26
     ARRAY_NOT_CONTAINS_ANY_OF_HASHED = 27
+    EQUALS = 28
+    NOT_EQUALS = 29
+    STARTS_WITH_ANY_OF = 30
+    NOT_STARTS_WITH_ANY_OF = 31
+    ENDS_WITH_ANY_OF = 32
+    NOT_ENDS_WITH_ANY_OF = 33
+    ARRAY_CONTAINS_ANY_OF = 34
+    ARRAY_NOT_CONTAINS_ANY_OF = 35
 
 
 COMPARATOR_TEXTS = [
-    'IS ONE OF',                 # IS_ONE_OF
-    'IS NOT ONE OF',             # IS_NOT_ONE_OF
-    'CONTAINS ANY OF',           # CONTAINS_ANY_OF
-    'NOT CONTAINS ANY OF',       # NOT_CONTAINS_ANY_OF
-    'IS ONE OF',                 # IS_ONE_OF_SEMVER
-    'IS NOT ONE OF',             # IS_NOT_ONE_OF_SEMVER
-    '<',                         # LESS_THAN_SEMVER
-    '<=',                        # LESS_THAN_OR_EQUAL_SEMVER
-    '>',                         # GREATER_THAN_SEMVER
-    '>=',                        # GREATER_THAN_OR_EQUAL_SEMVER
-    '=',                         # EQUALS_NUMBER
-    '!=',                        # NOT_EQUALS_NUMBER
-    '<',                         # LESS_THAN_NUMBER
-    '<=',                        # LESS_THAN_OR_EQUAL_NUMBER
-    '>',                         # GREATER_THAN_NUMBER
-    '>=',                        # GREATER_THAN_OR_EQUAL_NUMBER
-    'IS ONE OF',                 # IS_ONE_OF_HASHED
-    'IS NOT ONE OF',             # IS_NOT_ONE_OF_HASHED
-    'BEFORE',                    # BEFORE_DATETIME
-    'AFTER',                     # AFTER_DATETIME
-    'EQUALS',                    # EQUALS_HASHED
-    'NOT EQUALS',                # NOT_EQUALS_HASHED
-    'STARTS WITH ANY OF',        # STARTS_WITH_ANY_OF_HASHED
-    'NOT STARTS WITH ANY OF',    # NOT_STARTS_WITH_ANY_OF_HASHED
-    'ENDS WITH ANY OF',          # ENDS_WITH_ANY_OF_HASHED
-    'NOT ENDS WITH ANY OF',      # NOT_ENDS_WITH_ANY_OF_HASHED
-    'ARRAY CONTAINS ANY OF',     # ARRAY_CONTAINS_ANY_OF_HASHED
-    'ARRAY NOT CONTAINS ANY OF'  # ARRAY_NOT_CONTAINS_ANY_OF_HASHED
+    'IS ONE OF',                  # IS_ONE_OF
+    'IS NOT ONE OF',              # IS_NOT_ONE_OF
+    'CONTAINS ANY OF',            # CONTAINS_ANY_OF
+    'NOT CONTAINS ANY OF',        # NOT_CONTAINS_ANY_OF
+    'IS ONE OF',                  # IS_ONE_OF_SEMVER
+    'IS NOT ONE OF',              # IS_NOT_ONE_OF_SEMVER
+    '<',                          # LESS_THAN_SEMVER
+    '<=',                         # LESS_THAN_OR_EQUAL_SEMVER
+    '>',                          # GREATER_THAN_SEMVER
+    '>=',                         # GREATER_THAN_OR_EQUAL_SEMVER
+    '=',                          # EQUALS_NUMBER
+    '!=',                         # NOT_EQUALS_NUMBER
+    '<',                          # LESS_THAN_NUMBER
+    '<=',                         # LESS_THAN_OR_EQUAL_NUMBER
+    '>',                          # GREATER_THAN_NUMBER
+    '>=',                         # GREATER_THAN_OR_EQUAL_NUMBER
+    'IS ONE OF',                  # IS_ONE_OF_HASHED
+    'IS NOT ONE OF',              # IS_NOT_ONE_OF_HASHED
+    'BEFORE',                     # BEFORE_DATETIME
+    'AFTER',                      # AFTER_DATETIME
+    'EQUALS',                     # EQUALS_HASHED
+    'NOT EQUALS',                 # NOT_EQUALS_HASHED
+    'STARTS WITH ANY OF',         # STARTS_WITH_ANY_OF_HASHED
+    'NOT STARTS WITH ANY OF',     # NOT_STARTS_WITH_ANY_OF_HASHED
+    'ENDS WITH ANY OF',           # ENDS_WITH_ANY_OF_HASHED
+    'NOT ENDS WITH ANY OF',       # NOT_ENDS_WITH_ANY_OF_HASHED
+    'ARRAY CONTAINS ANY OF',      # ARRAY_CONTAINS_ANY_OF_HASHED
+    'ARRAY NOT CONTAINS ANY OF',  # ARRAY_NOT_CONTAINS_ANY_OF_HASHED
+    'EQUALS',                     # EQUALS
+    'NOT EQUALS',                 # NOT_EQUALS
+    'STARTS WITH ANY OF',         # STARTS_WITH_ANY_OF
+    'NOT STARTS WITH ANY OF',     # NOT_STARTS_WITH_ANY_OF
+    'ENDS WITH ANY OF',           # ENDS_WITH_ANY_OF
+    'NOT ENDS WITH ANY OF',       # NOT_ENDS_WITH_ANY_OF
+    'ARRAY CONTAINS ANY OF',      # ARRAY_CONTAINS_ANY_OF
+    'ARRAY NOT CONTAINS ANY OF'   # ARRAY_NOT_CONTAINS_ANY_OF
 ]
 COMPARISON_VALUES = [
     STRING_LIST_VALUE,  # IS_ONE_OF
@@ -176,7 +192,15 @@ COMPARISON_VALUES = [
     STRING_LIST_VALUE,  # ENDS_WITH_ANY_OF_HASHED
     STRING_LIST_VALUE,  # NOT_ENDS_WITH_ANY_OF_HASHED
     STRING_LIST_VALUE,  # ARRAY_CONTAINS_ANY_OF_HASHED
-    STRING_LIST_VALUE   # ARRAY_NOT_CONTAINS_ANY_OF_HASHED
+    STRING_LIST_VALUE,  # ARRAY_NOT_CONTAINS_ANY_OF_HASHED
+    STRING_VALUE,       # EQUALS
+    STRING_VALUE,       # NOT_EQUALS
+    STRING_LIST_VALUE,  # STARTS_WITH_ANY_OF
+    STRING_LIST_VALUE,  # NOT_STARTS_WITH_ANY_OF
+    STRING_LIST_VALUE,  # ENDS_WITH_ANY_OF
+    STRING_LIST_VALUE,  # NOT_ENDS_WITH_ANY_OF
+    STRING_LIST_VALUE,  # ARRAY_CONTAINS_ANY_OF
+    STRING_LIST_VALUE   # ARRAY_NOT_CONTAINS_ANY_OF
 ]
 SEGMENT_COMPARATOR_TEXTS = ['IS IN SEGMENT', 'IS NOT IN SEGMENT']
 PREREQUISITE_COMPARATOR_TEXTS = ['EQUALS', 'DOES NOT EQUAL']

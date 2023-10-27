@@ -546,7 +546,6 @@ class RolloutEvaluator(object):
             if (comparator == Comparator.BEFORE_DATETIME and user_value_float < comparison_value_float) \
                     or (comparator == Comparator.AFTER_DATETIME and user_value_float > comparison_value_float):
                 return True, error
-
         # EQUALS (hashed)
         elif comparator == Comparator.EQUALS_HASHED:
             if sha256(user_value, salt, context_salt) == comparison_value:
@@ -577,7 +576,6 @@ class RolloutEvaluator(object):
             # If no matches were found for the NOT_* conditions, then return True
             if comparator in [Comparator.NOT_STARTS_WITH_ANY_OF_HASHED, Comparator.NOT_ENDS_WITH_ANY_OF_HASHED]:
                 return True, error
-
         # ARRAY CONTAINS ANY OF, ARRAY NOT CONTAINS ANY OF (hashed)
         elif Comparator.ARRAY_CONTAINS_ANY_OF_HASHED <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF_HASHED:
             try:
@@ -598,6 +596,48 @@ class RolloutEvaluator(object):
             else:
                 for comparison in comparison_value:
                     if comparison in hashed_user_values:
+                        return False, None
+                return True, error
+        # EQUALS
+        elif comparator == Comparator.EQUALS:
+            if user_value == comparison_value:
+                return True, error
+        # NOT EQUALS
+        elif comparator == Comparator.NOT_EQUALS:
+            if user_value != comparison_value:
+                return True, error
+        # STARTS WITH ANY OF, NOT STARTS WITH ANY OF, ENDS WITH ANY OF, NOT ENDS WITH ANY OF
+        elif Comparator.STARTS_WITH_ANY_OF <= comparator <= Comparator.NOT_ENDS_WITH_ANY_OF:
+            for comparison in comparison_value:
+                if (comparator == Comparator.STARTS_WITH_ANY_OF and user_value.startswith(comparison)) or \
+                        (comparator == Comparator.ENDS_WITH_ANY_OF and user_value.endswith(comparison)):
+                    return True, error
+                elif (comparator == Comparator.NOT_STARTS_WITH_ANY_OF and user_value.startswith(comparison)) \
+                        or (comparator == Comparator.NOT_ENDS_WITH_ANY_OF and user_value.endswith(comparison)):
+                    return False, None
+
+            # If no matches were found for the NOT_* conditions, then return True
+            if comparator in [Comparator.NOT_STARTS_WITH_ANY_OF, Comparator.NOT_ENDS_WITH_ANY_OF]:
+                return True, error
+        # ARRAY CONTAINS ANY OF, ARRAY NOT CONTAINS ANY OF
+        elif Comparator.ARRAY_CONTAINS_ANY_OF <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF:
+            try:
+                user_value_list = json.loads(user_value)
+                if not isinstance(user_value_list, list):
+                    raise ValueError()
+            except ValueError:
+                validation_error = "'%s' is not a valid JSON string array" % str(user_value)
+                error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
+                                                            validation_error)
+                return False, error
+
+            if comparator == Comparator.ARRAY_CONTAINS_ANY_OF:
+                for comparison in comparison_value:
+                    if comparison in user_value_list:
+                        return True, error
+            else:
+                for comparison in comparison_value:
+                    if comparison in user_value_list:
                         return False, None
                 return True, error
 
