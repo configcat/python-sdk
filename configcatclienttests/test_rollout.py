@@ -53,6 +53,11 @@ class RolloutTests(unittest.TestCase):
         self._test_matrix('data/testmatrix_variationId.csv',
                           'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
 
+    def test_matrix_unicode(self):
+        # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08dbc325-7f69-4fd4-8af4-cf9f24ec8ac9/08dbd63c-9774-49d6-8187-5f2aab7bd606/08dbc325-9ebd-4587-8171-88f76a3004cb
+        self._test_matrix('data/testmatrix_unicode.csv',
+                          'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/Da6w8dBbmUeMUBhh0iEeQQ', self.value_test_type)
+
     def _test_matrix(self, file_path, sdk_key, type, base_url=None):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)

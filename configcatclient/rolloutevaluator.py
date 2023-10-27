@@ -16,11 +16,11 @@ from .logger import Logger
 from .user import User
 
 
-def sha256(value, salt, context_salt):
+def sha256(value_utf8, salt, context_salt):
     """
     Calculates the SHA256 hash of the given value with the given salt and context_salt.
     """
-    return hashlib.sha256(value.encode('utf8') + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
+    return hashlib.sha256(value_utf8 + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
 
 
 class RolloutEvaluator(object):
@@ -524,11 +524,11 @@ class RolloutEvaluator(object):
                 return True, error
         # IS ONE OF (hashed)
         elif comparator == Comparator.IS_ONE_OF_HASHED:
-            if sha256(user_value, salt, context_salt) in comparison_value:
+            if sha256(user_value.encode('utf8'), salt, context_salt) in comparison_value:
                 return True, error
         # IS NOT ONE OF (hashed)
         elif comparator == Comparator.IS_NOT_ONE_OF_HASHED:
-            if sha256(user_value, salt, context_salt) not in comparison_value:
+            if sha256(user_value.encode('utf8'), salt, context_salt) not in comparison_value:
                 return True, error
         # BEFORE, AFTER (UTC datetime)
         elif Comparator.BEFORE_DATETIME <= comparator <= Comparator.AFTER_DATETIME:
@@ -548,29 +548,30 @@ class RolloutEvaluator(object):
                 return True, error
         # EQUALS (hashed)
         elif comparator == Comparator.EQUALS_HASHED:
-            if sha256(user_value, salt, context_salt) == comparison_value:
+            if sha256(user_value.encode('utf8'), salt, context_salt) == comparison_value:
                 return True, error
         # NOT EQUALS (hashed)
         elif comparator == Comparator.NOT_EQUALS_HASHED:
-            if sha256(user_value, salt, context_salt) != comparison_value:
+            if sha256(user_value.encode('utf8'), salt, context_salt) != comparison_value:
                 return True, error
         # STARTS WITH ANY OF, NOT STARTS WITH ANY OF, ENDS WITH ANY OF, NOT ENDS WITH ANY OF (hashed)
         elif Comparator.STARTS_WITH_ANY_OF_HASHED <= comparator <= Comparator.NOT_ENDS_WITH_ANY_OF_HASHED:
             for comparison in comparison_value:
                 underscore_index = comparison.index('_')
                 length = int(comparison[:underscore_index])
+                user_value_utf8 = user_value.encode('utf8')
 
-                if len(user_value) >= length:
+                if len(user_value_utf8) >= length:
                     comparison_string = comparison[underscore_index + 1:]
                     if (comparator == Comparator.STARTS_WITH_ANY_OF_HASHED
-                        and sha256(user_value[:length], salt, context_salt) == comparison_string) or \
+                        and sha256(user_value_utf8[:length], salt, context_salt) == comparison_string) or \
                             (comparator == Comparator.ENDS_WITH_ANY_OF_HASHED
-                             and sha256(user_value[-length:], salt, context_salt) == comparison_string):
+                             and sha256(user_value_utf8[-length:], salt, context_salt) == comparison_string):
                         return True, error
                     elif (comparator == Comparator.NOT_STARTS_WITH_ANY_OF_HASHED
-                          and sha256(user_value[:length], salt, context_salt) == comparison_string) or \
+                          and sha256(user_value_utf8[:length], salt, context_salt) == comparison_string) or \
                             (comparator == Comparator.NOT_ENDS_WITH_ANY_OF_HASHED
-                             and sha256(user_value[-length:], salt, context_salt) == comparison_string):
+                             and sha256(user_value_utf8[-length:], salt, context_salt) == comparison_string):
                         return False, None
 
             # If no matches were found for the NOT_* conditions, then return True
@@ -588,7 +589,7 @@ class RolloutEvaluator(object):
                                                             validation_error)
                 return False, error
 
-            hashed_user_values = [sha256(x.strip(), salt, context_salt) for x in user_value_list]
+            hashed_user_values = [sha256(x.encode('utf8'), salt, context_salt) for x in user_value_list]
             if comparator == Comparator.ARRAY_CONTAINS_ANY_OF_HASHED:
                 for comparison in comparison_value:
                     if comparison in hashed_user_values:
