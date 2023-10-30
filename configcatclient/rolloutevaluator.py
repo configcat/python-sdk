@@ -238,7 +238,7 @@ class RolloutEvaluator(object):
                     if not result:
                         log_builder.append(', skipping the remaining AND conditions')
 
-                if not result:
+                if not result or error:
                     condition_result = False
                     break
             elif segment_condition is not None:
@@ -251,13 +251,13 @@ class RolloutEvaluator(object):
                     elif error is None:
                         log_builder.new_line()
 
-                if not result:
+                if not result or error:
                     condition_result = False
                     break
             elif prerequisite_flag_condition is not None:
                 result, error = self._evaluate_prerequisite_flag_condition(prerequisite_flag_condition, context, config,
                                                                            log_builder)
-                if not result:
+                if not result or error:
                     condition_result = False
                     break
 
@@ -411,12 +411,23 @@ class RolloutEvaluator(object):
                 log_builder.decrease_indent()
                 segment_evaluation_result = segment_condition_result if segment_comparator == SegmentComparator.IS_IN \
                     else not segment_condition_result
-                log_builder.new_line('Segment evaluation result: User IS%sIN SEGMENT.' %
-                                     (' ' if segment_evaluation_result else ' NOT '))
-                log_builder.new_line("Condition (User %s '%s') evaluates to %s." %
-                                     (SEGMENT_COMPARATOR_TEXTS[segment_comparator],
-                                      segment_name, 'true' if segment_condition_result else 'false'))
+                log_builder.new_line('Segment evaluation result: ')
+                if not error:
+                    log_builder.append('User IS%sIN SEGMENT.' % (' ' if segment_evaluation_result else ' NOT '))
+                else:
+                    log_builder.append('%s.' % error)
+
+                log_builder.new_line("Condition (User %s '%s') " % (SEGMENT_COMPARATOR_TEXTS[segment_comparator],
+                                                                    segment_name))
+                if not error:
+                    log_builder.append("evaluates to %s." % ('true' if segment_condition_result else 'false'))
+                else:
+                    log_builder.append('failed to evaluate.')
+
                 log_builder.decrease_indent().new_line(')')
+                if error:
+                    log_builder.new_line()
+
             return segment_condition_result, error
 
         return False, None
