@@ -1,7 +1,10 @@
 import json
+import sys
 from math import floor
 
 from . import utils
+from .config import extend_config_with_inline_salt_and_segment
+from .utils import unicode_to_utf8
 
 
 class ConfigEntry(object):
@@ -38,6 +41,9 @@ class ConfigEntry(object):
         try:
             config_json = string[etag_index + 1:]
             config = json.loads(config_json)
+            if sys.version_info[0] == 2:
+                config = unicode_to_utf8(config)  # On Python 2.7, convert unicode to utf-8
+            extend_config_with_inline_salt_and_segment(config)
         except ValueError as e:
             raise ValueError('Invalid config JSON: {}. {}'.format(config_json, str(e)))
 

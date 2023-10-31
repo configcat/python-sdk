@@ -70,3 +70,31 @@ def get_date_time(seconds_since_epoch):
 
 def get_utc_now_seconds_since_epoch():
     return get_seconds_since_epoch(get_utc_now())
+
+
+def unicode_to_utf8(data):
+    """
+    Convert unicode data in a collection to UTF-8 data. Used for supporting unicode config json strings on Python 2.7.
+    Once Python 2.7 is no longer supported, this function can be removed.
+    """
+    if isinstance(data, dict):
+        return {unicode_to_utf8(key): unicode_to_utf8(value) for key, value in data.iteritems()}
+    elif isinstance(data, list):
+        return [unicode_to_utf8(element) for element in data]
+    elif isinstance(data, unicode):  # noqa: F821 (ignore warning: unicode is undefined in Python 3)
+        return data.encode('utf-8')
+    else:
+        return data
+
+
+def encode_utf8(value):
+    """
+    Get the UTF-8 encoded value of a string. Used for supporting unicode config json strings on Python 2.7.
+    If the value is already UTF-8 encoded, it is returned as is.
+    Once Python 2.7 is no longer supported, this function can be removed.
+    The use of this function can be replaced with encode() method of the string: value.encode('utf-8')
+    """
+    try:
+        return value.encode('utf-8')
+    except UnicodeDecodeError:
+        return value

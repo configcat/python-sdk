@@ -1,6 +1,7 @@
 import json
 
 import hashlib
+import sys
 import semver
 
 from .config import FEATURE_FLAGS, INLINE_SALT, TARGETING_RULES, PERCENTAGE_RULE_ATTRIBUTE, CONDITIONS, SERVED_VALUE, \
@@ -14,13 +15,14 @@ from .evaluationlogbuilder import EvaluationLogBuilder
 from .logger import Logger
 
 from .user import User
+from .utils import unicode_to_utf8, encode_utf8
 
 
 def sha256(value_utf8, salt, context_salt):
     """
     Calculates the SHA256 hash of the given value with the given salt and context_salt.
     """
-    return hashlib.sha256(value_utf8 + salt.encode('utf8') + context_salt.encode('utf8')).hexdigest()
+    return hashlib.sha256(value_utf8 + salt.encode('utf-8') + context_salt.encode('utf-8')).hexdigest()
 
 
 class RolloutEvaluator(object):
@@ -535,11 +537,11 @@ class RolloutEvaluator(object):
                 return True, error
         # IS ONE OF (hashed)
         elif comparator == Comparator.IS_ONE_OF_HASHED:
-            if sha256(user_value.encode('utf8'), salt, context_salt) in comparison_value:
+            if sha256(encode_utf8(user_value), salt, context_salt) in comparison_value:
                 return True, error
         # IS NOT ONE OF (hashed)
         elif comparator == Comparator.IS_NOT_ONE_OF_HASHED:
-            if sha256(user_value.encode('utf8'), salt, context_salt) not in comparison_value:
+            if sha256(encode_utf8(user_value), salt, context_salt) not in comparison_value:
                 return True, error
         # BEFORE, AFTER (UTC datetime)
         elif Comparator.BEFORE_DATETIME <= comparator <= Comparator.AFTER_DATETIME:
@@ -559,18 +561,18 @@ class RolloutEvaluator(object):
                 return True, error
         # EQUALS (hashed)
         elif comparator == Comparator.EQUALS_HASHED:
-            if sha256(user_value.encode('utf8'), salt, context_salt) == comparison_value:
+            if sha256(encode_utf8(user_value), salt, context_salt) == comparison_value:
                 return True, error
         # NOT EQUALS (hashed)
         elif comparator == Comparator.NOT_EQUALS_HASHED:
-            if sha256(user_value.encode('utf8'), salt, context_salt) != comparison_value:
+            if sha256(encode_utf8(user_value), salt, context_salt) != comparison_value:
                 return True, error
         # STARTS WITH ANY OF, NOT STARTS WITH ANY OF, ENDS WITH ANY OF, NOT ENDS WITH ANY OF (hashed)
         elif Comparator.STARTS_WITH_ANY_OF_HASHED <= comparator <= Comparator.NOT_ENDS_WITH_ANY_OF_HASHED:
             for comparison in comparison_value:
                 underscore_index = comparison.index('_')
                 length = int(comparison[:underscore_index])
-                user_value_utf8 = user_value.encode('utf8')
+                user_value_utf8 = encode_utf8(user_value)
 
                 if len(user_value_utf8) >= length:
                     comparison_string = comparison[underscore_index + 1:]
@@ -594,13 +596,16 @@ class RolloutEvaluator(object):
                 user_value_list = json.loads(user_value)
                 if not isinstance(user_value_list, list):
                     raise ValueError()
+
+                if sys.version_info[0] == 2:
+                    user_value_list = unicode_to_utf8(user_value_list)  # On Python 2.7, convert unicode to utf-8
             except ValueError:
                 validation_error = "'%s' is not a valid JSON string array" % str(user_value)
                 error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
                                                             validation_error)
                 return False, error
 
-            hashed_user_values = [sha256(x.encode('utf8'), salt, context_salt) for x in user_value_list]
+            hashed_user_values = [sha256(encode_utf8(x), salt, context_salt) for x in user_value_list]
             if comparator == Comparator.ARRAY_CONTAINS_ANY_OF_HASHED:
                 for comparison in comparison_value:
                     if comparison in hashed_user_values:
@@ -637,6 +642,9 @@ class RolloutEvaluator(object):
                 user_value_list = json.loads(user_value)
                 if not isinstance(user_value_list, list):
                     raise ValueError()
+
+                if sys.version_info[0] == 2:
+                    user_value_list = unicode_to_utf8(user_value_list)  # On Python 2.7, convert unicode to utf-8
             except ValueError:
                 validation_error = "'%s' is not a valid JSON string array" % str(user_value)
                 error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,

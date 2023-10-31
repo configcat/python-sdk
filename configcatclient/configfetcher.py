@@ -10,7 +10,7 @@ from .configentry import ConfigEntry
 from .config import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
 from .logger import Logger
-from .utils import get_utc_now_seconds_since_epoch
+from .utils import get_utc_now_seconds_since_epoch, unicode_to_utf8
 from .version import CONFIGCATCLIENT_VERSION
 
 if sys.version_info < (2, 7, 9):
@@ -152,7 +152,7 @@ class ConfigFetcher(object):
         # Retry the config download with the new base_url
         return self.get_configuration(etag, retries + 1)
 
-    def _fetch(self, etag):
+    def _fetch(self, etag):  # noqa: C901
         uri = self._base_url + '/' + BASE_PATH + self._sdk_key + BASE_EXTENSION
         headers = self._headers
         if etag:
@@ -171,8 +171,14 @@ class ConfigFetcher(object):
                     response_etag = ''
                 config = response.json()
                 extend_config_with_inline_salt_and_segment(config)
+                if sys.version_info[0] == 2:
+                    config = unicode_to_utf8(config)  # On Python 2.7, convert unicode to utf-8
+                    config_json_string = response.text.encode('utf-8')
+                else:
+                    config_json_string = response.text
+
                 return FetchResponse.success(
-                    ConfigEntry(config, response_etag, response.text, get_utc_now_seconds_since_epoch()))
+                    ConfigEntry(config, response_etag, config_json_string, get_utc_now_seconds_since_epoch()))
             elif response.status_code == 304:
                 return FetchResponse.not_modified()
             elif response.status_code in [404, 403]:
