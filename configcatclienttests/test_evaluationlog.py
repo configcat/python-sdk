@@ -145,16 +145,31 @@ class EvaluationLogTests(unittest.TestCase):
                     with open(expected_log_file_path, 'w') as file:
                         file.write(log)
                 else:
-                    # On Python 3.5 the order of the keys in the serialized user object is different.
-                    # So we use a different expected log file.
-                    if sys.version_info[:2] == (3, 5):
-                        expected_log_file_path_py35 = expected_log_file_path.replace('.txt', '_py35.txt')
-                        if os.path.isfile(expected_log_file_path_py35):
-                            expected_log_file_path = expected_log_file_path_py35
-
                     self.assertTrue(os.path.isfile(expected_log_file_path))
                     with open(expected_log_file_path, 'r') as file:
                         expected_log = file.read()
+
+                    # On <= Python 3.5 the order of the keys in the serialized user object is random.
+                    # We need to cut out the JSON part and compare the JSON objects separately.
+                    if sys.version_info[:2] <= (3, 5):
+                        if expected_log.startswith('INFO [5000]') and log.startswith('INFO [5000]'):
+                            # Extract the JSON part from expected_log
+                            match = re.search(r'(\{.*?\})', expected_log)
+                            expected_log_json = None
+                            if match:
+                                expected_log_json = json.loads(match.group(1))
+                                # Remove the JSON-like part from the original string
+                                expected_log = re.sub(r'\{.*?\}', '', expected_log)
+
+                            # Extract the JSON part from log
+                            log_json = None
+                            match = re.search(r'(\{.*?\})', log)
+                            if match:
+                                log_json = json.loads(match.group(1))
+                                # Remove the JSON-like part from the original string
+                                log = re.sub(r'\{.*?\}', '', log)
+
+                            self.assertEqual(expected_log_json, log_json, 'User object mismatch for test: ' + test_name)
 
                     self.assertEqual(expected_log, log, 'Log mismatch for test: ' + test_name)
                     self.assertEqual(return_value, value, 'Return value mismatch for test: ' + test_name)
