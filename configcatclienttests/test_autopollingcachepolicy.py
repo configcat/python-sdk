@@ -302,7 +302,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
             request_get.return_value = response_mock
             response_mock.json.return_value = TEST_OBJECT
             response_mock.status_code = 200
-            response_mock.headers = {'Etag': 'test-etag'}
+            response_mock.headers = {'ETag': 'test-etag'}
 
             polling_mode = PollingMode.auto_poll(poll_interval_seconds=1)
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())
@@ -337,7 +337,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
             request_get.return_value = response_mock
             response_mock.json.return_value = TEST_OBJECT
             response_mock.status_code = 200
-            response_mock.headers = {'Etag': 'test-etag'}
+            response_mock.headers = {'ETag': 'test-etag'}
 
             polling_mode = PollingMode.auto_poll(poll_interval_seconds=1)
             config_fetcher = ConfigFetcher('', log, polling_mode.identifier())

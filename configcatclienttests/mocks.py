@@ -1,5 +1,6 @@
 import json
 import time
+import logging
 
 from configcatclient.configentry import ConfigEntry
 from configcatclient.utils import get_utc_now_seconds_since_epoch, distant_past
@@ -147,7 +148,7 @@ class MockHeader:
         self.etag = etag
 
     def get(self, name):
-        if name == 'Etag':
+        if name == 'ETag':
             return self.etag
         return None
 
@@ -199,3 +200,24 @@ class HookCallbacks(object):
     def callback_exception(self, *args, **kwargs):
         self.callback_exception_call_count += 1
         raise Exception("error")
+
+
+class MockLogHandler(logging.Handler):
+    def __init__(self, *args, **kwargs):
+        super(MockLogHandler, self).__init__(*args, **kwargs)
+        self.error_logs = []
+        self.warning_logs = []
+        self.info_logs = []
+
+    def clear(self):
+        self.error_logs = []
+        self.warning_logs = []
+        self.info_logs = []
+
+    def emit(self, record):
+        if record.levelno == logging.ERROR:
+            self.error_logs.append(record.getMessage())
+        elif record.levelno == logging.WARNING:
+            self.warning_logs.append(record.getMessage())
+        elif record.levelno == logging.INFO:
+            self.info_logs.append(record.getMessage())

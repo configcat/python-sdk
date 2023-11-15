@@ -1,8 +1,16 @@
+import logging
 import unittest
 import json
 from datetime import datetime
+from parameterized import parameterized
 
+from configcatclient.configcatoptions import Hooks
+from configcatclient.rolloutevaluator import RolloutEvaluator
 from configcatclient.user import User
+from configcatclient.logger import Logger
+from configcatclienttests.mocks import MockLogHandler
+
+logging.basicConfig()
 
 
 class UserTests(unittest.TestCase):
@@ -52,3 +60,55 @@ class UserTests(unittest.TestCase):
 
     def test_attribute_value_from_list(self):
         self.assertEqual(User.attribute_value_from_list(['a', 'b', 'c']), '["a", "b", "c"]')
+
+    @parameterized.expand([
+        ('identifierAttribute', False, "False"),
+        ('emailAttribute', False, "False"),
+        ('countryAttribute', False, "False"),
+        ('Custom1', False, "False"),
+        ('identifierAttribute', 1.23, "1.23"),
+        ('emailAttribute', 1.23, "1.23"),
+        ('countryAttribute', 1.23, "1.23"),
+        ('Custom1', 1.23, "1.23"),
+    ])
+    def test_non_string_attribute(self, attribute_name, attribute_value, comparison_value):
+        config = {
+            'f': {
+                'test': {
+                    't': 0,
+                    'r': [
+                        {
+                            'c': [
+                                {
+                                    'u': {'a': attribute_name, 'c': 1, 'l': [comparison_value]}
+                                }
+                            ],
+                            's': {'v': {'b': False}}
+                        },
+                        {
+                            'c': [
+                                {
+                                    'u': {'a': attribute_name, 'c': 0, 'l': [comparison_value]}
+                                }
+                            ],
+                            's': {'v': {'b': True}}
+                        },
+                    ],
+                    'v': {'b': False}
+                }
+            }
+        }
+
+        user = User(identifier='id', custom={attribute_name: attribute_value})
+        log_builder = None
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+        value, _, _, _, _ = evaluator.evaluate('test', user, 'default_value', 'default_variation_id', config, log_builder)
+
+        self.assertTrue(value)
+        self.assertEqual(1, len(log_handler.warning_logs))
+        self.assertTrue(log_handler.warning_logs[0].startswith('[4004]'))
+

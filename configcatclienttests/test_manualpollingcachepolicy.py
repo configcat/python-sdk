@@ -94,7 +94,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             response_mock.json.return_value = json.loads(config_json_string)
             response_mock.text = config_json_string
             response_mock.status_code = 200
-            response_mock.headers = {'Etag': 'test-etag'}
+            response_mock.headers = {'ETag': 'test-etag'}
 
             polling_mode = PollingMode.manual_poll()
             config_cache = InMemoryConfigCache()

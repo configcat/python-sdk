@@ -166,7 +166,7 @@ class ConfigFetcher(object):
             response.raise_for_status()
 
             if response.status_code in [200, 201, 202, 203, 204]:
-                response_etag = response.headers.get('Etag')
+                response_etag = response.headers.get('ETag')
                 if response_etag is None:
                     response_etag = ''
                 config = response.json()

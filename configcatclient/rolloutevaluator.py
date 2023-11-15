@@ -137,6 +137,22 @@ class RolloutEvaluator(object):
                % (comparison_attribute, comparator_text,
                   EvaluationLogBuilder.trunc_comparison_value_if_needed(comparator, comparison_value))
 
+    def _get_user_attribute(self, context, user, attribute):
+        user_attribute = user.get_attribute(attribute)
+        if user_attribute is not None:
+            if not isinstance(user_attribute, str):
+                if attribute not in context.type_mismatched_logged_user_attributes:
+                    self.log.warning('Evaluation of setting \'%s\' may not produce the expected result '
+                                     '(the User.%s attribute is not a string value, thus it was converted to \'%s\' '
+                                     'using the runtime\'s default conversion). User Object attribute values should be '
+                                     'passed as strings. You can use the static helper methods of the `User` class to '
+                                     'produce attribute values with the correct type and format.',
+                                     context.key, attribute, user_attribute, event_id=4004)
+                    context.type_mismatched_logged_user_attributes.add(attribute)
+                user_attribute = str(user_attribute)
+
+        return user_attribute
+
     def _handle_invalid_user_attribute(self, comparison_attribute, comparator, comparison_value, key, validation_error):
         """
         returns: evaluation error message
@@ -174,7 +190,7 @@ class RolloutEvaluator(object):
             return False, None, None, None
 
         user_attribute_name = percentage_rule_attribute if percentage_rule_attribute is not None else 'Identifier'
-        user_key = user.get_attribute(percentage_rule_attribute) if percentage_rule_attribute is not None \
+        user_key = self._get_user_attribute(context, user, percentage_rule_attribute) if percentage_rule_attribute is not None \
             else user.get_identifier()
         if percentage_rule_attribute is not None and user_key is None:
             if not context.is_missing_user_object_attribute_logged:
@@ -462,7 +478,7 @@ class RolloutEvaluator(object):
             error = 'cannot evaluate, User Object is missing'
             return False, error
 
-        user_value = user.get_attribute(comparison_attribute)
+        user_value = self._get_user_attribute(context, user, comparison_attribute)
         if user_value is None or not user_value:
             self.log.warning('Cannot evaluate condition (%s) for setting \'%s\' '
                              '(the User.%s attribute is missing). You should set the User.%s attribute in order to make '
