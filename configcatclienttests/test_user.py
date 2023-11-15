@@ -58,8 +58,13 @@ class UserTests(unittest.TestCase):
         self.assertEqual(User.attribute_value_from_datetime(datetime(2023, 9, 19, 11, 1, 35)), '1695121295.0')
         self.assertEqual(User.attribute_value_from_datetime(datetime(2023, 9, 19, 11, 1, 35, 510000)), '1695121295.51')
 
-    def test_attribute_value_from_list(self):
-        self.assertEqual(User.attribute_value_from_list(['a', 'b', 'c']), '["a", "b", "c"]')
+    def test_attribute_value_from_number(self):
+        self.assertEqual(User.attribute_value_from_number(1), '1')
+        self.assertEqual(User.attribute_value_from_number(1.23), '1.23')
+        self.assertIsNone(User.attribute_value_from_number('string'))
+
+    def test_attribute_value_from_string_list(self):
+        self.assertEqual(User.attribute_value_from_string_list(['a', 'b', 'c']), '["a", "b", "c"]')
 
     @parameterized.expand([
         ('identifierAttribute', False, "False"),

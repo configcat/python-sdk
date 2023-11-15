@@ -31,7 +31,7 @@ class RolloutEvaluator(object):
 
     def evaluate(self, key, user, default_value, default_variation_id, config, log_builder, visited_keys=None):  # noqa: C901
         """
-        returns value, variation_id, matched_targeting_rule, matched_percentage_rule, error
+        returns value, variation_id, matched_targeting_rule, matched_percentage_option, error
         """
 
         if visited_keys is None:
@@ -125,6 +125,11 @@ class RolloutEvaluator(object):
             log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % return_value)
             return return_value, return_variation_id, None, None, None
         except Exception as e:
+            # During the recursive evaluation of a prerequisite flag, we propagate the exceptions
+            # and let the root flag's evaluation code handle them.
+            if not is_root_flag_evaluation:
+                raise e
+
             error = 'Failed to evaluate setting \'%s\'. (%s). ' \
                     'Returning the `%s` parameter that you specified in your application: \'%s\'. '
             error_args = (key, str(e), 'default_value', str(default_value))
@@ -190,8 +195,10 @@ class RolloutEvaluator(object):
             return False, None, None, None
 
         user_attribute_name = percentage_rule_attribute if percentage_rule_attribute is not None else 'Identifier'
-        user_key = self._get_user_attribute(context, user, percentage_rule_attribute) if percentage_rule_attribute is not None \
-            else user.get_identifier()
+        if percentage_rule_attribute is not None:
+            user_key = self._get_user_attribute(context, user, percentage_rule_attribute)
+        else:
+            user_key = user.get_identifier()
         if percentage_rule_attribute is not None and user_key is None:
             if not context.is_missing_user_object_attribute_logged:
                 self.log.warning('Cannot evaluate %% options for setting \'%s\' '
@@ -512,8 +519,7 @@ class RolloutEvaluator(object):
                 match = False
                 for x in filter(None, [x.strip() for x in comparison_value]):
                     match = semver.VersionInfo.parse(str(user_value).strip()).match('==' + str(x)) or match
-                if (match and comparator == Comparator.IS_ONE_OF_SEMVER) \
-                        or (not match and comparator == Comparator.IS_NOT_ONE_OF_SEMVER):
+                if match == (comparator == Comparator.IS_ONE_OF_SEMVER):
                     return True, error
             except ValueError:
                 validation_error = "'%s' is not a valid semantic version" % str(user_value).strip()
@@ -542,7 +548,7 @@ class RolloutEvaluator(object):
                                                             validation_error)
                 return False, error
 
-            comparison_value_float = float(str(comparison_value).replace(",", "."))
+            comparison_value_float = float(comparison_value)
 
             if (comparator == Comparator.EQUALS_NUMBER and user_value_float == comparison_value_float) \
                     or (comparator == Comparator.NOT_EQUALS_NUMBER and user_value_float != comparison_value_float) \
@@ -570,7 +576,7 @@ class RolloutEvaluator(object):
                                                             validation_error)
                 return False, error
 
-            comparison_value_float = float(str(comparison_value).replace(",", "."))
+            comparison_value_float = float(comparison_value)
 
             if (comparator == Comparator.BEFORE_DATETIME and user_value_float < comparison_value_float) \
                     or (comparator == Comparator.AFTER_DATETIME and user_value_float > comparison_value_float):

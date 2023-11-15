@@ -48,7 +48,14 @@ class User(object):
         return str(utils.get_seconds_since_epoch(value))
 
     @staticmethod
-    def attribute_value_from_list(value):
+    def attribute_value_from_number(value):
+        if value is None or not isinstance(value, (int, float)):
+            return None
+
+        return str(value)
+
+    @staticmethod
+    def attribute_value_from_string_list(value):
         if value is None or not isinstance(value, list):
             return None
 

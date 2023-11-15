@@ -8,7 +8,7 @@ class EvaluationDetails(object):
                  is_default_value=False,
                  error=None,
                  matched_targeting_rule=None,
-                 matched_percentage_rule=None):
+                 matched_percentage_option=None):
         # Key of the feature flag or setting.
         self.key = key
 
@@ -35,7 +35,7 @@ class EvaluationDetails(object):
         self.matched_targeting_rule = matched_targeting_rule
 
         # The percentage option which was used to select the evaluated value (if any).
-        self.matched_percentage_rule = matched_percentage_rule
+        self.matched_percentage_option = matched_percentage_option
 
     @staticmethod
     def from_error(key, value, error, variation_id=None):

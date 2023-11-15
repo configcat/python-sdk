@@ -222,7 +222,7 @@ class ConfigCatClientTests(unittest.TestCase):
             self.assertEqual('id1', details.variation_id)
             self.assertFalse(details.is_default_value)
             self.assertIsNone(details.error)
-            self.assertIsNone(details.matched_percentage_rule)
+            self.assertIsNone(details.matched_percentage_option)
             self.assertEqual('fake1', details.matched_targeting_rule[SERVED_VALUE][VALUE][STRING_VALUE])
             self.assertEqual(str(user), str(details.user))
             now = get_utc_now()

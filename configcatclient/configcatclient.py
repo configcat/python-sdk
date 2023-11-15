@@ -392,6 +392,6 @@ class ConfigCatClient(object):
                                     is_default_value=True if error else False,
                                     error=error,
                                     matched_targeting_rule=rule,
-                                    matched_percentage_rule=percentage_rule)
+                                    matched_percentage_option=percentage_rule)
         self._hooks.invoke_on_flag_evaluated(details)
         return details
