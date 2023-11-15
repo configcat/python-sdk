@@ -145,7 +145,12 @@ class RolloutEvaluator(object):
     def _get_user_attribute(self, context, user, attribute):
         user_attribute = user.get_attribute(attribute)
         if user_attribute is not None:
-            if not isinstance(user_attribute, str):
+            try:
+                string_types = (str, unicode)  # Python 2.7
+            except NameError:
+                string_types = (str,)  # Python 3.x
+
+            if not isinstance(user_attribute, string_types):
                 if attribute not in context.type_mismatched_logged_user_attributes:
                     self.log.warning('Evaluation of setting \'%s\' may not produce the expected result '
                                      '(the User.%s attribute is not a string value, thus it was converted to \'%s\' '
