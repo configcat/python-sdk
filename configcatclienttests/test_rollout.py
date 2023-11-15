@@ -1,9 +1,14 @@
 import logging
+import sys
 import unittest
 from os import path
 
 import configcatclient
+from configcatclient import PollingMode
 from configcatclient.user import User
+import codecs
+
+from configcatclient.utils import unicode_to_utf8
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -77,8 +82,14 @@ class RolloutTests(unittest.TestCase):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
 
-        with open(file_path, 'r') as f:
-            content = f.readlines()
+        # On Python 2.7, convert unicode to utf-8
+        if sys.version_info[0] == 2:
+            with codecs.open(file_path, 'r', encoding='utf-8') as f:
+                content = f.readlines()
+                content = unicode_to_utf8(content)  # On Python 2.7, convert unicode to utf-8
+        else:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.readlines()
 
         # CSV header
         header = content[0].rstrip()

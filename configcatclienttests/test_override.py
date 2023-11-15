@@ -73,7 +73,7 @@ class OverrideTests(unittest.TestCase):
         client.close()
 
     def test_reload_file(self):
-        temp = tempfile.NamedTemporaryFile(mode="w")
+        temp = tempfile.NamedTemporaryFile(mode="w", delete=False)
         dictionary = {'flags': {
             'enabledFeature': False
         }}
@@ -102,9 +102,10 @@ class OverrideTests(unittest.TestCase):
         self.assertTrue(client.get_value('enabledFeature', False))
 
         client.close()
+        temp.close()
 
     def test_invalid_file(self):
-        temp = tempfile.NamedTemporaryFile(mode="w")
+        temp = tempfile.NamedTemporaryFile(mode="w", delete=False)
         temp.write('{"flags": {"enabledFeature": true}')
         temp.flush()
 
@@ -117,6 +118,7 @@ class OverrideTests(unittest.TestCase):
         self.assertFalse(client.get_value('enabledFeature', False))
 
         client.close()
+        temp.close()
 
     def test_dictionary(self):
         dictionary = {
