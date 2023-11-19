@@ -2,19 +2,27 @@ import logging
 import sys
 import unittest
 from os import path
+from parameterized import parameterized
 
 import configcatclient
-from configcatclient import PollingMode
+from configcatclient import PollingMode, ConfigCatOptions, ConfigCatClient
+from configcatclient.configcatoptions import Hooks
+from configcatclient.localdictionarydatasource import LocalDictionaryFlagOverrides
+from configcatclient.localfiledatasource import LocalFileDataSource
+from configcatclient.logger import Logger
+from configcatclient.overridedatasource import OverrideBehaviour
+from configcatclient.rolloutevaluator import RolloutEvaluator
 from configcatclient.user import User
 import codecs
 
 from configcatclient.utils import unicode_to_utf8
+from configcatclienttests.mocks import MockLogHandler
 
 logging.basicConfig(level=logging.WARNING)
 
 
 class RolloutTests(unittest.TestCase):
-
+    script_dir = path.dirname(__file__)
     value_test_type = "value_test"
     variation_test_type = "variation_test"
 
@@ -139,6 +147,83 @@ class RolloutTests(unittest.TestCase):
         setting_value = client.get_value('stringContainsDogDefaultCat', 'Lion', {'Email': 'a@configcat.com'})
         self.assertEqual('Cat', setting_value)
         configcatclient.close_all()
+
+    @parameterized.expand([
+        ("key1", "'key1' -> 'key1'"),
+        ("key2", "'key2' -> 'key3' -> 'key2'"),
+        ("key4", "'key4' -> 'key3' -> 'key2' -> 'key3'")
+    ])
+    def test_prerequisite_flag_circular_dependency(self, key, dependency_cycle):
+        config = LocalFileDataSource(path.join(self.script_dir, 'data/test_circulardependency_v6.json'),
+                                     OverrideBehaviour.LocalOnly, None).get_overrides()
+
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+
+        value, _, _, _, _ = evaluator.evaluate(key, None, 'default_value', 'default_variation_id', config, None)
+
+        self.assertEqual('default_value', value)
+        error_log = log_handler.error_logs[0]
+        self.assertTrue('Circular dependency detected' in error_log)
+        self.assertTrue(dependency_cycle in error_log)
+
+    @parameterized.expand([
+        ("stringDependsOnBool", "mainBoolFlag", True, "Dog"),
+        ("stringDependsOnBool", "mainBoolFlag", False, "Cat"),
+        ("stringDependsOnBool", "mainBoolFlag", "1", None),
+        ("stringDependsOnBool", "mainBoolFlag", 1, None),
+        ("stringDependsOnBool", "mainBoolFlag", 1.0, None),
+        ("stringDependsOnBool", "mainBoolFlag", [True], None),
+        ("stringDependsOnBool", "mainBoolFlag", None, None),
+        ("stringDependsOnString", "mainStringFlag", "private", "Dog"),
+        ("stringDependsOnString", "mainStringFlag", "Private", "Cat"),
+        ("stringDependsOnString", "mainStringFlag", True, None),
+        ("stringDependsOnString", "mainStringFlag", 1, None),
+        ("stringDependsOnString", "mainStringFlag", 1.0, None),
+        ("stringDependsOnString", "mainStringFlag", ["private"], None),
+        ("stringDependsOnString", "mainStringFlag", None, None),
+        ("stringDependsOnInt", "mainIntFlag", 2, "Dog"),
+        ("stringDependsOnInt", "mainIntFlag", 1, "Cat"),
+        ("stringDependsOnInt", "mainIntFlag", "2", None),
+        ("stringDependsOnInt", "mainIntFlag", True, None),
+        ("stringDependsOnInt", "mainIntFlag", 2.0, None),
+        ("stringDependsOnInt", "mainIntFlag", [2], None),
+        ("stringDependsOnInt", "mainIntFlag", None, None),
+        ("stringDependsOnDouble", "mainDoubleFlag", 0.1, "Dog"),
+        ("stringDependsOnDouble", "mainDoubleFlag", 0.11, "Cat"),
+        ("stringDependsOnDouble", "mainDoubleFlag", "0.1", None),
+        ("stringDependsOnDouble", "mainDoubleFlag", True, None),
+        ("stringDependsOnDouble", "mainDoubleFlag", 1, None),
+        ("stringDependsOnDouble", "mainDoubleFlag", [0.1], None),
+        ("stringDependsOnDouble", "mainDoubleFlag", None, None)
+    ])
+    def test_prerequisite_flag_comparison_value_type_mismatch(self, key, prerequisite_flag_key, prerequisite_flag_value, expected_value):
+        override_dictionary = {prerequisite_flag_key: prerequisite_flag_value}
+        options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                   flag_overrides=LocalDictionaryFlagOverrides(
+                                       source=override_dictionary,
+                                       override_behaviour=OverrideBehaviour.LocalOverRemote))
+        client = ConfigCatClient.get(sdk_key='configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg', options=options)
+        client.force_refresh()
+
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+
+        value = client.get_value(key, None)
+
+        self.assertEqual(expected_value, value)
+
+        if expected_value is None:
+            self.assertEqual(1, len(log_handler.error_logs))
+            error_log = log_handler.error_logs[0]
+            self.assertTrue('Type mismatch between comparison value' in error_log)
+            self.assertTrue('and prerequisite flag' in error_log)
+
+        client.close()
 
 
 '''

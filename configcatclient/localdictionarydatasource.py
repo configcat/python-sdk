@@ -1,4 +1,4 @@
-from .config import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE
+from .config import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 
 
@@ -28,7 +28,11 @@ class LocalDictionaryDataSource(OverrideDataSource):
 
             if FEATURE_FLAGS not in self._config:
                 self._config[FEATURE_FLAGS] = {}
+
             self._config[FEATURE_FLAGS][key] = {VALUE: {value_type: value}}
+            setting_type = SettingType.from_type(type(value))
+            if setting_type is not None:
+                self._config[FEATURE_FLAGS][key][SETTING_TYPE] = int(setting_type)
 
     def get_overrides(self):
         return self._config

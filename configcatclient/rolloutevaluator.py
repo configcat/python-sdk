@@ -9,7 +9,7 @@ from .config import FEATURE_FLAGS, INLINE_SALT, TARGETING_RULES, PERCENTAGE_RULE
     SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, \
     PrerequisiteComparator, INLINE_SEGMENT, SEGMENT_NAME, SEGMENT_COMPARATOR, SEGMENT_CONDITIONS, SegmentComparator, \
     COMPARISON_ATTRIBUTE, COMPARATOR, Comparator, COMPARATOR_TEXTS, PREREQUISITE_COMPARATOR_TEXTS, \
-    SEGMENT_COMPARATOR_TEXTS, COMPARISON_VALUES
+    SEGMENT_COMPARATOR_TEXTS, COMPARISON_VALUES, get_value_type, get_setting_type
 from .evaluationcontext import EvaluationContext
 from .evaluationlogbuilder import EvaluationLogBuilder
 from .logger import Logger
@@ -285,9 +285,8 @@ class RolloutEvaluator(object):
                     condition_result = False
                     break
             elif prerequisite_flag_condition is not None:
-                result, error = self._evaluate_prerequisite_flag_condition(prerequisite_flag_condition, context, config,
-                                                                           log_builder)
-                if not result or error:
+                result = self._evaluate_prerequisite_flag_condition(prerequisite_flag_condition, context, config, log_builder)
+                if not result:
                     condition_result = False
                     break
 
@@ -316,49 +315,37 @@ class RolloutEvaluator(object):
         # Check if the prerequisite key exists
         settings = config.get(FEATURE_FLAGS, {})
         if prerequisite_key is None or settings.get(prerequisite_key) is None:
-            raise KeyError('Prerequisite flag key is missing or invalid.')
+            raise ValueError('Prerequisite flag key is missing or invalid.')
 
         prerequisite_condition_result = False
-        try:
-            prerequisite_comparison_value = get_value(prerequisite_flag_condition)
-        except ValueError as e:
-            log_builder and log_builder.new_line('Prerequisite comparison value error: %s' % str(e))
-            return prerequisite_condition_result, None
+        prerequisite_comparison_value = get_value(prerequisite_flag_condition)
 
         prerequisite_condition = ("Flag '%s' %s '%s'" %
                                   (prerequisite_key, PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
                                    str(prerequisite_comparison_value)))
+
+        # Type mismatch check
+        if get_value_type(prerequisite_flag_condition) != get_setting_type(settings[prerequisite_key]):
+            raise TypeError("Type mismatch between comparison value '%s' and prerequisite flag '%s'." %
+                            (str(prerequisite_comparison_value), prerequisite_key))
 
         # Circular dependency check
         visited_keys = context.visited_keys
         visited_keys.append(context.key)
         if prerequisite_key in visited_keys:
             depending_flags = ' -> '.join("'{}'".format(s) for s in list(visited_keys) + [prerequisite_key])
-            error = 'Cannot evaluate condition (%s) for setting \'%s\' (circular dependency detected between the following ' \
-                    'depending flags: %s). Please check your feature flag definition and eliminate the circular dependency.'
-            error_args = (prerequisite_condition, context.key, depending_flags)
-            self.log.warning(error, *error_args, event_id=3005)
-            if log_builder:
-                log_builder.append(prerequisite_condition + ' ')
-
-            if visited_keys:
-                visited_keys.pop()
-
-            return prerequisite_condition_result, 'cannot evaluate, circular dependency detected'
+            raise ValueError('Circular dependency detected between the following depending flags: %s.' % depending_flags)
 
         if log_builder:
             log_builder.append(prerequisite_condition)
             log_builder.new_line('(').increase_indent()
             log_builder.new_line("Evaluating prerequisite flag '%s':" % prerequisite_key)
 
-        prerequisite_value, _, _, _, error = self.evaluate(prerequisite_key, context.user, None, None, config,
+        prerequisite_value, _, _, _, _ = self.evaluate(prerequisite_key, context.user, None, None, config,
                                                            log_builder, context.visited_keys)
 
         if visited_keys:
             visited_keys.pop()
-
-        if error is not None:
-            return prerequisite_condition_result, error
 
         if log_builder:
             log_builder.new_line("Prerequisite flag evaluation result: '%s'." % str(prerequisite_value))
@@ -379,13 +366,16 @@ class RolloutEvaluator(object):
             log_builder.append('%s.' % ('true' if prerequisite_condition_result else 'false'))
             log_builder.decrease_indent().new_line(')').new_line()
 
-        return prerequisite_condition_result, None
+        return prerequisite_condition_result
 
     def _evaluate_segment_condition(self, segment_condition, context, salt, log_builder):  # noqa: C901
         user = context.user
         key = context.key
 
         segment = segment_condition[INLINE_SEGMENT]
+        if segment is None:
+            raise ValueError('Segment reference is invalid.')
+
         segment_name = segment.get(SEGMENT_NAME, '')
         segment_comparator = segment_condition.get(SEGMENT_COMPARATOR)
         segment_conditions = segment.get(SEGMENT_CONDITIONS, [])
@@ -474,6 +464,9 @@ class RolloutEvaluator(object):
         comparator = user_condition.get(COMPARATOR)
         comparison_value = user_condition.get(COMPARISON_VALUES[comparator])
         error = None
+
+        if comparison_attribute is None:
+            raise ValueError('Comparison attribute name is missing.')
 
         if log_builder:
             log_builder.append(self._format_rule(comparison_attribute, comparator, comparison_value) + ' ')

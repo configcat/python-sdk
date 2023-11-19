@@ -28,16 +28,16 @@ class EvaluationLogBuilder(object):
             return "'<hashed value>'"
 
         if isinstance(comparison_value, list):
-            limit = 10
+            length_limit = 10
             length = len(comparison_value)
-            if length > limit:
-                remaining = length - limit
+            if length > length_limit:
+                remaining = length - length_limit
                 if remaining == 1:
                     more_text = "<1 more value>"
                 else:
                     more_text = "<{} more values>".format(remaining)
 
-                return str(comparison_value[:limit])[:-1] + ', ... ' + more_text + ']'
+                return str(comparison_value[:length_limit])[:-1] + ', ... ' + more_text + ']'
 
             return str(comparison_value)
 

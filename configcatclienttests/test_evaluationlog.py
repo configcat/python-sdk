@@ -55,9 +55,6 @@ class EvaluationLogTests(unittest.TestCase):
     def test_prerequisite_flag(self):
         self.assertTrue(self._evaluation_log('data/evaluation/prerequisite_flag.json'))
 
-    def test_circular_dependency(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/circular_dependency.json'))
-
     def test_semver_validation(self):
         self.assertTrue(self._evaluation_log('data/evaluation/semver_validation.json'))
 

@@ -1,5 +1,5 @@
 from .config import extend_config_with_inline_salt_and_segment, VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, \
-    INT_VALUE, DOUBLE_VALUE
+    INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
 import os
@@ -54,6 +54,9 @@ class LocalFileDataSource(OverrideDataSource):
                                 value_type = DOUBLE_VALUE
 
                             self._config[FEATURE_FLAGS][key] = {VALUE: {value_type: value}}
+                            setting_type = SettingType.from_type(type(value))
+                            if setting_type is not None:
+                                self._config[FEATURE_FLAGS][key][SETTING_TYPE] = int(setting_type)
                     else:
                         extend_config_with_inline_salt_and_segment(data)
                         self._config = data

@@ -61,20 +61,80 @@ STRING_LIST_VALUE = 'l'
 
 
 def get_value(dictionary):
-    value = dictionary.get(VALUE)
-    if value is None:
+    value_descriptor = dictionary.get(VALUE)
+    if value_descriptor is None:
         raise ValueError('Value is missing.')
 
-    if value.get(BOOL_VALUE) is not None:
-        return value.get(BOOL_VALUE)
-    if value.get(STRING_VALUE) is not None:
-        return value.get(STRING_VALUE)
-    if value.get(INT_VALUE) is not None:
-        return value.get(INT_VALUE)
-    if value.get(DOUBLE_VALUE) is not None:
-        return value.get(DOUBLE_VALUE)
+    if value_descriptor.get(BOOL_VALUE) is not None:
+        value = value_descriptor.get(BOOL_VALUE)
+        if isinstance(value, bool):
+            return value
+    if value_descriptor.get(STRING_VALUE) is not None:
+        value = value_descriptor.get(STRING_VALUE)
+        if isinstance(value, str):
+            return value
+    if value_descriptor.get(INT_VALUE) is not None:
+        value = value_descriptor.get(INT_VALUE)
+        if isinstance(value, int):
+            return value
+    if value_descriptor.get(DOUBLE_VALUE) is not None:
+        value = value_descriptor.get(DOUBLE_VALUE)
+        if isinstance(value, (float, int)):
+            return value
+    else:
+        raise ValueError('Unknown value type.')
 
-    raise ValueError('Unknown value type.')
+    raise ValueError('Invalid value type.')
+
+
+def get_value_type(dictionary):
+    value = dictionary.get(VALUE)
+    if value is not None:
+        if value.get(BOOL_VALUE) is not None:
+            return bool
+        if value.get(STRING_VALUE) is not None:
+            return str
+        if value.get(INT_VALUE) is not None:
+            return int
+        if value.get(DOUBLE_VALUE) is not None:
+            return float
+
+    return None
+
+
+class SettingType(IntEnum):
+    BOOL = 0
+    STRING = 1
+    INT = 2
+    DOUBLE = 3
+
+    @staticmethod
+    def from_type(object_type):
+        if object_type is bool:
+            return SettingType.BOOL
+        if object_type is str:
+            return SettingType.STRING
+        if object_type is int:
+            return SettingType.INT
+        if object_type is float:
+            return SettingType.DOUBLE
+
+        return None
+
+
+def get_setting_type(setting):
+    setting_type = setting.get(SETTING_TYPE)
+    if setting_type is not None:
+        if setting_type == SettingType.BOOL:
+            return bool
+        if setting_type == SettingType.STRING:
+            return str
+        if setting_type == SettingType.INT:
+            return int
+        if setting_type == SettingType.DOUBLE:
+            return float
+
+    return None
 
 
 class PrerequisiteComparator(IntEnum):
