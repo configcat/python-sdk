@@ -33,7 +33,7 @@ class LocalFileDataSource(OverrideDataSource):
         self._reload_file_content()
         return self._config
 
-    def _reload_file_content(self):
+    def _reload_file_content(self):  # noqa: C901
         try:
             stamp = os.stat(self._file_path).st_mtime
             if stamp != self._cached_file_stamp:

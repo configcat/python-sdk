@@ -342,7 +342,7 @@ class RolloutEvaluator(object):
             log_builder.new_line("Evaluating prerequisite flag '%s':" % prerequisite_key)
 
         prerequisite_value, _, _, _, _ = self.evaluate(prerequisite_key, context.user, None, None, config,
-                                                           log_builder, context.visited_keys)
+                                                       log_builder, context.visited_keys)
 
         if visited_keys:
             visited_keys.pop()
