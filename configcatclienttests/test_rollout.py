@@ -149,6 +149,30 @@ class RolloutTests(unittest.TestCase):
         self.assertEqual('Cat', setting_value)
         configcatclient.close_all()
 
+    # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08dbc325-7f69-4fd4-8af4-cf9f24ec8ac9/08dbc325-9e4e-4f59-86b2-5da50924b6ca/08dbc325-9ebd-4587-8171-88f76a3004cb
+    @parameterized.expand([
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", None, None, None, "Cat", False, False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", "12345", None, None, "Cat", False, False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", "12345", "a@example.com", None, "Dog", True, False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", "12345", "a@configcat.com", None, "Cat", False, False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", "12345", "a@configcat.com", "", "Frog", True, True),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", "12345", "a@configcat.com", "US", "Fish", True, True),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", "12345", "b@configcat.com", None, "Cat", False, False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", "12345", "b@configcat.com", "", "Falcon", False, True),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/P4e3fAz_1ky2-Zg2e4cbkw", "stringMatchedTargetingRuleAndOrPercentageOption", "12345", "b@configcat.com", "US", "Spider", False, True)
+    ])
+    def test_evaluation_details_matched_evaluation_rule_and_percentage_option(self, sdk_key, key, user_id, email, percentage_base, expected_return_value, expected_matched_targeting_rule, expected_matched_percentage_option):
+        client = ConfigCatClient.get(sdk_key=sdk_key, options=ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
+        client.force_refresh()
+
+        user = User(user_id, email=email, custom={"PercentageBase": percentage_base}) if user_id is not None else None
+
+        evaluation_details = client.get_value_details(key, None, user)
+
+        self.assertEqual(expected_return_value, evaluation_details.value)
+        self.assertEqual(expected_matched_targeting_rule, evaluation_details.matched_targeting_rule is not None)
+        self.assertEqual(expected_matched_percentage_option, evaluation_details.matched_percentage_option is not None)
+
     def test_user_object_attribute_value_conversion_text_comparison(self):
         client = ConfigCatClient.get(sdk_key='configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ',
                                      options=ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
