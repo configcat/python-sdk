@@ -381,6 +381,14 @@ class ConfigCatClient(object):
             config=config,
             log_builder=log_builder)
 
+        if default_value is not None and type(value) is not type(default_value) and \
+                not (type(value) is float and type(default_value) is int) and \
+                not (type(value) is int and type(default_value) is float):
+            self.log.warning("The type of a setting does not match the type of the specified default value (%s). "
+                             "Setting's type was %s but the default value's type was %s. "
+                             "Please make sure that using a default value not matching the setting's type was intended." %
+                             (default_value, type(value), type(default_value)), event_id=4002)
+
         if log_builder:
             self.log.info(str(log_builder), event_id=5000)
 

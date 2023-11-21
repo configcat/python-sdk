@@ -5,6 +5,7 @@ import unittest
 
 import pytest
 import requests
+from parameterized import parameterized
 
 from configcatclient import ConfigCatClientException
 from configcatclient.configcatclient import ConfigCatClient
@@ -14,7 +15,8 @@ from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions, Hooks
 from configcatclient.pollingmode import PollingMode
 from configcatclient.utils import get_utc_now, get_utc_now_seconds_since_epoch
-from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT, TEST_SDK_KEY, HookCallbacks, SingleValueConfigCache
+from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT, TEST_SDK_KEY, HookCallbacks, SingleValueConfigCache, \
+    MockLogHandler
 
 # Python2/Python3 support
 try:
@@ -340,6 +342,52 @@ class ConfigCatClientTests(unittest.TestCase):
             client.force_refresh()
 
             self.assertEqual(1, request_get.call_count)
+
+            client.close()
+
+    @parameterized.expand([
+        # no type mismatch warning
+        ('testStringKey', 'test@example.com', 'default', 'testValue', False),
+        ('testBoolKey', None, False, True, False),
+        ('testBoolKey', None, None, True, False),
+        ('testIntKey', None, 3.14, 1, False),
+        ('testIntKey', None, 42, 1, False),
+        ('testDoubleKey', None, 3.14, 1.1, False),
+        ('testDoubleKey', None, 42, 1.1, False),
+        # type mismatch warning
+        ('testStringKey', 'test@example.com', 0, 'testValue', True),
+        ('testStringKey', 'test@example.com', False, 'testValue', True),
+        ('testBoolKey', None, 0, True, True),
+        ('testBoolKey', None, 0.1, True, True),
+        ('testBoolKey', None, 'default', True, True),
+    ])
+    def test_default_value_and_setting_type_mismatch(self, key, user_id, default_value, expected_value, is_warning):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            response_mock.json.return_value = TEST_OBJECT
+            response_mock.status_code = 200
+            response_mock.headers = {}
+
+            client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
+            client.force_refresh()
+
+            logger = logging.getLogger('configcat')
+            log_handler = MockLogHandler()
+            logger.addHandler(log_handler)
+
+            user = User(user_id) if user_id else None
+            self.assertEqual(expected_value, client.get_value(key, default_value, user))
+
+            if is_warning:
+                self.assertEqual(1, len(log_handler.warning_logs))
+                warning = log_handler.warning_logs[0]
+                self.assertEqual("[4002] The type of a setting does not match the type of the specified default value (%s). "
+                                 "Setting's type was %s but the default value's type was %s. "
+                                 "Please make sure that using a default value not matching the setting's type was intended." %
+                                 (default_value, type(expected_value), type(default_value)), warning)
+            else:
+                self.assertEqual(0, len(log_handler.warning_logs))
 
             client.close()
 
