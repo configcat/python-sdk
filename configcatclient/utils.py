@@ -1,9 +1,9 @@
 import sys
 import inspect
 from qualname import qualname
-from datetime import datetime
+from datetime import datetime, timezone
 
-epoch_time = datetime(1970, 1, 1)
+epoch_time = datetime(1970, 1, 1, tzinfo=timezone.utc)
 distant_future = sys.float_info.max
 distant_past = 0
 
@@ -57,15 +57,19 @@ def method_is_called_from(method, level=1):
 
 
 def get_utc_now():
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def get_seconds_since_epoch(date_time):
+    # if there is no timezone info, assume UTC
+    if date_time.tzinfo is None:
+        date_time = date_time.replace(tzinfo=timezone.utc)
+
     return (date_time - epoch_time).total_seconds()
 
 
 def get_date_time(seconds_since_epoch):
-    return datetime.utcfromtimestamp(seconds_since_epoch)
+    return datetime.fromtimestamp(seconds_since_epoch, timezone.utc)
 
 
 def get_utc_now_seconds_since_epoch():

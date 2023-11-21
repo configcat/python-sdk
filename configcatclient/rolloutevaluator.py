@@ -13,9 +13,10 @@ from .config import FEATURE_FLAGS, INLINE_SALT, TARGETING_RULES, PERCENTAGE_RULE
 from .evaluationcontext import EvaluationContext
 from .evaluationlogbuilder import EvaluationLogBuilder
 from .logger import Logger
+from datetime import datetime
 
 from .user import User
-from .utils import unicode_to_utf8, encode_utf8
+from .utils import unicode_to_utf8, encode_utf8, get_seconds_since_epoch
 
 
 def sha256(value_utf8, salt, context_salt):
@@ -142,26 +143,42 @@ class RolloutEvaluator(object):
                % (comparison_attribute, comparator_text,
                   EvaluationLogBuilder.trunc_comparison_value_if_needed(comparator, comparison_value))
 
-    def _get_user_attribute(self, context, user, attribute):
-        user_attribute = user.get_attribute(attribute)
-        if user_attribute is not None:
-            try:
-                string_types = (str, unicode)  # Python 2.7
-            except NameError:
-                string_types = (str,)  # Python 3.x
+    def _user_attribute_value_to_string(self, value):
+        if value is None:
+            return None
 
-            if not isinstance(user_attribute, string_types):
-                if attribute not in context.type_mismatched_logged_user_attributes:
-                    self.log.warning('Evaluation of setting \'%s\' may not produce the expected result '
-                                     '(the User.%s attribute is not a string value, thus it was converted to \'%s\' '
-                                     'using the runtime\'s default conversion). User Object attribute values should be '
-                                     'passed as strings. You can use the static helper methods of the `User` class to '
-                                     'produce attribute values with the correct type and format.',
-                                     context.key, attribute, user_attribute, event_id=4004)
-                    context.type_mismatched_logged_user_attributes.add(attribute)
-                user_attribute = str(user_attribute)
+        if isinstance(value, datetime):
+            value = self._get_user_attribute_value_as_seconds_since_epoch(value)
+        elif isinstance(value, list):
+            value = self.get_user_attribute_value_as_string_list(value)
 
-        return user_attribute
+        return str(value)
+
+    def _get_user_attribute_value_as_text(self, attribute_name, attribute_value, condition, key):
+        if isinstance(attribute_value, str):
+            return attribute_value
+
+        self.log.warning('Evaluation of condition (%s) for setting \'%s\' may not produce the expected result '
+                         '(the User.%s attribute is not a string value, thus it was automatically converted to '
+                         'the string value \'%s\'). Please make sure that using a non-string value was intended.',
+                         condition, key, attribute_name, attribute_value, event_id=3005)
+        return self._user_attribute_value_to_string(attribute_value)
+
+    def _get_user_attribute_value_as_seconds_since_epoch(self, attribute_value):
+        if isinstance(attribute_value, datetime):
+            return get_seconds_since_epoch(attribute_value)
+
+        return float(str(attribute_value).replace(",", "."))
+
+    def get_user_attribute_value_as_string_list(self, attribute_value):
+        if not isinstance(attribute_value, list):
+            attribute_value_list = json.loads(attribute_value)
+        else:
+            attribute_value_list = attribute_value
+        if not isinstance(attribute_value_list, list):
+            raise ValueError()
+
+        return attribute_value_list
 
     def _handle_invalid_user_attribute(self, comparison_attribute, comparator, comparison_value, key, validation_error):
         """
@@ -201,7 +218,7 @@ class RolloutEvaluator(object):
 
         user_attribute_name = percentage_rule_attribute if percentage_rule_attribute is not None else 'Identifier'
         if percentage_rule_attribute is not None:
-            user_key = self._get_user_attribute(context, user, percentage_rule_attribute)
+            user_key = user.get_attribute(percentage_rule_attribute)
         else:
             user_key = user.get_identifier()
         if percentage_rule_attribute is not None and user_key is None:
@@ -218,7 +235,7 @@ class RolloutEvaluator(object):
                     'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
             return False, None, None, None
 
-        hash_candidate = ('%s%s' % (key, user_key)).encode('utf-8')
+        hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
         hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
         bucket = 0
@@ -463,13 +480,14 @@ class RolloutEvaluator(object):
         comparison_attribute = user_condition.get(COMPARISON_ATTRIBUTE)
         comparator = user_condition.get(COMPARATOR)
         comparison_value = user_condition.get(COMPARISON_VALUES[comparator])
+        condition = self._format_rule(comparison_attribute, comparator, comparison_value)
         error = None
 
         if comparison_attribute is None:
             raise ValueError('Comparison attribute name is missing.')
 
         if log_builder:
-            log_builder.append(self._format_rule(comparison_attribute, comparator, comparison_value) + ' ')
+            log_builder.append(condition + ' ')
 
         if user is None:
             if not context.is_missing_user_object_logged:
@@ -483,33 +501,35 @@ class RolloutEvaluator(object):
             error = 'cannot evaluate, User Object is missing'
             return False, error
 
-        user_value = self._get_user_attribute(context, user, comparison_attribute)
+        user_value = user.get_attribute(comparison_attribute)
         if user_value is None or not user_value:
             self.log.warning('Cannot evaluate condition (%s) for setting \'%s\' '
                              '(the User.%s attribute is missing). You should set the User.%s attribute in order to make '
                              'targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/',
-                             self._format_rule(comparison_attribute, comparator, comparison_value), key,
-                             comparison_attribute, comparison_attribute,
-                             event_id=3003)
+                             condition, key, comparison_attribute, comparison_attribute, event_id=3003)
             error = 'cannot evaluate, the User.{} attribute is missing'.format(comparison_attribute)
             return False, error
 
         # IS ONE OF
         if comparator == Comparator.IS_ONE_OF:
-            if str(user_value) in comparison_value:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
+            if user_value in comparison_value:
                 return True, error
         # IS NOT ONE OF
         elif comparator == Comparator.IS_NOT_ONE_OF:
-            if str(user_value) not in comparison_value:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
+            if user_value not in comparison_value:
                 return True, error
         # CONTAINS ANY OF
         elif comparator == Comparator.CONTAINS_ANY_OF:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
             for comparison in comparison_value:
-                if str(comparison) in str(user_value):
+                if comparison in user_value:
                     return True, error
         # NOT CONTAINS ANY OF
         elif comparator == Comparator.NOT_CONTAINS_ANY_OF:
-            if not any(str(comparison) in str(user_value) for comparison in comparison_value):
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
+            if not any(comparison in user_value for comparison in comparison_value):
                 return True, error
         # IS ONE OF, IS NOT ONE OF (Semantic version)
         elif Comparator.IS_ONE_OF_SEMVER <= comparator <= Comparator.IS_NOT_ONE_OF_SEMVER:
@@ -557,16 +577,18 @@ class RolloutEvaluator(object):
                 return True, error
         # IS ONE OF (hashed)
         elif comparator == Comparator.IS_ONE_OF_HASHED:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
             if sha256(encode_utf8(user_value), salt, context_salt) in comparison_value:
                 return True, error
         # IS NOT ONE OF (hashed)
         elif comparator == Comparator.IS_NOT_ONE_OF_HASHED:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
             if sha256(encode_utf8(user_value), salt, context_salt) not in comparison_value:
                 return True, error
         # BEFORE, AFTER (UTC datetime)
         elif Comparator.BEFORE_DATETIME <= comparator <= Comparator.AFTER_DATETIME:
             try:
-                user_value_float = float(str(user_value).replace(",", "."))
+                user_value_float = self._get_user_attribute_value_as_seconds_since_epoch(user_value)
             except ValueError:
                 validation_error = "'%s' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)" % \
                                    str(user_value)
@@ -581,10 +603,12 @@ class RolloutEvaluator(object):
                 return True, error
         # EQUALS (hashed)
         elif comparator == Comparator.EQUALS_HASHED:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
             if sha256(encode_utf8(user_value), salt, context_salt) == comparison_value:
                 return True, error
         # NOT EQUALS (hashed)
         elif comparator == Comparator.NOT_EQUALS_HASHED:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
             if sha256(encode_utf8(user_value), salt, context_salt) != comparison_value:
                 return True, error
         # STARTS WITH ANY OF, NOT STARTS WITH ANY OF, ENDS WITH ANY OF, NOT ENDS WITH ANY OF (hashed)
@@ -592,6 +616,7 @@ class RolloutEvaluator(object):
             for comparison in comparison_value:
                 underscore_index = comparison.index('_')
                 length = int(comparison[:underscore_index])
+                user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
                 user_value_utf8 = encode_utf8(user_value)
 
                 if len(user_value_utf8) >= length:
@@ -613,14 +638,12 @@ class RolloutEvaluator(object):
         # ARRAY CONTAINS ANY OF, ARRAY NOT CONTAINS ANY OF (hashed)
         elif Comparator.ARRAY_CONTAINS_ANY_OF_HASHED <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF_HASHED:
             try:
-                user_value_list = json.loads(user_value)
-                if not isinstance(user_value_list, list):
-                    raise ValueError()
+                user_value_list = self.get_user_attribute_value_as_string_list(user_value)
 
                 if sys.version_info[0] == 2:
                     user_value_list = unicode_to_utf8(user_value_list)  # On Python 2.7, convert unicode to utf-8
             except ValueError:
-                validation_error = "'%s' is not a valid JSON string array" % str(user_value)
+                validation_error = "'%s' is not a valid string array" % str(user_value)
                 error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
                                                             validation_error)
                 return False, error
@@ -637,14 +660,17 @@ class RolloutEvaluator(object):
                 return True, error
         # EQUALS
         elif comparator == Comparator.EQUALS:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
             if user_value == comparison_value:
                 return True, error
         # NOT EQUALS
         elif comparator == Comparator.NOT_EQUALS:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
             if user_value != comparison_value:
                 return True, error
         # STARTS WITH ANY OF, NOT STARTS WITH ANY OF, ENDS WITH ANY OF, NOT ENDS WITH ANY OF
         elif Comparator.STARTS_WITH_ANY_OF <= comparator <= Comparator.NOT_ENDS_WITH_ANY_OF:
+            user_value = self._get_user_attribute_value_as_text(comparison_attribute, user_value, condition, key)
             for comparison in comparison_value:
                 if (comparator == Comparator.STARTS_WITH_ANY_OF and user_value.startswith(comparison)) or \
                         (comparator == Comparator.ENDS_WITH_ANY_OF and user_value.endswith(comparison)):
@@ -659,14 +685,12 @@ class RolloutEvaluator(object):
         # ARRAY CONTAINS ANY OF, ARRAY NOT CONTAINS ANY OF
         elif Comparator.ARRAY_CONTAINS_ANY_OF <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF:
             try:
-                user_value_list = json.loads(user_value)
-                if not isinstance(user_value_list, list):
-                    raise ValueError()
+                user_value_list = self.get_user_attribute_value_as_string_list(user_value)
 
                 if sys.version_info[0] == 2:
                     user_value_list = unicode_to_utf8(user_value_list)  # On Python 2.7, convert unicode to utf-8
             except ValueError:
-                validation_error = "'%s' is not a valid JSON string array" % str(user_value)
+                validation_error = "'%s' is not a valid string array" % str(user_value)
                 error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
                                                             validation_error)
                 return False, error
