@@ -3,6 +3,7 @@ import logging
 import unittest
 
 from configcatclient import ConfigCatClient, ConfigCatOptions, PollingMode
+from configcatclient.config import SettingType
 from configcatclient.configcache import InMemoryConfigCache
 from configcatclient.configcatoptions import Hooks
 from configcatclient.configentry import ConfigEntry
@@ -41,7 +42,7 @@ class ConfigCacheTests(unittest.TestCase):
     def test_invalid_cache_content(self):
         hook_callbacks = HookCallbacks()
         hooks = Hooks(on_error=hook_callbacks.on_error)
-        config_json_string = TEST_JSON_FORMAT.format(value='{"s": "test"}')
+        config_json_string = TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test"}')
         config_cache = SingleValueConfigCache(ConfigEntry(
             config=json.loads(config_json_string),
             etag='test-etag',
@@ -59,14 +60,14 @@ class ConfigCacheTests(unittest.TestCase):
         # Invalid fetch time in cache
         config_cache._value = '\n'.join(['text',
                                          'test-etag',
-                                         TEST_JSON_FORMAT.format(value='{"s": "test2"}')])
+                                         TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test2"}')])
 
         self.assertEqual('test', client.get_value('testKey', 'default'))
         self.assertTrue('Error occurred while reading the cache.\nInvalid fetch time: text' in hook_callbacks.error)
 
         # Number of values is fewer than expected
         config_cache._value = '\n'.join([str(get_utc_now_seconds_since_epoch()),
-                                         TEST_JSON_FORMAT.format(value='{"s": "test2"}')])
+                                         TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test2"}')])
 
         self.assertEqual('test', client.get_value('testKey', 'default'))
         self.assertTrue('Error occurred while reading the cache.\nNumber of values is fewer than expected.'

@@ -58,33 +58,26 @@ STRING_VALUE = 's'
 INT_VALUE = 'i'
 DOUBLE_VALUE = 'd'
 STRING_LIST_VALUE = 'l'
+UNSUPPORTED_VALUE = 'unsupported_value'
 
 
-def get_value(dictionary):
+def get_value(dictionary, setting_type):
     value_descriptor = dictionary.get(VALUE)
     if value_descriptor is None:
-        raise ValueError('Value is missing.')
+        raise ValueError('Value is missing')
 
-    if value_descriptor.get(BOOL_VALUE) is not None:
-        value = value_descriptor.get(BOOL_VALUE)
-        if isinstance(value, bool):
-            return value
-    if value_descriptor.get(STRING_VALUE) is not None:
-        value = value_descriptor.get(STRING_VALUE)
-        if isinstance(value, str):
-            return value
-    if value_descriptor.get(INT_VALUE) is not None:
-        value = value_descriptor.get(INT_VALUE)
-        if isinstance(value, int):
-            return value
-    if value_descriptor.get(DOUBLE_VALUE) is not None:
-        value = value_descriptor.get(DOUBLE_VALUE)
-        if isinstance(value, (float, int)):
-            return value
-    else:
-        raise ValueError('Unknown value type.')
+    if setting_type not in list(map(int, SettingType)):
+        raise ValueError('Unsupported setting type')
 
-    raise ValueError('Invalid value type.')
+    expected_value_type, expected_py_type = SettingType.get_type_info(setting_type)
+    if expected_value_type is None:
+        raise ValueError('Unsupported setting type')
+
+    value = value_descriptor.get(expected_value_type)
+    if value is None:
+        raise ValueError('Setting value is not of the expected type %s' % expected_py_type)
+
+    return value
 
 
 def get_value_type(dictionary):
@@ -109,6 +102,10 @@ class SettingType(IntEnum):
     DOUBLE = 3
 
     @staticmethod
+    def get_type_info(setting_type):
+        return setting_type_mapping.get(setting_type, (None, None))
+
+    @staticmethod
     def from_type(object_type):
         if object_type is bool:
             return SettingType.BOOL
@@ -121,20 +118,21 @@ class SettingType(IntEnum):
 
         return None
 
+    @staticmethod
+    def to_type(setting_type):
+        return SettingType.get_type_info(setting_type)[1]
 
-def get_setting_type(setting):
-    setting_type = setting.get(SETTING_TYPE)
-    if setting_type is not None:
-        if setting_type == SettingType.BOOL:
-            return bool
-        if setting_type == SettingType.STRING:
-            return str
-        if setting_type == SettingType.INT:
-            return int
-        if setting_type == SettingType.DOUBLE:
-            return float
+    @staticmethod
+    def to_value_type(setting_type):
+        return SettingType.get_type_info(setting_type)[0]
 
-    return None
+
+setting_type_mapping = {
+    SettingType.BOOL: (BOOL_VALUE, bool),
+    SettingType.STRING: (STRING_VALUE, str),
+    SettingType.INT: (INT_VALUE, int),
+    SettingType.DOUBLE: (DOUBLE_VALUE, float)
+}
 
 
 class PrerequisiteComparator(IntEnum):

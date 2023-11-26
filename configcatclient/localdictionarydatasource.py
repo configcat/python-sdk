@@ -1,4 +1,5 @@
-from .config import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE
+from .config import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE, \
+    UNSUPPORTED_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 
 
@@ -23,8 +24,12 @@ class LocalDictionaryDataSource(OverrideDataSource):
                 value_type = STRING_VALUE
             elif isinstance(value, int):
                 value_type = INT_VALUE
-            else:
+            elif isinstance(value, float):
                 value_type = DOUBLE_VALUE
+            else:
+                value_type = UNSUPPORTED_VALUE
+                self.log.error("Error occurred while reading dictionary: "
+                               "Unsupported value type: %s." % type(value))
 
             if FEATURE_FLAGS not in self._config:
                 self._config[FEATURE_FLAGS] = {}

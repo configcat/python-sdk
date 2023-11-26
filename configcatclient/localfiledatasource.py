@@ -1,5 +1,5 @@
 from .config import extend_config_with_inline_salt_and_segment, VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, \
-    INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE
+    INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE, UNSUPPORTED_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
 import os
@@ -50,8 +50,12 @@ class LocalFileDataSource(OverrideDataSource):
                                 value_type = STRING_VALUE
                             elif isinstance(value, int):
                                 value_type = INT_VALUE
-                            else:
+                            elif isinstance(value, float):
                                 value_type = DOUBLE_VALUE
+                            else:
+                                value_type = UNSUPPORTED_VALUE
+                                self.log.error("Error occurred while parsing the local config file \'%s\':"
+                                               "Unsupported value type: %s." % (self._file_path, type(value)))
 
                             self._config[FEATURE_FLAGS][key] = {VALUE: {value_type: value}}
                             setting_type = SettingType.from_type(type(value))

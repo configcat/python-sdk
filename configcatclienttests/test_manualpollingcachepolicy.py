@@ -9,7 +9,7 @@ from configcatclient.configcache import NullConfigCache, InMemoryConfigCache
 from configcatclient.configcatoptions import Hooks
 from configcatclient.configfetcher import ConfigFetcher
 from configcatclient.configservice import ConfigService
-from configcatclient.config import VALUE, FEATURE_FLAGS, STRING_VALUE
+from configcatclient.config import VALUE, FEATURE_FLAGS, STRING_VALUE, SettingType
 from configcatclient.logger import Logger
 from configcatclient.utils import get_utc_now_seconds_since_epoch
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_OBJECT, TEST_JSON_FORMAT
@@ -90,7 +90,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
         with mock.patch.object(requests, 'get') as request_get:
             response_mock = Mock()
             request_get.return_value = response_mock
-            config_json_string = TEST_JSON_FORMAT.format(value='{"s": "test"}')
+            config_json_string = TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test"}')
             response_mock.json.return_value = json.loads(config_json_string)
             response_mock.text = config_json_string
             response_mock.status_code = 200
@@ -117,7 +117,7 @@ class ManualPollingCachePolicyTests(unittest.TestCase):
             self.assertEqual('test-etag', cache_tokens[1])
             self.assertEqual(config_json_string, cache_tokens[2])
 
-            config_json_string = TEST_JSON_FORMAT.format(value='{"s": "test2"}')
+            config_json_string = TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test2"}')
             response_mock.json.return_value = json.loads(config_json_string)
             response_mock.text = config_json_string
 

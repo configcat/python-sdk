@@ -29,7 +29,7 @@ logging.basicConfig()
 
 
 def mocked_requests_get(*args, **kwargs):
-    return MockResponse({"f": {"fakeKey": {"v": {"b": False}}, "fakeKey2": {"v": {"s": "test"}}}}, 200)
+    return MockResponse({"f": {"fakeKey": {"v": {"b": False}, "t": 0}, "fakeKey2": {"v": {"s": "test"}, "t": 1}}}, 200)
 
 
 class OverrideTests(unittest.TestCase):

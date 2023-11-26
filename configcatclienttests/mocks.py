@@ -2,6 +2,7 @@ import json
 import time
 import logging
 
+from configcatclient.config import SettingType
 from configcatclient.configentry import ConfigEntry
 from configcatclient.utils import get_utc_now_seconds_since_epoch, distant_past
 
@@ -28,7 +29,7 @@ TEST_JSON = r'''{
    }
 }'''
 
-TEST_JSON_FORMAT = '{{ "f": {{ "testKey": {{ "v": {value}, "p": [], "r": [] }} }} }}'
+TEST_JSON_FORMAT = '{{ "f": {{ "testKey": {{ "t": {value_type}, "v": {value}, "p": [], "r": [] }} }} }}'
 
 TEST_JSON2 = r'''{
   "p": {
@@ -118,7 +119,7 @@ class ConfigFetcherCountMock(ConfigFetcher):
     def get_configuration(self, etag=''):
         self._value += 1
         value_string = '{ "i": %s }' % self._value
-        config_json_string = TEST_JSON_FORMAT.format(value=value_string)
+        config_json_string = TEST_JSON_FORMAT.format(value_type=SettingType.INT, value=value_string)
         config = json.loads(config_json_string)
         return FetchResponse.success(ConfigEntry(config, etag, config_json_string))
 

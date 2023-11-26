@@ -9,7 +9,7 @@ from .config import FEATURE_FLAGS, INLINE_SALT, TARGETING_RULES, PERCENTAGE_RULE
     SEGMENT_CONDITION, PREREQUISITE_FLAG_CONDITION, PREREQUISITE_FLAG_KEY, PREREQUISITE_COMPARATOR, \
     PrerequisiteComparator, INLINE_SEGMENT, SEGMENT_NAME, SEGMENT_COMPARATOR, SEGMENT_CONDITIONS, SegmentComparator, \
     COMPARISON_ATTRIBUTE, COMPARATOR, Comparator, COMPARATOR_TEXTS, PREREQUISITE_COMPARATOR_TEXTS, \
-    SEGMENT_COMPARATOR_TEXTS, COMPARISON_VALUES, get_value_type, get_setting_type
+    SEGMENT_COMPARATOR_TEXTS, COMPARISON_VALUES, get_value_type, SETTING_TYPE, SettingType
 from .evaluationcontext import EvaluationContext
 from .evaluationlogbuilder import EvaluationLogBuilder
 from .logger import Logger
@@ -50,11 +50,12 @@ class RolloutEvaluator(object):
             self.log.error(error, *error_args, event_id=1001)
             return default_value, default_variation_id, None, None, Logger.format(error, error_args)
 
+        setting_type = setting_descriptor.get(SETTING_TYPE)
         salt = setting_descriptor.get(INLINE_SALT, '')
         targeting_rules = setting_descriptor.get(TARGETING_RULES, [])
         percentage_rule_attribute = setting_descriptor.get(PERCENTAGE_RULE_ATTRIBUTE)
 
-        context = EvaluationContext(key, user, visited_keys)
+        context = EvaluationContext(key, setting_type, user, visited_keys)
 
         user_has_invalid_type = context.user is not None and not isinstance(context.user, User)
         if user_has_invalid_type:
@@ -82,7 +83,7 @@ class RolloutEvaluator(object):
 
                 if len(conditions) > 0:
                     served_value = targeting_rule.get(SERVED_VALUE)
-                    value = get_value(served_value) if served_value is not None else None
+                    value = get_value(served_value, setting_type) if served_value is not None else None
 
                     # Evaluate targeting rule conditions (logically connected by AND)
                     if self._evaluate_conditions(conditions, context, salt, config, log_builder, value):
@@ -121,7 +122,7 @@ class RolloutEvaluator(object):
                 log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % percentage_value)
                 return percentage_value, percentage_variation_id, None, percentage_option, None
 
-            return_value = get_value(setting_descriptor)
+            return_value = get_value(setting_descriptor, setting_type)
             return_variation_id = setting_descriptor.get(VARIATION_ID, default_variation_id)
             log_builder and is_root_flag_evaluation and log_builder.new_line("Returning '%s'." % return_value)
             return return_value, return_variation_id, None, None, None
@@ -244,7 +245,7 @@ class RolloutEvaluator(object):
             percentage = percentage_option.get(PERCENTAGE, 0)
             bucket += percentage
             if hash_val < bucket:
-                percentage_value = get_value(percentage_option)
+                percentage_value = get_value(percentage_option, context.setting_type)
                 variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
                 if log_builder:
                     log_builder.new_line('Evaluating %% options based on the User.%s attribute:' %
@@ -335,16 +336,20 @@ class RolloutEvaluator(object):
             raise ValueError('Prerequisite flag key is missing or invalid.')
 
         prerequisite_condition_result = False
-        prerequisite_comparison_value = get_value(prerequisite_flag_condition)
+        prerequisite_flag_setting_type = settings[prerequisite_key].get(SETTING_TYPE)
+        prerequisite_comparison_value_type = get_value_type(prerequisite_flag_condition)
+
+        # Type mismatch check
+        if prerequisite_comparison_value_type != SettingType.to_type(prerequisite_flag_setting_type):
+            raise ValueError("Type mismatch between comparison value type %s and type %s of prerequisite flag '%s'" %
+                             (prerequisite_comparison_value_type, SettingType.to_type(prerequisite_flag_setting_type),
+                              prerequisite_key))
+
+        prerequisite_comparison_value = get_value(prerequisite_flag_condition, prerequisite_flag_setting_type)
 
         prerequisite_condition = ("Flag '%s' %s '%s'" %
                                   (prerequisite_key, PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],
                                    str(prerequisite_comparison_value)))
-
-        # Type mismatch check
-        if get_value_type(prerequisite_flag_condition) != get_setting_type(settings[prerequisite_key]):
-            raise TypeError("Type mismatch between comparison value '%s' and prerequisite flag '%s'." %
-                            (str(prerequisite_comparison_value), prerequisite_key))
 
         # Circular dependency check
         visited_keys = context.visited_keys

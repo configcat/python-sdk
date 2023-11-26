@@ -7,6 +7,7 @@ from parameterized import parameterized
 
 import configcatclient
 from configcatclient import PollingMode, ConfigCatOptions, ConfigCatClient
+from configcatclient.config import SettingType
 from configcatclient.configcatoptions import Hooks
 from configcatclient.localdictionarydatasource import LocalDictionaryFlagOverrides
 from configcatclient.localfiledatasource import LocalFileDataSource
@@ -199,6 +200,31 @@ class RolloutTests(unittest.TestCase):
                          (custom_attribute_name, custom_attribute_value, key, custom_attribute_name, custom_attribute_value),
                          warning_log)
 
+    def test_wrong_config_json_type_mismatch(self):
+        config = {
+            'f': {
+                'test': {
+                    't': 1,  # SettingType.STRING
+                    'v': {'b': True},  # bool value instead of string (type mismatch)
+                    'p': [],
+                    'r': []
+                }
+            }
+        }
+
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+        value, _, _, _, _ = evaluator.evaluate('test', None, False, 'default_variation_id', config, None)
+
+        self.assertFalse(value)
+        self.assertEqual(1, len(log_handler.error_logs))
+        error = log_handler.error_logs[0]
+        self.assertTrue(error.startswith("[2001] Failed to evaluate setting 'test'. "
+                                         "(Setting value is not of the expected type <class 'str'>)"))
+
     @parameterized.expand([
         # SemVer-based comparisons
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/iV8vH2MBakKxkFZylxHmTg", "lessThanWithPercentage", "12345", "Custom1", "0.0", "20%"),
@@ -294,36 +320,36 @@ class RolloutTests(unittest.TestCase):
         self.assertTrue(dependency_cycle in error_log)
 
     @parameterized.expand([
-        ("stringDependsOnBool", "mainBoolFlag", True, "Dog"),
-        ("stringDependsOnBool", "mainBoolFlag", False, "Cat"),
-        ("stringDependsOnBool", "mainBoolFlag", "1", None),
-        ("stringDependsOnBool", "mainBoolFlag", 1, None),
-        ("stringDependsOnBool", "mainBoolFlag", 1.0, None),
-        ("stringDependsOnBool", "mainBoolFlag", [True], None),
-        ("stringDependsOnBool", "mainBoolFlag", None, None),
-        ("stringDependsOnString", "mainStringFlag", "private", "Dog"),
-        ("stringDependsOnString", "mainStringFlag", "Private", "Cat"),
-        ("stringDependsOnString", "mainStringFlag", True, None),
-        ("stringDependsOnString", "mainStringFlag", 1, None),
-        ("stringDependsOnString", "mainStringFlag", 1.0, None),
-        ("stringDependsOnString", "mainStringFlag", ["private"], None),
-        ("stringDependsOnString", "mainStringFlag", None, None),
-        ("stringDependsOnInt", "mainIntFlag", 2, "Dog"),
-        ("stringDependsOnInt", "mainIntFlag", 1, "Cat"),
-        ("stringDependsOnInt", "mainIntFlag", "2", None),
-        ("stringDependsOnInt", "mainIntFlag", True, None),
-        ("stringDependsOnInt", "mainIntFlag", 2.0, None),
-        ("stringDependsOnInt", "mainIntFlag", [2], None),
-        ("stringDependsOnInt", "mainIntFlag", None, None),
-        ("stringDependsOnDouble", "mainDoubleFlag", 0.1, "Dog"),
-        ("stringDependsOnDouble", "mainDoubleFlag", 0.11, "Cat"),
-        ("stringDependsOnDouble", "mainDoubleFlag", "0.1", None),
-        ("stringDependsOnDouble", "mainDoubleFlag", True, None),
-        ("stringDependsOnDouble", "mainDoubleFlag", 1, None),
-        ("stringDependsOnDouble", "mainDoubleFlag", [0.1], None),
-        ("stringDependsOnDouble", "mainDoubleFlag", None, None)
+        ("stringDependsOnBool", bool, "mainBoolFlag", True, "Dog"),
+        ("stringDependsOnBool", bool, "mainBoolFlag", False, "Cat"),
+        ("stringDependsOnBool", bool, "mainBoolFlag", "1", None),
+        ("stringDependsOnBool", bool, "mainBoolFlag", 1, None),
+        ("stringDependsOnBool", bool, "mainBoolFlag", 1.0, None),
+        ("stringDependsOnBool", bool, "mainBoolFlag", [True], None),
+        ("stringDependsOnBool", bool, "mainBoolFlag", None, None),
+        ("stringDependsOnString", str, "mainStringFlag", "private", "Dog"),
+        ("stringDependsOnString", str, "mainStringFlag", "Private", "Cat"),
+        ("stringDependsOnString", str, "mainStringFlag", True, None),
+        ("stringDependsOnString", str, "mainStringFlag", 1, None),
+        ("stringDependsOnString", str, "mainStringFlag", 1.0, None),
+        ("stringDependsOnString", str, "mainStringFlag", ["private"], None),
+        ("stringDependsOnString", str, "mainStringFlag", None, None),
+        ("stringDependsOnInt", int, "mainIntFlag", 2, "Dog"),
+        ("stringDependsOnInt", int, "mainIntFlag", 1, "Cat"),
+        ("stringDependsOnInt", int, "mainIntFlag", "2", None),
+        ("stringDependsOnInt", int, "mainIntFlag", True, None),
+        ("stringDependsOnInt", int, "mainIntFlag", 2.0, None),
+        ("stringDependsOnInt", int, "mainIntFlag", [2], None),
+        ("stringDependsOnInt", int, "mainIntFlag", None, None),
+        ("stringDependsOnDouble", float, "mainDoubleFlag", 0.1, "Dog"),
+        ("stringDependsOnDouble", float, "mainDoubleFlag", 0.11, "Cat"),
+        ("stringDependsOnDouble", float, "mainDoubleFlag", "0.1", None),
+        ("stringDependsOnDouble", float, "mainDoubleFlag", True, None),
+        ("stringDependsOnDouble", float, "mainDoubleFlag", 1, None),
+        ("stringDependsOnDouble", float, "mainDoubleFlag", [0.1], None),
+        ("stringDependsOnDouble", float, "mainDoubleFlag", None, None)
     ])
-    def test_prerequisite_flag_comparison_value_type_mismatch(self, key, prerequisite_flag_key, prerequisite_flag_value, expected_value):
+    def test_prerequisite_flag_comparison_value_type_mismatch(self, key, comparison_value_type, prerequisite_flag_key, prerequisite_flag_value, expected_value):
         override_dictionary = {prerequisite_flag_key: prerequisite_flag_value}
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                    flag_overrides=LocalDictionaryFlagOverrides(
@@ -343,8 +369,10 @@ class RolloutTests(unittest.TestCase):
         if expected_value is None:
             self.assertEqual(1, len(log_handler.error_logs))
             error_log = log_handler.error_logs[0]
-            self.assertTrue('Type mismatch between comparison value' in error_log)
-            self.assertTrue('and prerequisite flag' in error_log)
+            prerequisite_flag_value_type = SettingType.to_type(SettingType.from_type(type(prerequisite_flag_value)))
+
+            self.assertTrue(("Type mismatch between comparison value type %s and type %s of prerequisite flag '%s'" %
+                             (comparison_value_type, prerequisite_flag_value_type, prerequisite_flag_key)) in error_log)
 
         client.close()
 
