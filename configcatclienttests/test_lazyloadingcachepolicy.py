@@ -10,7 +10,7 @@ from configcatclient.configcatoptions import Hooks
 from configcatclient.configentry import ConfigEntry
 from configcatclient.configfetcher import FetchResponse, ConfigFetcher
 from configcatclient.configservice import ConfigService
-from configcatclient.config import VALUE, FEATURE_FLAGS, STRING_VALUE
+from configcatclient.config import VALUE, FEATURE_FLAGS, STRING_VALUE, SettingType
 from configcatclient.logger import Logger
 from configcatclient.utils import get_seconds_since_epoch, get_utc_now_seconds_since_epoch
 
@@ -26,7 +26,7 @@ except ImportError:
 
 from configcatclient.configcache import NullConfigCache
 from configcatclienttests.mocks import ConfigFetcherMock, ConfigFetcherWithErrorMock, TEST_JSON, SingleValueConfigCache, \
-    TEST_OBJECT
+    TEST_OBJECT, TEST_JSON_FORMAT
 
 logging.basicConfig()
 log = Logger('configcat', Hooks())
@@ -177,6 +177,48 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
         self.assertEqual('testValue', settings.get('testKey').get(VALUE).get(STRING_VALUE))
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(config_fetcher.get_fetch_count, 1)
+
+    def test_cache_TTL_respects_external_cache(self):
+        with mock.patch.object(requests, 'get') as request_get:
+            response_mock = Mock()
+            request_get.return_value = response_mock
+            config_json_string_remote = TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test-remote"}')
+            response_mock.json.return_value = json.loads(config_json_string_remote)
+            response_mock.text = config_json_string_remote
+            response_mock.status_code = 200
+            # response_mock.headers = {'ETag': 'etag'}
+
+            config_json_string_local = TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test-local"}')
+            config_cache = SingleValueConfigCache(ConfigEntry(
+                config=json.loads(config_json_string_local),
+                etag='etag',
+                config_json_string=config_json_string_local,
+                fetch_time=get_utc_now_seconds_since_epoch()).serialize())
+
+            polling_mode = PollingMode.lazy_load(cache_refresh_interval_seconds=1)
+            config_fetcher = ConfigFetcherMock()
+            cache_policy = ConfigService('', polling_mode, Hooks(), config_fetcher, log, config_cache, False)
+
+            config, _ = cache_policy.get_config()
+            settings = config.get(FEATURE_FLAGS)
+
+            self.assertEqual('test-local', settings.get('testKey').get(VALUE).get(STRING_VALUE))
+            self.assertEqual(config_fetcher.get_fetch_count, 0)
+
+            time.sleep(1)
+
+            config_json_string_local = TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test-local2"}')
+            config_cache._value = ConfigEntry(
+                config=json.loads(config_json_string_local),
+                etag='etag2',
+                config_json_string=config_json_string_local,
+                fetch_time=get_utc_now_seconds_since_epoch()).serialize()
+
+            config, _ = cache_policy.get_config()
+            settings = config.get(FEATURE_FLAGS)
+
+            self.assertEqual('test-local2', settings.get('testKey').get(VALUE).get(STRING_VALUE))
+            self.assertEqual(config_fetcher.get_fetch_count, 0)
 
     def test_online_offline(self):
         with mock.patch.object(requests, 'get') as request_get:
