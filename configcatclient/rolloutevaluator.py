@@ -151,7 +151,7 @@ class RolloutEvaluator(object):
         if isinstance(value, datetime):
             value = self._get_user_attribute_value_as_seconds_since_epoch(value)
         elif isinstance(value, list):
-            value = self.get_user_attribute_value_as_string_list(value)
+            value = self._get_user_attribute_value_as_string_list(value)
 
         return str(value)
 
@@ -159,19 +159,31 @@ class RolloutEvaluator(object):
         if isinstance(attribute_value, str):
             return attribute_value
 
+        if sys.version_info[0] == 2 and isinstance(attribute_value, unicode):  # noqa: F821
+            return attribute_value  # Handle unicode strings on Python 2.7
+
         self.log.warning('Evaluation of condition (%s) for setting \'%s\' may not produce the expected result '
                          '(the User.%s attribute is not a string value, thus it was automatically converted to '
                          'the string value \'%s\'). Please make sure that using a non-string value was intended.',
                          condition, key, attribute_name, attribute_value, event_id=3005)
         return self._user_attribute_value_to_string(attribute_value)
 
+    def _convert_numeric_to_float(self, value):
+        if isinstance(value, str):
+            return float(value.replace(",", "."))
+
+        if sys.version_info[0] == 2 and isinstance(value, unicode):  # noqa: F821
+            return float(value.replace(",", "."))  # Handle unicode strings on Python 2.7
+
+        return float(value)
+
     def _get_user_attribute_value_as_seconds_since_epoch(self, attribute_value):
         if isinstance(attribute_value, datetime):
             return get_seconds_since_epoch(attribute_value)
 
-        return float(str(attribute_value).replace(",", "."))
+        return self._convert_numeric_to_float(attribute_value)
 
-    def get_user_attribute_value_as_string_list(self, attribute_value):
+    def _get_user_attribute_value_as_string_list(self, attribute_value):
         if not isinstance(attribute_value, list):
             attribute_value_list = json.loads(attribute_value)
         else:
@@ -564,7 +576,7 @@ class RolloutEvaluator(object):
         # =, <>, <, <=, >, >= (number)
         elif Comparator.EQUALS_NUMBER <= comparator <= Comparator.GREATER_THAN_OR_EQUAL_NUMBER:
             try:
-                user_value_float = float(str(user_value).replace(",", "."))
+                user_value_float = self._convert_numeric_to_float(user_value)
             except ValueError:
                 validation_error = "'%s' is not a valid decimal number" % str(user_value)
                 error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
@@ -643,7 +655,7 @@ class RolloutEvaluator(object):
         # ARRAY CONTAINS ANY OF, ARRAY NOT CONTAINS ANY OF (hashed)
         elif Comparator.ARRAY_CONTAINS_ANY_OF_HASHED <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF_HASHED:
             try:
-                user_value_list = self.get_user_attribute_value_as_string_list(user_value)
+                user_value_list = self._get_user_attribute_value_as_string_list(user_value)
 
                 if sys.version_info[0] == 2:
                     user_value_list = unicode_to_utf8(user_value_list)  # On Python 2.7, convert unicode to utf-8
@@ -690,7 +702,7 @@ class RolloutEvaluator(object):
         # ARRAY CONTAINS ANY OF, ARRAY NOT CONTAINS ANY OF
         elif Comparator.ARRAY_CONTAINS_ANY_OF <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF:
             try:
-                user_value_list = self.get_user_attribute_value_as_string_list(user_value)
+                user_value_list = self._get_user_attribute_value_as_string_list(user_value)
 
                 if sys.version_info[0] == 2:
                     user_value_list = unicode_to_utf8(user_value_list)  # On Python 2.7, convert unicode to utf-8

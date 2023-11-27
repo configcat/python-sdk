@@ -1,9 +1,16 @@
 import logging
 import sys
 import unittest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from os import path
 from parameterized import parameterized
+
+try:
+    from datetime import timezone
+    utc_plus_2 = timezone(timedelta(hours=2))
+except ImportError:
+    import pytz as timezone  # On Python 2.7, datetime.timezone is not available. We use pytz instead.
+    utc_plus_2 = timezone.FixedOffset(120)  # 120 minutes (2 hours)
 
 import configcatclient
 from configcatclient import PollingMode, ConfigCatOptions, ConfigCatClient
@@ -222,8 +229,13 @@ class RolloutTests(unittest.TestCase):
         self.assertFalse(value)
         self.assertEqual(1, len(log_handler.error_logs))
         error = log_handler.error_logs[0]
-        self.assertTrue(error.startswith("[2001] Failed to evaluate setting 'test'. "
-                                         "(Setting value is not of the expected type <class 'str'>)"))
+        if sys.version_info[0] == 2:
+            # On Python 2.7 the serializer returns <type 'str'> instead of <class 'str'>
+            self.assertTrue(error.startswith("[2001] Failed to evaluate setting 'test'. "
+                                             "(Setting value is not of the expected type <type 'str'>)"))
+        else:
+            self.assertTrue(error.startswith("[2001] Failed to evaluate setting 'test'. "
+                                             "(Setting value is not of the expected type <class 'str'>)"))
 
     @parameterized.expand([
         # SemVer-based comparisons
@@ -255,13 +267,13 @@ class RolloutTests(unittest.TestCase):
         # Date time-based comparisons
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 3, 31, 23, 59, 59, 999000), False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 3, 31, 23, 59, 59, 999000, timezone.utc), False),
-        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 4, 1, 1, 59, 59, 999000, timezone(timedelta(hours=2))), False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 4, 1, 1, 59, 59, 999000, utc_plus_2), False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 4, 1, 0, 0, 0, 1000, timezone.utc), True),
-        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 4, 1, 2, 0, 0, 1000, timezone(timedelta(hours=2))), True),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 4, 1, 2, 0, 0, 1000, utc_plus_2), True),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 4, 30, 23, 59, 59, 999000, timezone.utc), True),
-        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 5, 1, 1, 59, 59, 999000, timezone(timedelta(hours=2))), True),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 5, 1, 1, 59, 59, 999000, utc_plus_2), True),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 5, 1, 0, 0, 0, 1000, timezone.utc), False),
-        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 5, 1, 2, 0, 0, 1000, timezone(timedelta(hours=2))), False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 5, 1, 2, 0, 0, 1000, utc_plus_2), False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", float('-inf'), False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", 1680307199.999, False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", 1680307200.001, True),

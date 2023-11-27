@@ -1,7 +1,12 @@
 import sys
 import inspect
 from qualname import qualname
-from datetime import datetime, timezone
+from datetime import datetime
+
+try:
+    from datetime import timezone
+except ImportError:
+    import pytz as timezone  # On Python 2.7, datetime.timezone is not available. We use pytz instead.
 
 epoch_time = datetime(1970, 1, 1, tzinfo=timezone.utc)
 distant_future = sys.float_info.max
