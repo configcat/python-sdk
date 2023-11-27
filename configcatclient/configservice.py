@@ -60,6 +60,11 @@ class ConfigService(object):
         """
         :return: RefreshResult object
         """
+        if self.is_offline():
+            offline_warning = 'Client is in offline mode, it cannot initiate HTTP calls.'
+            self.log.warning(offline_warning, event_id=3200)
+            return RefreshResult(is_success=False, error=offline_warning)
+
         _, error = self._fetch_if_older(utils.distant_future)
         return RefreshResult(is_success=error is None, error=error)
 
@@ -112,9 +117,7 @@ class ConfigService(object):
 
             # If we are in offline mode or the caller prefers cached values, do not initiate fetch.
             if self._is_offline or prefer_cache:
-                offline_warning = 'Client is in offline mode, it cannot initiate HTTP calls.'
-                self.log.warning(offline_warning, event_id=3200)
-                return self._cached_entry, offline_warning
+                return self._cached_entry, None
 
         # No fetch is running, initiate a new one.
         # Ensure only one fetch request is running at a time.
