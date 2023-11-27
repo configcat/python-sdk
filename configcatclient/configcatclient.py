@@ -61,7 +61,7 @@ class ConfigCatClient(object):
         """
         with cls._lock:
             for key, value in list(cls._instances.items()):
-                value.__close_resources()
+                value._close_resources()
             cls._instances.clear()
 
     def __init__(self,
@@ -124,7 +124,7 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: the value.
         """
-        config, fetch_time = self.__get_config()
+        config, fetch_time = self._get_config()
         if config is None or config.get(FEATURE_FLAGS) is None:
             message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
                       'Returning the `%s` parameter that you specified in your application: \'%s\'.'
@@ -134,12 +134,12 @@ class ConfigCatClient(object):
                 EvaluationDetails.from_error(key, default_value, Logger.format(message, message_args)))
             return default_value
 
-        details = self.__evaluate(key=key,
-                                  user=user,
-                                  default_value=default_value,
-                                  default_variation_id=None,
-                                  config=config,
-                                  fetch_time=fetch_time)
+        details = self._evaluate(key=key,
+                                 user=user,
+                                 default_value=default_value,
+                                 default_variation_id=None,
+                                 config=config,
+                                 fetch_time=fetch_time)
 
         return details.value
 
@@ -152,7 +152,7 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: the evaluation details.
         """
-        config, fetch_time = self.__get_config()
+        config, fetch_time = self._get_config()
         if config is None or config.get(FEATURE_FLAGS) is None:
             message = 'Config JSON is not present when evaluating setting \'%s\'. ' \
                       'Returning the `%s` parameter that you specified in your application: \'%s\'.'
@@ -162,12 +162,12 @@ class ConfigCatClient(object):
             self._hooks.invoke_on_flag_evaluated(details)
             return details
 
-        details = self.__evaluate(key=key,
-                                  user=user,
-                                  default_value=default_value,
-                                  default_variation_id=None,
-                                  config=config,
-                                  fetch_time=fetch_time)
+        details = self._evaluate(key=key,
+                                 user=user,
+                                 default_value=default_value,
+                                 default_variation_id=None,
+                                 config=config,
+                                 fetch_time=fetch_time)
 
         return details
 
@@ -177,7 +177,7 @@ class ConfigCatClient(object):
 
         :return: list of keys.
         """
-        config, _ = self.__get_config()
+        config, _ = self._get_config()
         if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
             return []
@@ -192,7 +192,7 @@ class ConfigCatClient(object):
         :param variation_id: variation ID
         :return: key and value
         """
-        config, _ = self.__get_config()
+        config, _ = self._get_config()
         if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'None', event_id=1000)
             return None
@@ -228,7 +228,7 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: dictionary of values
         """
-        config, _ = self.__get_config()
+        config, _ = self._get_config()
         if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'empty dictionary', event_id=1000)
             return {}
@@ -249,7 +249,7 @@ class ConfigCatClient(object):
         :param user: the user object to identify the caller.
         :return: list of all evaluation details
         """
-        config, fetch_time = self.__get_config()
+        config, fetch_time = self._get_config()
         if config is None:
             self.log.error('Config JSON is not present. Returning %s.', 'empty list', event_id=1000)
             return []
@@ -257,12 +257,12 @@ class ConfigCatClient(object):
         details_result = []
         settings = config.get(FEATURE_FLAGS, {})
         for key in list(settings):
-            details = self.__evaluate(key=key,
-                                      user=user,
-                                      default_value=None,
-                                      default_variation_id=None,
-                                      config=config,
-                                      fetch_time=fetch_time)
+            details = self._evaluate(key=key,
+                                     user=user,
+                                     default_value=None,
+                                     default_variation_id=None,
+                                     config=config,
+                                     fetch_time=fetch_time)
             details_result.append(details)
 
         return details_result
@@ -332,15 +332,15 @@ class ConfigCatClient(object):
         Closes the underlying resources.
         """
         with ConfigCatClient._lock:
-            self.__close_resources()
+            self._close_resources()
             ConfigCatClient._instances.pop(self._sdk_key)
 
-    def __close_resources(self):
+    def _close_resources(self):
         if self._config_service:
             self._config_service.close()
         self._hooks.clear()
 
-    def __get_config(self):
+    def _get_config(self):
         if self._override_data_source:
             behaviour = self._override_data_source.get_behaviour()
 
@@ -387,7 +387,7 @@ class ConfigCatClient(object):
                                  "Please make sure that using a default value not matching the setting's type was intended." %
                                  (default_value, type(value), type(default_value)), event_id=4002)
 
-    def __evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
+    def _evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
         user = user if user is not None else self._default_user
 
         # Skip building the evaluation log if it won't be logged.
