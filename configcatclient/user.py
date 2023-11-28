@@ -21,27 +21,27 @@ class User(object):
             country: Country of the user.
             custom: Custom attributes of the user for advanced targeting rule definitions (e.g. role, subscription type, etc.)
 
-            The set of allowed attribute values depends on the comparison type of the condition which references the User
-            Object attribute. String values are supported by all comparison types (in some cases they need to be provided in a
-            specific format though). Some comparison types work with other types of values, as described below.
+            All comparators support string values as User Object attribute (in some cases they need to be provided in a
+            specific format though, see below), but some of them also support other types of values. It depends on the
+            comparator how the values will be handled. The following rules apply:
 
-            Text-based comparisons (EQUALS, IS_ONE_OF, etc.)
+            Text-based comparators (EQUALS, IS_ONE_OF, etc.)
             * accept string values,
             * all other values are automatically converted to string
               (a warning will be logged but evaluation will continue as normal).
 
-            SemVer-based comparisons (IS_ONE_OF_SEMVER, LESS_THAN_SEMVER, GREATER_THAN_SEMVER, etc.)
+            SemVer-based comparators (IS_ONE_OF_SEMVER, LESS_THAN_SEMVER, GREATER_THAN_SEMVER, etc.)
             * accept string values containing a properly formatted, valid semver value,
             * all other values are considered invalid
               (a warning will be logged and the currently evaluated targeting rule will be skipped).
 
-            Number-based comparisons (EQUALS_NUMBER, LESS_THAN_NUMBER, GREATER_THAN_OR_EQUAL_NUMBER, etc.)
+            Number-based comparators (EQUALS_NUMBER, LESS_THAN_NUMBER, GREATER_THAN_OR_EQUAL_NUMBER, etc.)
             * accept float values and all other numeric values which can safely be converted to float,
             * accept string values containing a properly formatted, valid float value,
             * all other values are considered invalid
               (a warning will be logged and the currently evaluated targeting rule will be skipped).
 
-            Date time-based comparisons (BEFORE_DATETIME / AFTER_DATETIME)
+            Date time-based comparators (BEFORE_DATETIME / AFTER_DATETIME)
             * accept datetime values, which are automatically converted to a second-based Unix timestamp
               (datetime values with naive timezone are considered to be in UTC),
             * accept float values representing a second-based Unix timestamp
@@ -50,14 +50,11 @@ class User(object):
             * all other values are considered invalid
               (a warning will be logged and the currently evaluated targeting rule will be skipped).
 
-            String array-based comparisons (ARRAY_CONTAINS_ANY_OF / ARRAY_NOT_CONTAINS_ANY_OF)
+            String array-based comparators (ARRAY_CONTAINS_ANY_OF / ARRAY_NOT_CONTAINS_ANY_OF)
             * accept arrays of strings,
             * accept string values containing a valid JSON string which can be deserialized to an array of strings,
             * all other values are considered invalid
               (a warning will be logged and the currently evaluated targeting rule will be skipped).
-
-            In cases where a non-string attribute value needs to be converted to string during evaluation,
-            it will always be done using the same format which is accepted by the comparisons.
         """
         self.__identifier = identifier if identifier is not None else ''
         self.__data = {'Identifier': identifier, 'Email': email, 'Country': country}
