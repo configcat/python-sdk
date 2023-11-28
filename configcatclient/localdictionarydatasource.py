@@ -34,8 +34,6 @@ class LocalDictionaryDataSource(OverrideDataSource):
                 value_type = DOUBLE_VALUE
             else:
                 value_type = UNSUPPORTED_VALUE
-                self.log.error("Error occurred while reading dictionary: "
-                               "Unsupported value type: %s." % type(value))
 
             if FEATURE_FLAGS not in self._config:
                 self._config[FEATURE_FLAGS] = {}

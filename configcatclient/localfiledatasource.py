@@ -62,8 +62,6 @@ class LocalFileDataSource(OverrideDataSource):
                                 value_type = DOUBLE_VALUE
                             else:
                                 value_type = UNSUPPORTED_VALUE
-                                self.log.error("Error occurred while parsing the local config file \'%s\':"
-                                               "Unsupported value type: %s." % (self._file_path, type(value)))
 
                             self._config[FEATURE_FLAGS][key] = {VALUE: {value_type: value}}
                             setting_type = SettingType.from_type(type(value))
