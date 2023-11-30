@@ -2,8 +2,8 @@ import hashlib
 from threading import Thread, Event, Lock
 
 from . import utils
+from .config import FEATURE_FLAGS, CONFIG_FILE_NAME, SERIALIZATION_FORMAT_VERSION
 from .configentry import ConfigEntry
-from .constants import CONFIG_FILE_NAME, FEATURE_FLAGS, SERIALIZATION_FORMAT_VERSION
 from .pollingmode import AutoPollingMode, LazyLoadingMode
 from .refreshresult import RefreshResult
 
@@ -31,11 +31,11 @@ class ConfigService(object):
         else:
             self._set_initialized()
 
-    def get_settings(self):
+    def get_config(self):
         if isinstance(self._polling_mode, LazyLoadingMode):
             entry, _ = self._fetch_if_older(
                 utils.get_utc_now_seconds_since_epoch() - self._polling_mode.cache_refresh_interval_seconds)
-            return (entry.config.get(FEATURE_FLAGS, {}), entry.fetch_time) \
+            return (entry.config, entry.fetch_time) \
                 if not entry.is_empty() \
                 else (None, utils.distant_past)
         elif isinstance(self._polling_mode, AutoPollingMode) and not self._initialized.is_set():
@@ -46,12 +46,13 @@ class ConfigService(object):
                 # Max wait time expired without result, notify subscribers with the cached config.
                 if not self._initialized.is_set():
                     self._set_initialized()
-                    return (self._cached_entry.config.get(FEATURE_FLAGS, {}), self._cached_entry.fetch_time) \
+                    return (self._cached_entry.config, self._cached_entry.fetch_time) \
                         if not self._cached_entry.is_empty() \
                         else (None, utils.distant_past)
 
-        entry, _ = self._fetch_if_older(utils.distant_past, prefer_cache=True)
-        return (entry.config.get(FEATURE_FLAGS, {}), entry.fetch_time) \
+        # If we are initialized, we prefer the cached results
+        entry, _ = self._fetch_if_older(utils.distant_past, prefer_cache=self._initialized.is_set())
+        return (entry.config, entry.fetch_time) \
             if not entry.is_empty() \
             else (None, utils.distant_past)
 
@@ -59,6 +60,11 @@ class ConfigService(object):
         """
         :return: RefreshResult object
         """
+        if self.is_offline():
+            offline_warning = 'Client is in offline mode, it cannot initiate HTTP calls.'
+            self.log.warning(offline_warning, event_id=3200)
+            return RefreshResult(is_success=False, error=offline_warning)
+
         _, error = self._fetch_if_older(utils.distant_future)
         return RefreshResult(is_success=error is None, error=error)
 
@@ -92,35 +98,26 @@ class ConfigService(object):
         if isinstance(self._polling_mode, AutoPollingMode):
             self._stopped.set()
 
-    def _fetch_if_older(self, time, prefer_cache=False):
+    def _fetch_if_older(self, threshold, prefer_cache=False):
         """
         :return: Returns the ConfigEntry object and error message in case of any error.
         """
 
         with self._lock:
             # Sync up with the cache and use it when it's not expired.
-            if self._cached_entry.is_empty() or self._cached_entry.fetch_time > time:
-                entry = self._read_cache()
-                if not entry.is_empty() and entry.etag != self._cached_entry.etag:
-                    self._cached_entry = entry
-                    self._hooks.invoke_on_config_changed(entry.config.get(FEATURE_FLAGS))
+            from_cache = self._read_cache()
+            if not from_cache.is_empty() and from_cache.etag != self._cached_entry.etag:
+                self._cached_entry = from_cache
+                self._hooks.invoke_on_config_changed(from_cache.config.get(FEATURE_FLAGS))
 
-                # Cache isn't expired
-                if self._cached_entry.fetch_time > time:
-                    self._set_initialized()
-                    return self._cached_entry, None
-
-            # Use cache anyway (get calls on auto & manual poll must not initiate fetch).
-            # The initialized check ensures that we subscribe for the ongoing fetch during the
-            # max init wait time window in case of auto poll.
-            if prefer_cache and self._initialized.is_set():
+            # Cache isn't expired
+            if self._cached_entry.fetch_time > threshold:
+                self._set_initialized()
                 return self._cached_entry, None
 
-            # If we are in offline mode we are not allowed to initiate fetch.
-            if self._is_offline:
-                offline_warning = 'Client is in offline mode, it cannot initiate HTTP calls.'
-                self.log.warning(offline_warning, event_id=3200)
-                return self._cached_entry, offline_warning
+            # If we are in offline mode or the caller prefers cached values, do not initiate fetch.
+            if self._is_offline or prefer_cache:
+                return self._cached_entry, None
 
         # No fetch is running, initiate a new one.
         # Ensure only one fetch request is running at a time.

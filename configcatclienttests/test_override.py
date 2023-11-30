@@ -4,12 +4,14 @@ from os import path
 import tempfile
 import json
 import time
+from parameterized import parameterized
 
 from configcatclient import ConfigCatClient
 from configcatclient.localdictionarydatasource import LocalDictionaryFlagOverrides
 from configcatclient.localfiledatasource import LocalFileFlagOverrides
 from configcatclient.overridedatasource import OverrideBehaviour
-from configcatclienttests.mocks import MockResponse
+from configcatclient.user import User
+from configcatclienttests.mocks import MockResponse, TEST_SDK_KEY
 from configcatclient.configcatoptions import ConfigCatOptions
 from configcatclient.pollingmode import PollingMode
 
@@ -27,7 +29,7 @@ logging.basicConfig()
 
 
 def mocked_requests_get(*args, **kwargs):
-    return MockResponse({"f": {"fakeKey": {"v": False}}}, 200)
+    return MockResponse({"f": {"fakeKey": {"v": {"b": False}, "t": 0}, "fakeKey2": {"v": {"s": "test"}, "t": 1}}}, 200)
 
 
 class OverrideTests(unittest.TestCase):
@@ -36,9 +38,9 @@ class OverrideTests(unittest.TestCase):
     def test_file(self):
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                    flag_overrides=LocalFileFlagOverrides(
-                                       file_path=path.join(OverrideTests.script_dir, 'test.json'),
+                                       file_path=path.join(OverrideTests.script_dir, 'data/test.json'),
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key='', options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
         self.assertFalse(client.get_value('disabledFeature', True))
@@ -50,7 +52,7 @@ class OverrideTests(unittest.TestCase):
     def test_simple_file(self):
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                    flag_overrides=LocalFileFlagOverrides(
-                                       file_path=path.join(OverrideTests.script_dir, 'test-simple.json'),
+                                       file_path=path.join(OverrideTests.script_dir, 'data/test-simple.json'),
                                        override_behaviour=OverrideBehaviour.LocalOnly))
         client = ConfigCatClient.get(sdk_key='test', options=options)
 
@@ -66,12 +68,12 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path='non_existent.json',
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
         self.assertFalse(client.get_value('enabledFeature', False))
         client.close()
 
     def test_reload_file(self):
-        temp = tempfile.NamedTemporaryFile(mode="w")
+        temp = tempfile.NamedTemporaryFile(mode="w", delete=False)
         dictionary = {'flags': {
             'enabledFeature': False
         }}
@@ -82,7 +84,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=temp.name,
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
         self.assertFalse(client.get_value('enabledFeature', True))
 
@@ -100,9 +102,10 @@ class OverrideTests(unittest.TestCase):
         self.assertTrue(client.get_value('enabledFeature', False))
 
         client.close()
+        temp.close()
 
     def test_invalid_file(self):
-        temp = tempfile.NamedTemporaryFile(mode="w")
+        temp = tempfile.NamedTemporaryFile(mode="w", delete=False)
         temp.write('{"flags": {"enabledFeature": true}')
         temp.flush()
 
@@ -110,11 +113,12 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalFileFlagOverrides(
                                        file_path=temp.name,
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
         self.assertFalse(client.get_value('enabledFeature', False))
 
         client.close()
+        temp.close()
 
     def test_dictionary(self):
         dictionary = {
@@ -129,7 +133,7 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalDictionaryFlagOverrides(
                                        source=dictionary,
                                        override_behaviour=OverrideBehaviour.LocalOnly))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
 
         self.assertTrue(client.get_value('enabledFeature', False))
         self.assertFalse(client.get_value('disabledFeature', True))
@@ -149,10 +153,11 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalDictionaryFlagOverrides(
                                        source=dictionary,
                                        override_behaviour=OverrideBehaviour.LocalOverRemote))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
         client.force_refresh()
 
         self.assertTrue(client.get_value('fakeKey', False))
+        self.assertEqual('test', client.get_value('fakeKey2', 'default'))
         self.assertTrue(client.get_value('nonexisting', False))
         client.close()
 
@@ -167,11 +172,71 @@ class OverrideTests(unittest.TestCase):
                                    flag_overrides=LocalDictionaryFlagOverrides(
                                        source=dictionary,
                                        override_behaviour=OverrideBehaviour.RemoteOverLocal))
-        client = ConfigCatClient.get(sdk_key='test', options=options)
+        client = ConfigCatClient.get(sdk_key=TEST_SDK_KEY, options=options)
         client.force_refresh()
 
         self.assertFalse(client.get_value('fakeKey', True))
+        self.assertEqual('test', client.get_value('fakeKey2', 'default'))
         self.assertTrue(client.get_value('nonexisting', False))
+        client.close()
+
+    @parameterized.expand([
+        ('stringDependsOnString', '1', 'john@sensitivecompany.com', None, 'Dog'),
+        ('stringDependsOnString', '1', 'john@sensitivecompany.com', OverrideBehaviour.RemoteOverLocal, 'Dog'),
+        ('stringDependsOnString', '1', 'john@sensitivecompany.com', OverrideBehaviour.LocalOverRemote, 'Dog'),
+        ('stringDependsOnString', '1', 'john@sensitivecompany.com', OverrideBehaviour.LocalOnly, None),
+        ('stringDependsOnString', '2', 'john@notsensitivecompany.com', None, 'Cat'),
+        ('stringDependsOnString', '2', 'john@notsensitivecompany.com', OverrideBehaviour.RemoteOverLocal, 'Cat'),
+        ('stringDependsOnString', '2', 'john@notsensitivecompany.com', OverrideBehaviour.LocalOverRemote, 'Dog'),
+        ('stringDependsOnString', '2', 'john@notsensitivecompany.com', OverrideBehaviour.LocalOnly, None),
+        ('stringDependsOnInt', '1', 'john@sensitivecompany.com', None, 'Dog'),
+        ('stringDependsOnInt', '1', 'john@sensitivecompany.com', OverrideBehaviour.RemoteOverLocal, 'Dog'),
+        ('stringDependsOnInt', '1', 'john@sensitivecompany.com', OverrideBehaviour.LocalOverRemote, 'Cat'),
+        ('stringDependsOnInt', '1', 'john@sensitivecompany.com', OverrideBehaviour.LocalOnly, None),
+        ('stringDependsOnInt', '2', 'john@notsensitivecompany.com', None, 'Cat'),
+        ('stringDependsOnInt', '2', 'john@notsensitivecompany.com', OverrideBehaviour.RemoteOverLocal, 'Cat'),
+        ('stringDependsOnInt', '2', 'john@notsensitivecompany.com', OverrideBehaviour.LocalOverRemote, 'Dog'),
+        ('stringDependsOnInt', '2', 'john@notsensitivecompany.com', OverrideBehaviour.LocalOnly, None)
+    ])
+    def test_prerequisite_flag_override(self, key, user_id, email, override_behaviour, expected_value):
+        # The flag override alters the definition of the following flags:
+        # * 'mainStringFlag': to check the case where a prerequisite flag is overridden (dependent flag: 'stringDependsOnString')
+        # * 'stringDependsOnInt': to check the case where a dependent flag is overridden (prerequisite flag: 'mainIntFlag')
+        options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                   flag_overrides=None if override_behaviour is None else LocalFileFlagOverrides(
+                                       file_path=path.join(OverrideTests.script_dir, 'data/test_override_flagdependency_v6.json'),
+                                       override_behaviour=override_behaviour))
+        client = ConfigCatClient.get(sdk_key='configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg', options=options)
+        client.force_refresh()
+        value = client.get_value(key, None, User(user_id, email))
+
+        self.assertEqual(expected_value, value)
+        client.close()
+
+    @parameterized.expand([
+        ('developerAndBetaUserSegment', '1', 'john@example.com', None, False),
+        ('developerAndBetaUserSegment', '1', 'john@example.com', OverrideBehaviour.RemoteOverLocal, False),
+        ('developerAndBetaUserSegment', '1', 'john@example.com', OverrideBehaviour.LocalOverRemote, True),
+        ('developerAndBetaUserSegment', '1', 'john@example.com', OverrideBehaviour.LocalOnly, True),
+        ('notDeveloperAndNotBetaUserSegment', '2', 'kate@example.com', None, True),
+        ('notDeveloperAndNotBetaUserSegment', '2', 'kate@example.com', OverrideBehaviour.RemoteOverLocal, True),
+        ('notDeveloperAndNotBetaUserSegment', '2', 'kate@example.com', OverrideBehaviour.LocalOverRemote, True),
+        ('notDeveloperAndNotBetaUserSegment', '2', 'kate@example.com', OverrideBehaviour.LocalOnly, None)
+    ])
+    def test_config_salt_segment_override(self, key, user_id, email, override_behaviour, expected_value):
+        # The flag override uses a different config json salt than the downloaded one and
+        # overrides the following segments:
+        # * 'Beta Users': User.Email IS ONE OF ['jane@example.com']
+        # * 'Developers': User.Email IS ONE OF ['john@example.com']
+        options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                   flag_overrides=None if override_behaviour is None else LocalFileFlagOverrides(
+                                       file_path=path.join(OverrideTests.script_dir, 'data/test_override_segments_v6.json'),
+                                       override_behaviour=override_behaviour))
+        client = ConfigCatClient.get(sdk_key='configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/h99HYXWWNE2bH8eWyLAVMA', options=options)
+        client.force_refresh()
+        value = client.get_value(key, None, User(user_id, email))
+
+        self.assertEqual(expected_value, value)
         client.close()
 
 

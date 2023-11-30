@@ -1,6 +1,15 @@
+import logging
 import unittest
 import json
+from datetime import datetime
 from configcatclient.user import User
+
+try:
+    from datetime import timezone
+except ImportError:
+    import pytz as timezone  # On Python 2.7, datetime.timezone is not available. We use pytz instead.
+
+logging.basicConfig()
 
 
 class UserTests(unittest.TestCase):
@@ -34,7 +43,12 @@ class UserTests(unittest.TestCase):
         user_id = 'id'
         email = 'test@test.com'
         country = 'country'
-        custom = {'custom': 'test'}
+        custom = {
+            'string': 'test',
+            'datetime': datetime(2023, 9, 19, 11, 1, 35, 999000, tzinfo=timezone.utc),
+            'int': 42,
+            'float': 3.14
+        }
         user = User(identifier=user_id, email=email, country=country, custom=custom)
 
         user_json = json.loads(str(user))
@@ -42,4 +56,7 @@ class UserTests(unittest.TestCase):
         self.assertEqual(user_id, user_json['Identifier'])
         self.assertEqual(email, user_json['Email'])
         self.assertEqual(country, user_json['Country'])
-        self.assertEqual(custom, user_json['Custom'])
+        self.assertEqual('test', user_json['string'])
+        self.assertEqual(42, user_json['int'])
+        self.assertEqual(3.14, user_json['float'])
+        self.assertEqual("2023-09-19T11:01:35.999000+00:00", user_json['datetime'])

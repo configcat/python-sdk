@@ -1,6 +1,8 @@
 import json
 import time
+import logging
 
+from configcatclient.config import SettingType
 from configcatclient.configentry import ConfigEntry
 from configcatclient.utils import get_utc_now_seconds_since_epoch, distant_past
 
@@ -13,53 +15,54 @@ except ImportError:
 from configcatclient.configfetcher import FetchResponse, ConfigFetcher
 from configcatclient.interfaces import ConfigCache
 
-TEST_JSON = '{' \
-            '   "p": {' \
-            '       "u": "https://cdn-global.configcat.com",' \
-            '       "r": 0' \
-            '   },' \
-            '   "f": {' \
-            '       "testKey": { "v": "testValue", "t": 1, "p": [], "r": [] }' \
-            '   }' \
-            '}'
+TEST_SDK_KEY = 'configcat-sdk-test-key/0000000000000000000000'
+TEST_SDK_KEY1 = 'configcat-sdk-test-key/0000000000000000000001'
+TEST_SDK_KEY2 = 'configcat-sdk-test-key/0000000000000000000002'
 
-TEST_JSON_FORMAT = '{{ "f": {{ "testKey": {{ "v": {value}, "p": [], "r": [] }} }} }}'
+TEST_JSON = r'''{
+   "p": {
+       "u": "https://cdn-global.configcat.com",
+       "r": 0
+   },
+   "f": {
+       "testKey": { "v": { "s": "testValue" }, "t": 1 }
+   }
+}'''
 
-TEST_JSON2 = '{' \
-             '  "p": {' \
-             '       "u": "https://cdn-global.configcat.com",' \
-             '       "r": 0' \
-             '  },' \
-             '  "f": {' \
-             '      "testKey": { "v": "testValue", "t": 1, "p": [], "r": [] }, ' \
-             '      "testKey2": { "v": "testValue2", "t": 1, "p": [], "r": [] }' \
-             '  }' \
-             '}'
+TEST_JSON_FORMAT = '{{ "f": {{ "testKey": {{ "t": {value_type}, "v": {value}, "p": [], "r": [] }} }} }}'
 
-TEST_OBJECT = json.loads(
-    '{'
-    '"p": {'
-    '"u": "https://cdn-global.configcat.com",'
-    '"r": 0'
-    "},"
-    '"f": {'
-    '"testBoolKey": '
-    '{"v": true, "t": 0, "p": [], "r": []},'
-    '"testStringKey": '
-    '{"v": "testValue", "i": "id", "t": 1, "p": [], "r": ['
-    '   {"i":"id1","v":"fake1","a":"Identifier","t":2,"c":"@test1.com"},'
-    '   {"i":"id2","v":"fake2","a":"Identifier","t":2,"c":"@test2.com"}'
-    ']},'
-    '"testIntKey": '
-    '{"v": 1, "t": 2, "p": [], "r": []},'
-    '"testDoubleKey": '
-    '{"v": 1.1, "t": 3,"p": [], "r": []},'
-    '"key1": '
-    '{"v": true, "i": "fakeId1","p": [], "r": []},'
-    '"key2": '
-    '{"v": false, "i": "fakeId2","p": [], "r": []}'
-    '}'
-    '}')
+TEST_JSON2 = r'''{
+  "p": {
+       "u": "https://cdn-global.configcat.com",
+       "r": 0
+  },
+  "f": {
+      "testKey": { "v": { "s": "testValue" }, "t": 1 },
+      "testKey2": { "v": { "s": "testValue2" }, "t": 1 }
+  }
+}'''
+
+TEST_OBJECT = json.loads(r'''{
+  "p": {
+    "u": "https://cdn-global.configcat.com",
+    "r": 0
+  },
+  "s": [
+    {"n": "id1", "r": [{"a": "Identifier", "c": 2, "l": ["@test1.com"]}]},
+    {"n": "id2", "r": [{"a": "Identifier", "c": 2, "l": ["@test2.com"]}]}
+  ],
+  "f": {
+    "testBoolKey": {"v": {"b": true}, "t": 0},
+    "testStringKey": {"v": {"s": "testValue"}, "i": "id", "t": 1, "r": [
+      {"c": [{"s": {"s": 0, "c": 0}}], "s": {"v": {"s": "fake1"}, "i": "id1"}},
+      {"c": [{"s": {"s": 1, "c": 0}}], "s": {"v": {"s": "fake2"}, "i": "id2"}}
+    ]},
+    "testIntKey": {"v": {"i": 1}, "t": 2},
+    "testDoubleKey": {"v": {"d": 1.1}, "t": 3},
+    "key1": {"v": {"b": true}, "t": 0, "i": "fakeId1"},
+    "key2": {"v": {"b": false}, "t": 0, "i": "fakeId2"}
+  }
+}''')
 
 
 class ConfigFetcherMock(ConfigFetcher):
@@ -115,7 +118,8 @@ class ConfigFetcherCountMock(ConfigFetcher):
 
     def get_configuration(self, etag=''):
         self._value += 1
-        config_json_string = TEST_JSON_FORMAT.format(value=self._value)
+        value_string = '{ "i": %s }' % self._value
+        config_json_string = TEST_JSON_FORMAT.format(value_type=SettingType.INT, value=value_string)
         config = json.loads(config_json_string)
         return FetchResponse.success(ConfigEntry(config, etag, config_json_string))
 
@@ -145,7 +149,7 @@ class MockHeader:
         self.etag = etag
 
     def get(self, name):
-        if name == 'Etag':
+        if name == 'ETag':
             return self.etag
         return None
 
@@ -197,3 +201,24 @@ class HookCallbacks(object):
     def callback_exception(self, *args, **kwargs):
         self.callback_exception_call_count += 1
         raise Exception("error")
+
+
+class MockLogHandler(logging.Handler):
+    def __init__(self, *args, **kwargs):
+        super(MockLogHandler, self).__init__(*args, **kwargs)
+        self.error_logs = []
+        self.warning_logs = []
+        self.info_logs = []
+
+    def clear(self):
+        self.error_logs = []
+        self.warning_logs = []
+        self.info_logs = []
+
+    def emit(self, record):
+        if record.levelno == logging.ERROR:
+            self.error_logs.append(record.getMessage())
+        elif record.levelno == logging.WARNING:
+            self.warning_logs.append(record.getMessage())
+        elif record.levelno == logging.INFO:
+            self.info_logs.append(record.getMessage())

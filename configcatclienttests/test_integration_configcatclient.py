@@ -42,12 +42,14 @@ class DefaultTests(unittest.TestCase):
         keys = client.get_all_keys()
         self.assertEqual(5, len(keys))
         self.assertTrue('keySampleText' in keys)
+        client.close()
 
     def test_get_all_values(self):
         client = configcatclient.get(_SDK_KEY)
         all_values = client.get_all_values()
         self.assertEqual(5, len(all_values))
         self.assertEqual('This text came from ConfigCat', all_values['keySampleText'])
+        client.close()
 
     def test_force_refresh(self):
         client = configcatclient.get(_SDK_KEY)

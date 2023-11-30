@@ -3,3 +3,4 @@ requests>=2.31.0; python_version >= "3.7"
 semver>=2.10.2
 enum-compat>=0.0.3
 qualname>=0.1.0
+pytz; python_version == "2.7"

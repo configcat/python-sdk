@@ -6,7 +6,7 @@ def parse_requirements(filename):
     return [line for line in lines if line]
 
 
-configcatclient_version = '8.0.1'
+configcatclient_version = '9.0.0'
 
 requirements = parse_requirements('requirements.txt')
 
@@ -39,6 +39,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Software Development',
         'Topic :: Software Development :: Libraries',
     ],

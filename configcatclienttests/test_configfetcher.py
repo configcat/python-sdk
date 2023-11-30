@@ -43,7 +43,7 @@ class ConfigFetcherTests(unittest.TestCase):
             response_mock = Mock()
             response_mock.json.return_value = test_json
             response_mock.status_code = 200
-            response_mock.headers = {'Etag': etag}
+            response_mock.headers = {'ETag': etag}
 
             request_get.return_value = response_mock
             fetch_response = fetcher.get_configuration()

@@ -1,7 +1,10 @@
 import logging
+import sys
 import unittest
 import multiprocessing
 from time import sleep
+
+import pytest
 
 import configcatclient
 from configcatclient.user import User
@@ -16,6 +19,7 @@ def _manual_force_refresh(client, repeat=10, delay=0.1):
 
 
 class ConcurrencyTests(unittest.TestCase):
+    @pytest.mark.skipif(sys.platform == 'win32' or sys.platform == 'darwin', reason="TypeError: can't pickle _thread.lock objects")
     def test_concurrency_process(self):
         client = configcatclient.get('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
         value = client.get_value('keySampleText', False, User('key'))

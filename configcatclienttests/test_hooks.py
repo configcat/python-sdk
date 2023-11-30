@@ -4,12 +4,13 @@ import unittest
 import requests
 
 from configcatclient.configcatclient import ConfigCatClient
-from configcatclient.constants import FEATURE_FLAGS, VALUE, COMPARATOR, COMPARISON_ATTRIBUTE, COMPARISON_VALUE
+from configcatclient.config import FEATURE_FLAGS, VALUE, SERVED_VALUE, STRING_VALUE, \
+    extend_config_with_inline_salt_and_segment
 from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions, Hooks
 from configcatclient.pollingmode import PollingMode
 from configcatclient.utils import get_utc_now
-from configcatclienttests.mocks import ConfigCacheMock, HookCallbacks, TEST_OBJECT
+from configcatclienttests.mocks import ConfigCacheMock, HookCallbacks, TEST_OBJECT, TEST_SDK_KEY
 
 # Python2/Python3 support
 try:
@@ -36,16 +37,18 @@ class HooksTests(unittest.TestCase):
         )
 
         config_cache = ConfigCacheMock()
-        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                              config_cache=config_cache,
-                                                              hooks=hooks))
+        client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                    config_cache=config_cache,
+                                                                    hooks=hooks))
 
         value = client.get_value('testStringKey', '')
 
         self.assertEqual('testValue', value)
         self.assertTrue(hook_callbacks.is_ready)
         self.assertEqual(1, hook_callbacks.is_ready_call_count)
-        self.assertEqual(TEST_OBJECT.get(FEATURE_FLAGS), hook_callbacks.changed_config)
+        extended_config = TEST_OBJECT
+        extend_config_with_inline_salt_and_segment(extended_config)
+        self.assertEqual(extended_config.get(FEATURE_FLAGS), hook_callbacks.changed_config)
         self.assertEqual(1, hook_callbacks.changed_config_call_count)
         self.assertTrue(hook_callbacks.evaluation_details)
         self.assertEqual(1, hook_callbacks.evaluation_details_call_count)
@@ -63,9 +66,9 @@ class HooksTests(unittest.TestCase):
         hooks.add_on_error(hook_callbacks.on_error)
 
         config_cache = ConfigCacheMock()
-        client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                              config_cache=config_cache,
-                                                              hooks=hooks))
+        client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                    config_cache=config_cache,
+                                                                    hooks=hooks))
 
         value = client.get_value('testStringKey', '')
 
@@ -90,7 +93,7 @@ class HooksTests(unittest.TestCase):
             response_mock.headers = {}
 
             hook_callbacks = HookCallbacks()
-            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
+            client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll()))
 
             client.get_hooks().add_on_flag_evaluated(hook_callbacks.on_flag_evaluated)
 
@@ -106,11 +109,8 @@ class HooksTests(unittest.TestCase):
             self.assertEqual('id1', details.variation_id)
             self.assertFalse(details.is_default_value)
             self.assertIsNone(details.error)
-            self.assertIsNone(details.matched_evaluation_percentage_rule)
-            self.assertEqual('fake1', details.matched_evaluation_rule[VALUE])
-            self.assertEqual(2, details.matched_evaluation_rule[COMPARATOR])
-            self.assertEqual('Identifier', details.matched_evaluation_rule[COMPARISON_ATTRIBUTE])
-            self.assertEqual('@test1.com', details.matched_evaluation_rule[COMPARISON_VALUE])
+            self.assertIsNone(details.matched_percentage_option)
+            self.assertEqual('fake1', details.matched_targeting_rule[SERVED_VALUE][VALUE][STRING_VALUE])
             self.assertEqual(str(user), str(details.user))
             now = get_utc_now()
             self.assertGreaterEqual(now, details.fetch_time)
@@ -133,8 +133,8 @@ class HooksTests(unittest.TestCase):
                 on_flag_evaluated=hook_callbacks.callback_exception,
                 on_error=hook_callbacks.callback_exception
             )
-            client = ConfigCatClient.get('test', ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
-                                                                  hooks=hooks))
+            client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
+                                                                        hooks=hooks))
 
             client.force_refresh()
 
