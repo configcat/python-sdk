@@ -161,7 +161,7 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertEqual(1, all_values['testIntKey'])
         self.assertEqual(1.1, all_values['testDoubleKey'])
         self.assertTrue(all_values['key1'])
-        self.assertFalse(all_values['key2'])
+        self.assertEqual('fake4', all_values['key2'])
         client.close()
 
     def test_get_all_value_details(self):
@@ -196,12 +196,12 @@ class ConfigCatClientTests(unittest.TestCase):
         details = details_by_key(all_details, 'key1')
         self.assertEqual('key1', details.key)
         self.assertEqual(True, details.value)
-        self.assertEqual('fakeId1', details.variation_id)
+        self.assertEqual('id3', details.variation_id)
 
         details = details_by_key(all_details, 'key2')
         self.assertEqual('key2', details.key)
-        self.assertEqual(False, details.value)
-        self.assertEqual('fakeId2', details.variation_id)
+        self.assertEqual('fake4', details.value)
+        self.assertEqual('id4', details.variation_id)
 
         client.close()
 
@@ -263,7 +263,7 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertEqual(1, all_values['testIntKey'])
         self.assertEqual(1.1, all_values['testDoubleKey'])
         self.assertTrue(all_values['key1'])
-        self.assertFalse(all_values['key2'])
+        self.assertEqual('fake6', all_values['key2'])
 
         all_values = client.get_all_values(user2)
         # Two dictionary should have exactly the same elements, order doesn't matter.
@@ -273,7 +273,7 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertEqual(1, all_values['testIntKey'])
         self.assertEqual(1.1, all_values['testDoubleKey'])
         self.assertTrue(all_values['key1'])
-        self.assertFalse(all_values['key2'])
+        self.assertEqual('fake8', all_values['key2'])
 
         client.clear_default_user()
         all_values = client.get_all_values()
@@ -283,7 +283,7 @@ class ConfigCatClientTests(unittest.TestCase):
         self.assertEqual(1, all_values['testIntKey'])
         self.assertEqual(1.1, all_values['testDoubleKey'])
         self.assertTrue(all_values['key1'])
-        self.assertFalse(all_values['key2'])
+        self.assertEqual('fake4', all_values['key2'])
 
         client.close()
 
