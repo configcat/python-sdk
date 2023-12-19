@@ -59,8 +59,17 @@ TEST_OBJECT = json.loads(r'''{
     ]},
     "testIntKey": {"v": {"i": 1}, "t": 2},
     "testDoubleKey": {"v": {"d": 1.1}, "t": 3},
-    "key1": {"v": {"b": true}, "t": 0, "i": "fakeId1"},
-    "key2": {"v": {"b": false}, "t": 0, "i": "fakeId2"}
+    "key1": {"v": {"b": true}, "t": 0, "i": "id3"},
+    "key2": {"v": {"s": "fake4"}, "t": 1, "i": "id4",
+      "r": [
+        {"c": [{"s": {"s": 0, "c": 0}}], "p": [
+          {"p": 50, "v": {"s": "fake5"}, "i": "id5"}, {"p": 50, "v": {"s": "fake6"}, "i": "id6"}
+        ]}
+      ], 
+      "p": [
+        {"p": 50, "v": {"s": "fake7"}, "i": "id7"}, {"p": 50, "v": {"s": "fake8"}, "i": "id8"}
+      ]
+    }
   }
 }''')
 
