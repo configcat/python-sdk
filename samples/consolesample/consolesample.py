@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':
     # Initialize the ConfigCatClient with an SDK Key.
-    client = configcatclient.get('PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A')
+    client = configcatclient.get('configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/AG6C1ngVb0CvM07un6JisQ')
 
     # In the project there is a 'keySampleText' setting with the following rules:
     # 1. If the User's country is Hungary, the value should be 'Dog'
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     my_setting_value = client.get_value('keySampleText', 'default value', User('key'))
     print("'keySampleText' value from ConfigCat: " + str(my_setting_value))
 
-    # 4. As we don't pass an User object to this call, this will print the setting's default value - 'Cat'
+    # 4. As we don't pass a User object to this call, this will print the setting's default value - 'Cat'
     my_setting_value = client.get_value('keySampleText', 'default value')
     print("'keySampleText' value from ConfigCat: " + str(my_setting_value))
 

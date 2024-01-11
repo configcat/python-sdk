@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 if __name__ == '__main__':
     # Initialize the ConfigCatClient with an SDK Key.
     client = configcatclient.get(
-        'PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ')
+        'configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/tiOvFw5gkky9LFu1Duuvzw')
 
     # Creating a user object to identify your user (optional).
     userObject = User('Some UserID', email='configcat@example.com', custom={
