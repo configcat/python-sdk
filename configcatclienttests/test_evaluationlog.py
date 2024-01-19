@@ -26,52 +26,52 @@ def remove_unicode_prefix(string):
 
 class EvaluationLogTests(unittest.TestCase):
     def test_simple_value(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/simple_value.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/simple_value.json'))
 
     def test_1_targeting_rule(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/1_targeting_rule.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/1_targeting_rule.json'))
 
     def test_2_targeting_rules(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/2_targeting_rules.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/2_targeting_rules.json'))
 
     def test_options_based_on_user_id(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/options_based_on_user_id.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/options_based_on_user_id.json'))
 
     def test_options_based_on_custom_attr(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/options_based_on_custom_attr.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/options_based_on_custom_attr.json'))
 
     def test_options_after_targeting_rule(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/options_after_targeting_rule.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/options_after_targeting_rule.json'))
 
     def test_options_within_targeting_rule(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/options_within_targeting_rule.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/options_within_targeting_rule.json'))
 
     def test_and_rules(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/and_rules.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/and_rules.json'))
 
     def test_segment(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/segment.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/segment.json'))
 
     def test_prerequisite_flag(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/prerequisite_flag.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/prerequisite_flag.json'))
 
     def test_semver_validation(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/semver_validation.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/semver_validation.json'))
 
     def test_epoch_date_validation(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/epoch_date_validation.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/epoch_date_validation.json'))
 
     def test_number_validation(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/number_validation.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/number_validation.json'))
 
     def test_comparators_validation(self):
         self.maxDiff = None
-        self.assertTrue(self._evaluation_log('data/evaluation/comparators.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/comparators.json'))
 
     def test_list_truncation_validation(self):
-        self.assertTrue(self._evaluation_log('data/evaluation/list_truncation.json'))
+        self.assertTrue(self._test_evaluation_log('data/evaluation/list_truncation.json'))
 
-    def _evaluation_log(self, file_path, test_filter=None, generate_expected_log=False):
+    def _test_evaluation_log(self, file_path, test_filter=None, generate_expected_log=False):
         script_dir = os.path.dirname(__file__)
         file_path = os.path.join(script_dir, file_path)
         self.assertTrue(os.path.isfile(file_path))
