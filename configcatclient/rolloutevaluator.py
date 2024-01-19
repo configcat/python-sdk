@@ -188,8 +188,20 @@ class RolloutEvaluator(object):
             attribute_value_list = json.loads(attribute_value)
         else:
             attribute_value_list = attribute_value
+
+        # Check if the result is a list
         if not isinstance(attribute_value_list, list):
             raise ValueError()
+
+        # Check if all items in the list are strings
+        for item in attribute_value_list:
+            # Handle unicode strings on Python 2.7
+            if sys.version_info[0] == 2:
+                if not isinstance(attribute_value, (str, unicode)):  # noqa: F821
+                    return attribute_value
+            else:
+                if not isinstance(item, str):
+                    raise ValueError()
 
         return attribute_value_list
 

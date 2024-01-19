@@ -186,7 +186,6 @@ class LazyLoadingCachePolicyTests(unittest.TestCase):
             response_mock.json.return_value = json.loads(config_json_string_remote)
             response_mock.text = config_json_string_remote
             response_mock.status_code = 200
-            # response_mock.headers = {'ETag': 'etag'}
 
             config_json_string_local = TEST_JSON_FORMAT.format(value_type=SettingType.STRING, value='{"s": "test-local"}')
             config_cache = SingleValueConfigCache(ConfigEntry(
