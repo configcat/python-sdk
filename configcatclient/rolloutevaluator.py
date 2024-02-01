@@ -1,6 +1,7 @@
 import json
 
 import hashlib
+import math
 import sys
 import semver
 
@@ -152,6 +153,19 @@ class RolloutEvaluator(object):
             value = self._get_user_attribute_value_as_seconds_since_epoch(value)
         elif isinstance(value, list):
             value = self._get_user_attribute_value_as_string_list(value)
+            return json.dumps(value, ensure_ascii=False, separators=(',', ':'))  # Convert the list to a JSON string
+
+        if isinstance(value, float):
+            if math.isnan(value):
+                return 'NaN'
+            if value == float('inf'):
+                return 'Infinity'
+            if value == float('-inf'):
+                return '-Infinity'
+            if 'e' in str(value):
+                return str(value)
+            if value.is_integer():
+                return str(int(value))
 
         return str(value)
 
@@ -260,7 +274,14 @@ class RolloutEvaluator(object):
                     'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
             return False, None, None, None
 
-        hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
+        # Unicode fix on Python 2.7
+        if sys.version_info[0] == 2:
+            try:
+                hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
+            except Exception as e:
+                hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).decode('utf-8').encode('utf-8')
+        else:
+            hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
         hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
         bucket = 0
@@ -317,7 +338,9 @@ class RolloutEvaluator(object):
                 result, error = self._evaluate_segment_condition(segment_condition, context, salt, log_builder)
                 if log_builder:
                     if len(conditions) > 1:
-                        log_builder.append(' => {}'.format('true' if result else 'false'))
+                        if error is None:
+                            log_builder.append(' ')
+                        log_builder.append('=> {}'.format('true' if result else 'false'))
                         if not result:
                             log_builder.append(', skipping the remaining AND conditions')
                     elif error is None:
@@ -328,6 +351,14 @@ class RolloutEvaluator(object):
                     break
             elif prerequisite_flag_condition is not None:
                 result = self._evaluate_prerequisite_flag_condition(prerequisite_flag_condition, context, config, log_builder)
+                if log_builder:
+                    if len(conditions) > 1:
+                        log_builder.append(' => {}'.format('true' if result else 'false'))
+                        if not result:
+                            log_builder.append(', skipping the remaining AND conditions')
+                    elif error is None:
+                        log_builder.new_line()
+
                 if not result:
                     condition_result = False
                     break
@@ -410,7 +441,7 @@ class RolloutEvaluator(object):
 
         if log_builder:
             log_builder.append('%s.' % ('true' if prerequisite_condition_result else 'false'))
-            log_builder.decrease_indent().new_line(')').new_line()
+            log_builder.decrease_indent().new_line(')')
 
         return prerequisite_condition_result
 
@@ -531,7 +562,7 @@ class RolloutEvaluator(object):
             return False, error
 
         user_value = user.get_attribute(comparison_attribute)
-        if user_value is None or not user_value:
+        if user_value is None or (not user_value and not isinstance(user_value, list)):
             self.log.warning('Cannot evaluate condition (%s) for setting \'%s\' '
                              '(the User.%s attribute is missing). You should set the User.%s attribute in order to make '
                              'targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/',

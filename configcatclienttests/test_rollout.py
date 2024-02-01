@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import sys
 import unittest
@@ -307,6 +308,150 @@ class RolloutTests(unittest.TestCase):
         user = User(user_id, custom={custom_attribute_name: custom_attribute_value})
         value = client.get_value(key, None, user)
 
+        self.assertEqual(expected_return_value, value)
+
+    @parameterized.expand([
+        ("numberToStringConversion", .12345, "1"),
+        ("numberToStringConversionInt", 125.0, "4"),
+        ("numberToStringConversionPositiveExp", -1.23456789e96, "2"),
+        ("numberToStringConversionNegativeExp", -12345.6789E-100, "4"),
+        ("numberToStringConversionNaN", float('nan'), "3"),
+        ("numberToStringConversionPositiveInf", float('inf'), "4"),
+        ("numberToStringConversionNegativeInf", float('-inf'), "3"),
+        ("dateToStringConversion", datetime(2023, 3, 31, 23, 59, 59, 999000), "3"),
+        ("dateToStringConversion", 1680307199.999, "3"),  # Assuming this needs conversion to date
+        ("dateToStringConversionNaN", float('nan'), "3"),
+        ("dateToStringConversionPositiveInf", float('inf'), "1"),
+        ("dateToStringConversionNegativeInf", float('-inf'), "5"),
+        ("stringArrayToStringConversion", ["read", "Write", " eXecute "], "4"),
+        ("stringArrayToStringConversionEmpty", [], "5"),
+        ("stringArrayToStringConversionSpecialChars", ["+<>%\"'\\/\t\r\n"], "3"),
+        ("stringArrayToStringConversionUnicode", ["äöüÄÖÜçéèñışğâ¢™✓😀"], "2"),
+    ])
+    def test_attribute_conversion_to_canonical_string(self, key, customAttributeValue, expectedReturnValue):
+        # Skip "dateToStringConversion" tests on Python 2.7 because of float precision issues
+        if sys.version_info[0] == 2 and key == 'dateToStringConversion':
+            self.skipTest("Python 2 float precision issue")
+
+        config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_attribute_conversion.json'),
+                                     OverrideBehaviour.LocalOnly, None).get_overrides()
+
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+
+        user = User('12345', custom={'Custom1': customAttributeValue})
+        value, _, _, _, _ = evaluator.evaluate(key, user, 'default_value', 'default_variation_id', config, None)
+        self.assertEqual(expectedReturnValue, value)
+
+    @parameterized.expand([
+        ("isoneof", "no trim"),
+        ("isnotoneof", "no trim"),
+        ("isoneofhashed", "no trim"),
+        ("isnotoneofhashed", "no trim"),
+        ("equalshashed", "no trim"),
+        ("notequalshashed", "no trim"),
+        ("arraycontainsanyofhashed", "no trim"),
+        ("arraynotcontainsanyofhashed", "no trim"),
+        ("equals", "no trim"),
+        ("notequals", "no trim"),
+        ("startwithanyof", "no trim"),
+        ("notstartwithanyof", "no trim"),
+        ("endswithanyof", "no trim"),
+        ("notendswithanyof", "no trim"),
+        ("arraycontainsanyof", "no trim"),
+        ("arraynotcontainsanyof", "no trim"),
+        ("startwithanyofhashed", "no trim"),
+        ("notstartwithanyofhashed", "no trim"),
+        ("endswithanyofhashed", "no trim"),
+        ("notendswithanyofhashed", "no trim"),
+        # semver comparators user values trimmed because of backward compatibility
+        ("semverisoneof", "4 trim"),
+        ("semverisnotoneof", "5 trim"),
+        ("semverless", "6 trim"),
+        ("semverlessequals", "7 trim"),
+        ("semvergreater", "8 trim"),
+        ("semvergreaterequals", "9 trim"),
+        # number and date comparators user values trimmed because of backward compatibility
+        ("numberequals", "10 trim"),
+        ("numbernotequals", "11 trim"),
+        ("numberless", "12 trim"),
+        ("numberlessequals", "13 trim"),
+        ("numbergreater", "14 trim"),
+        ("numbergreaterequals", "15 trim"),
+        ("datebefore", "18 trim"),
+        ("dateafter", "19 trim"),
+        # "contains any of" and "not contains any of" is a special case, the not trimmed user attribute checked against not trimmed comparator values.
+        ("containsanyof", "no trim"),
+        ("notcontainsanyof", "no trim")
+    ])
+    def test_comparison_attribute_trimming(self, key, expected_return_value):
+        config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_attribute_trimming.json'),
+                                         OverrideBehaviour.LocalOnly, None).get_overrides()
+
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+
+        user = User(' 12345 ', country='[" USA "]', custom={
+            'Version': ' 1.0.0 ',
+            'Number': ' 3 ',
+            'Date': ' 1705253400 '
+        })
+        value, _, _, _, _ = evaluator.evaluate(key, user, 'default_value', 'default_variation_id', config, None)
+        self.assertEqual(expected_return_value, value)
+
+    @parameterized.expand([
+        ("isoneof", "no trim"),
+        ("isnotoneof", "no trim"),
+        ("containsanyof", "no trim"),
+        ("notcontainsanyof", "no trim"),
+        ("isoneofhashed", "no trim"),
+        ("isnotoneofhashed", "no trim"),
+        ("equalshashed", "no trim"),
+        ("notequalshashed", "no trim"),
+        ("arraycontainsanyofhashed", "no trim"),
+        ("arraynotcontainsanyofhashed", "no trim"),
+        ("equals", "no trim"),
+        ("notequals", "no trim"),
+        ("startwithanyof", "no trim"),
+        ("notstartwithanyof", "no trim"),
+        ("endswithanyof", "no trim"),
+        ("notendswithanyof", "no trim"),
+        ("arraycontainsanyof", "no trim"),
+        ("arraynotcontainsanyof", "no trim"),
+        ("startwithanyofhashed", "no trim"),
+        ("notstartwithanyofhashed", "no trim"),
+        ("endswithanyofhashed", "no trim"),
+        ("notendswithanyofhashed", "no trim"),
+        # semver comparator values trimmed because of backward compatibility
+        ("semverisoneof", "4 trim"),
+        ("semverisnotoneof", "5 trim"),
+        ("semverless", "6 trim"),
+        ("semverlessequals", "7 trim"),
+        ("semvergreater", "8 trim"),
+        ("semvergreaterequals", "9 trim")
+    ])
+    def test_comparison_value_trimming(self, key, expected_return_value):
+        config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_value_trimming.json'),
+                                         OverrideBehaviour.LocalOnly, None).get_overrides()
+
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+
+        user = User('12345', country='["USA"]', custom={
+            'Version': '1.0.0',
+            'Number': '3',
+            'Date': '1705253400'
+        })
+        value, _, _, _, _ = evaluator.evaluate(key, user, 'default_value', 'default_variation_id', config, None)
         self.assertEqual(expected_return_value, value)
 
     @parameterized.expand([

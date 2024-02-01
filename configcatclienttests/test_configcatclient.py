@@ -54,25 +54,31 @@ class ConfigCatClientTests(unittest.TestCase):
         except ConfigCatClientException:
             pass
 
-    def test_invalid_sdk_key(self):
-        with pytest.raises(ConfigCatClientException):
-            ConfigCatClient.get('key')
-
-        with pytest.raises(ConfigCatClientException):
-            ConfigCatClient.get('configcat-proxy/key')
-
-        with pytest.raises(ConfigCatClientException):
-            ConfigCatClient.get('1234567890abcdefghijkl01234567890abcdefghijkl')
-
-        with pytest.raises(ConfigCatClientException):
-            ConfigCatClient.get('configcat-sdk-2/1234567890abcdefghijkl/1234567890abcdefghijkl')
-
-        with pytest.raises(ConfigCatClientException):
-            ConfigCatClient.get('configcat/1234567890abcdefghijkl/1234567890abcdefghijkl')
-
-        ConfigCatClient.get('1234567890abcdefghijkl/1234567890abcdefghijkl')
-        ConfigCatClient.get('configcat-sdk-1/1234567890abcdefghijkl/1234567890abcdefghijkl')
-        ConfigCatClient.get('configcat-proxy/key', options=ConfigCatOptions(base_url='base_url'))
+    @parameterized.expand([
+        ("sdk-key-90123456789012", False, False),
+        ("sdk-key-9012345678901/1234567890123456789012", False, False),
+        ("sdk-key-90123456789012/123456789012345678901", False, False),
+        ("sdk-key-90123456789012/12345678901234567890123", False, False),
+        ("sdk-key-901234567890123/1234567890123456789012", False, False),
+        ("sdk-key-90123456789012/1234567890123456789012", False, True),
+        ("configcat-sdk-1/sdk-key-90123456789012", False, False),
+        ("configcat-sdk-1/sdk-key-9012345678901/1234567890123456789012", False, False),
+        ("configcat-sdk-1/sdk-key-90123456789012/123456789012345678901", False, False),
+        ("configcat-sdk-1/sdk-key-90123456789012/12345678901234567890123", False, False),
+        ("configcat-sdk-1/sdk-key-901234567890123/1234567890123456789012", False, False),
+        ("configcat-sdk-1/sdk-key-90123456789012/1234567890123456789012", False, True),
+        ("configcat-sdk-2/sdk-key-90123456789012/1234567890123456789012", False, False),
+        ("configcat-proxy/", False, False),
+        ("configcat-proxy/", True, False),
+        ("configcat-proxy/sdk-key-90123456789012", False, False),
+        ("configcat-proxy/sdk-key-90123456789012", True, True),
+    ])
+    def test_sdk_key_format_validation(self, sdk_key, custom_base_url, is_valid):
+        try:
+            ConfigCatClient.get(sdk_key, ConfigCatOptions(base_url='https://my-configcat-proxy' if custom_base_url else None))
+            self.assertTrue(is_valid)
+        except ConfigCatClientException:
+            self.assertFalse(is_valid)
 
     def test_bool(self):
         client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
