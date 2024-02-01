@@ -278,8 +278,9 @@ class RolloutEvaluator(object):
         if sys.version_info[0] == 2:
             try:
                 hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
-            except Exception as e:
-                hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).decode('utf-8').encode('utf-8')
+            except Exception:
+                hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).decode('utf-8').encode(
+                    'utf-8')
         else:
             hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
         hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
