@@ -86,4 +86,4 @@ class User(object):
             dump.update(self.__custom)
 
         filtered_dump = OrderedDict([(k, v) for k, v in dump.items() if v is not None])
-        return json.dumps(filtered_dump, separators=(',', ':'), default=serializer)
+        return json.dumps(filtered_dump, ensure_ascii=False, separators=(',', ':'), default=serializer)
