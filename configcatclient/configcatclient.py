@@ -4,7 +4,7 @@ from threading import Lock
 from . import utils
 from .configservice import ConfigService
 from .config import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, FEATURE_FLAGS, SERVED_VALUE, SETTING_TYPE, \
-    is_type_missmatch
+    is_type_mismatch
 from .evaluationdetails import EvaluationDetails
 from .evaluationlogbuilder import EvaluationLogBuilder
 from .interfaces import ConfigCatClientException
@@ -374,8 +374,8 @@ class ConfigCatClient(object):
 
         return self._config_service.get_config()
 
-    def _check_type_missmatch(self, value, default_value):
-        if default_value is not None and is_type_missmatch(value, type(default_value)):
+    def _check_type_mismatch(self, value, default_value):
+        if default_value is not None and is_type_mismatch(value, type(default_value)):
             self.log.warning("The type of a setting does not match the type of the specified default value (%s). "
                              "Setting's type was %s but the default value's type was %s. "
                              "Please make sure that using a default value not matching the setting's type was intended." %
@@ -395,7 +395,7 @@ class ConfigCatClient(object):
             config=config,
             log_builder=log_builder)
 
-        self._check_type_missmatch(value, default_value)
+        self._check_type_mismatch(value, default_value)
 
         if log_builder:
             self.log.info(str(log_builder), event_id=5000)
