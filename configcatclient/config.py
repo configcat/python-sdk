@@ -64,13 +64,13 @@ UNSUPPORTED_VALUE = 'unsupported_value'
 
 
 def is_type_missmatch(value, py_type):
-    is_float_int_missmatch = \
+    is_float_int_mismatch = \
         (type(value) is float and py_type is int) or \
         (type(value) is int and py_type is float)
 
-    # On Python 2.7, ignore the type missmatch is between str and unicode.
+    # On Python 2.7, ignore the type mismatch between str and unicode.
     # (ignore warning: unicode is undefined in Python 3)
-    is_str_unicode_missmatch = \
+    is_str_unicode_mismatch = \
         (sys.version_info[0] == 2 and type(value) is unicode and py_type is str) or \
         (sys.version_info[0] == 2 and type(value) is str and py_type is unicode)  # noqa: F821
 
