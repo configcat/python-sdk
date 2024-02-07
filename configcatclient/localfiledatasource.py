@@ -1,3 +1,4 @@
+import codecs
 import sys
 
 from .config import extend_config_with_inline_salt_and_segment, VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, \
@@ -16,6 +17,14 @@ class LocalFileFlagOverrides(FlagOverrides):
 
     def create_data_source(self, log):
         return LocalFileDataSource(self.file_path, self.override_behaviour, log)
+
+
+def open_file(file_path, mode='r'):
+    # Python 2.7, utf-8 is not supported in open() function
+    if sys.version_info[0] == 2:
+        return codecs.open(file_path, mode, encoding='utf-8')
+    else:
+        return open(file_path, mode, encoding='utf-8')
 
 
 class LocalFileDataSource(OverrideDataSource):
@@ -42,7 +51,7 @@ class LocalFileDataSource(OverrideDataSource):
             stamp = os.stat(self._file_path).st_mtime
             if stamp != self._cached_file_stamp:
                 self._cached_file_stamp = stamp
-                with open(self._file_path) as file:
+                with open_file(self._file_path) as file:
                     data = json.load(file)
 
                     if sys.version_info[0] == 2:

@@ -66,8 +66,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         end_time = time.time()
         elapsed_time = end_time - start_time
         self.assertEqual(config, None)
-        self.assertTrue(elapsed_time > 1)
-        self.assertTrue(elapsed_time < 2)
+        self.assertGreaterEqual(elapsed_time, 1)
+        self.assertLess(elapsed_time, 2)
         cache_policy.close()
 
     def test_fetch_call_count(self):
@@ -290,7 +290,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         settings = config.get(FEATURE_FLAGS)
         elapsed_time = time.time() - start_time
 
-        self.assertGreater(elapsed_time, max_init_wait_time_seconds)
+        self.assertGreaterEqual(elapsed_time, max_init_wait_time_seconds)
         self.assertLess(elapsed_time, max_init_wait_time_seconds + 1)
         self.assertEqual('testValue', settings.get('testKey').get(VALUE).get(STRING_VALUE))
         self.assertEqual('testValue2', settings.get('testKey2').get(VALUE).get(STRING_VALUE))

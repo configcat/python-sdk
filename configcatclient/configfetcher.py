@@ -201,6 +201,8 @@ class ConfigFetcher(object):
             self.log.error(error, *error_args, event_id=1102)
             return FetchResponse.failure(Logger.format(error, error_args), True)
         except Exception as e:
-            error = 'Unexpected error occurred while trying to fetch config JSON.'
+            error = 'Unexpected error occurred while trying to fetch config JSON. It is most likely due to a local network ' \
+                    'issue. Please make sure your application can reach the ConfigCat CDN servers (or your proxy server) ' \
+                    'over HTTP.'
             self.log.exception(error, event_id=1103)
             return FetchResponse.failure(Logger.format(error, (), e), True)

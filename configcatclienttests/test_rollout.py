@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import sys
 import unittest
@@ -35,7 +36,35 @@ class RolloutTests(unittest.TestCase):
     value_test_type = "value_test"
     variation_test_type = "variation_test"
 
-    def test_matrix_text(self):
+    def test_matrix_basic_v1(self):
+        # https://app.configcat.com/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08d62463-86ec-8fde-f5b5-1c5c426fc830/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A', self.value_test_type)
+
+    def test_matrix_semantic_v1(self):
+        # https://app.configcat.com/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08d745f1-f315-7daf-d163-5541d3786e6f/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix_semantic.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA', self.value_test_type)
+
+    def test_matrix_semantic_2_v1(self):
+        # https://app.configcat.com/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08d77fa1-a796-85f9-df0c-57c448eb9934/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix_semantic_2.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w', self.value_test_type)
+
+    def test_matrix_number_v1(self):
+        # https://app.configcat.com/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08d747f0-5986-c2ef-eef3-ec778e32e10a/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix_number.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw', self.value_test_type)
+
+    def test_matrix_sensitive_v1(self):
+        # https://app.configcat.com/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08d7b724-9285-f4a7-9fcd-00f64f1e83d5/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix_sensitive.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA', self.value_test_type)
+
+    def test_matrix_segments_old_v1(self):
+        # https://app.configcat.com/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08d9f207-6883-43e5-868c-cbf677af3fe6/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix_segments_old.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/LcYz135LE0qbcacz2mgXnA', self.value_test_type)
+
+    def test_matrix_variation_id_v1(self):
+        # https://app.configcat.com/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08d774b9-3d05-0027-d5f4-3e76c3dba752/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix_variationId.csv', 'PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA', self.variation_test_type)
+
+    def test_matrix_basic(self):
         # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08dbc4dc-1927-4d6b-8fb9-b1472564e2d3/244cf8b0-f604-11e8-b543-f23c917f9d8d
         self._test_matrix('data/testmatrix.csv',
                           'configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/AG6C1ngVb0CvM07un6JisQ', self.value_test_type)
@@ -310,6 +339,150 @@ class RolloutTests(unittest.TestCase):
         self.assertEqual(expected_return_value, value)
 
     @parameterized.expand([
+        ("numberToStringConversion", .12345, "1"),
+        ("numberToStringConversionInt", 125.0, "4"),
+        ("numberToStringConversionPositiveExp", -1.23456789e96, "2"),
+        ("numberToStringConversionNegativeExp", -12345.6789E-100, "4"),
+        ("numberToStringConversionNaN", float('nan'), "3"),
+        ("numberToStringConversionPositiveInf", float('inf'), "4"),
+        ("numberToStringConversionNegativeInf", float('-inf'), "3"),
+        ("dateToStringConversion", datetime(2023, 3, 31, 23, 59, 59, 999000), "3"),
+        ("dateToStringConversion", 1680307199.999, "3"),  # Assuming this needs conversion to date
+        ("dateToStringConversionNaN", float('nan'), "3"),
+        ("dateToStringConversionPositiveInf", float('inf'), "1"),
+        ("dateToStringConversionNegativeInf", float('-inf'), "5"),
+        ("stringArrayToStringConversion", ["read", "Write", " eXecute "], "4"),
+        ("stringArrayToStringConversionEmpty", [], "5"),
+        ("stringArrayToStringConversionSpecialChars", ["+<>%\"'\\/\t\r\n"], "3"),
+        ("stringArrayToStringConversionUnicode", ["äöüÄÖÜçéèñışğâ¢™✓😀"], "2"),
+    ])
+    def test_attribute_conversion_to_canonical_string(self, key, customAttributeValue, expectedReturnValue):
+        # Skip "dateToStringConversion" tests on Python 2.7 because of float precision issues
+        if sys.version_info[0] == 2 and key == 'dateToStringConversion':
+            self.skipTest("Python 2 float precision issue")
+
+        config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_attribute_conversion.json'),
+                                     OverrideBehaviour.LocalOnly, None).get_overrides()
+
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+
+        user = User('12345', custom={'Custom1': customAttributeValue})
+        value, _, _, _, _ = evaluator.evaluate(key, user, 'default_value', 'default_variation_id', config, None)
+        self.assertEqual(expectedReturnValue, value)
+
+    @parameterized.expand([
+        ("isoneof", "no trim"),
+        ("isnotoneof", "no trim"),
+        ("isoneofhashed", "no trim"),
+        ("isnotoneofhashed", "no trim"),
+        ("equalshashed", "no trim"),
+        ("notequalshashed", "no trim"),
+        ("arraycontainsanyofhashed", "no trim"),
+        ("arraynotcontainsanyofhashed", "no trim"),
+        ("equals", "no trim"),
+        ("notequals", "no trim"),
+        ("startwithanyof", "no trim"),
+        ("notstartwithanyof", "no trim"),
+        ("endswithanyof", "no trim"),
+        ("notendswithanyof", "no trim"),
+        ("arraycontainsanyof", "no trim"),
+        ("arraynotcontainsanyof", "no trim"),
+        ("startwithanyofhashed", "no trim"),
+        ("notstartwithanyofhashed", "no trim"),
+        ("endswithanyofhashed", "no trim"),
+        ("notendswithanyofhashed", "no trim"),
+        # semver comparators user values trimmed because of backward compatibility
+        ("semverisoneof", "4 trim"),
+        ("semverisnotoneof", "5 trim"),
+        ("semverless", "6 trim"),
+        ("semverlessequals", "7 trim"),
+        ("semvergreater", "8 trim"),
+        ("semvergreaterequals", "9 trim"),
+        # number and date comparators user values trimmed because of backward compatibility
+        ("numberequals", "10 trim"),
+        ("numbernotequals", "11 trim"),
+        ("numberless", "12 trim"),
+        ("numberlessequals", "13 trim"),
+        ("numbergreater", "14 trim"),
+        ("numbergreaterequals", "15 trim"),
+        ("datebefore", "18 trim"),
+        ("dateafter", "19 trim"),
+        # "contains any of" and "not contains any of" is a special case, the not trimmed user attribute checked against not trimmed comparator values.
+        ("containsanyof", "no trim"),
+        ("notcontainsanyof", "no trim")
+    ])
+    def test_comparison_attribute_trimming(self, key, expected_return_value):
+        config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_attribute_trimming.json'),
+                                         OverrideBehaviour.LocalOnly, None).get_overrides()
+
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+
+        user = User(' 12345 ', country='[" USA "]', custom={
+            'Version': ' 1.0.0 ',
+            'Number': ' 3 ',
+            'Date': ' 1705253400 '
+        })
+        value, _, _, _, _ = evaluator.evaluate(key, user, 'default_value', 'default_variation_id', config, None)
+        self.assertEqual(expected_return_value, value)
+
+    @parameterized.expand([
+        ("isoneof", "no trim"),
+        ("isnotoneof", "no trim"),
+        ("containsanyof", "no trim"),
+        ("notcontainsanyof", "no trim"),
+        ("isoneofhashed", "no trim"),
+        ("isnotoneofhashed", "no trim"),
+        ("equalshashed", "no trim"),
+        ("notequalshashed", "no trim"),
+        ("arraycontainsanyofhashed", "no trim"),
+        ("arraynotcontainsanyofhashed", "no trim"),
+        ("equals", "no trim"),
+        ("notequals", "no trim"),
+        ("startwithanyof", "no trim"),
+        ("notstartwithanyof", "no trim"),
+        ("endswithanyof", "no trim"),
+        ("notendswithanyof", "no trim"),
+        ("arraycontainsanyof", "no trim"),
+        ("arraynotcontainsanyof", "no trim"),
+        ("startwithanyofhashed", "no trim"),
+        ("notstartwithanyofhashed", "no trim"),
+        ("endswithanyofhashed", "no trim"),
+        ("notendswithanyofhashed", "no trim"),
+        # semver comparator values trimmed because of backward compatibility
+        ("semverisoneof", "4 trim"),
+        ("semverisnotoneof", "5 trim"),
+        ("semverless", "6 trim"),
+        ("semverlessequals", "7 trim"),
+        ("semvergreater", "8 trim"),
+        ("semvergreaterequals", "9 trim")
+    ])
+    def test_comparison_value_trimming(self, key, expected_return_value):
+        config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_value_trimming.json'),
+                                         OverrideBehaviour.LocalOnly, None).get_overrides()
+
+        log = Logger('configcat', Hooks())
+        logger = logging.getLogger('configcat')
+        log_handler = MockLogHandler()
+        logger.addHandler(log_handler)
+        evaluator = RolloutEvaluator(log)
+
+        user = User('12345', country='["USA"]', custom={
+            'Version': '1.0.0',
+            'Number': '3',
+            'Date': '1705253400'
+        })
+        value, _, _, _, _ = evaluator.evaluate(key, user, 'default_value', 'default_variation_id', config, None)
+        self.assertEqual(expected_return_value, value)
+
+    @parameterized.expand([
         ("key1", "'key1' -> 'key1'"),
         ("key2", "'key2' -> 'key3' -> 'key2'"),
         ("key4", "'key4' -> 'key3' -> 'key2' -> 'key3'")
@@ -383,8 +556,10 @@ class RolloutTests(unittest.TestCase):
             error_log = log_handler.error_logs[0]
             prerequisite_flag_value_type = SettingType.to_type(SettingType.from_type(type(prerequisite_flag_value)))
 
-            self.assertTrue(("Type mismatch between comparison value type %s and type %s of prerequisite flag '%s'" %
-                             (comparison_value_type, prerequisite_flag_value_type, prerequisite_flag_key)) in error_log)
+            if prerequisite_flag_value is None or prerequisite_flag_value_type is None:
+                self.assertTrue('Unsupported setting type' in error_log)
+            else:
+                self.assertTrue(("Setting value is not of the expected type %s" % prerequisite_flag_value_type) in error_log)
 
         client.close()
 

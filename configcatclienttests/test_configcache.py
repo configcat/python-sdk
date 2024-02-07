@@ -30,8 +30,8 @@ class ConfigCacheTests(unittest.TestCase):
         self.assertEqual(value2, None)
 
     def test_cache_key(self):
-        self.assertEqual("7f845c43ecc95e202b91e271435935e6d1391e5d", ConfigService._get_cache_key('test1'))
-        self.assertEqual("a78b7e323ef543a272c74540387566a22415148a", ConfigService._get_cache_key('test2'))
+        self.assertEqual("f83ba5d45bceb4bb704410f51b704fb6dfa19942", ConfigService._get_cache_key('configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012'))
+        self.assertEqual("da7bfd8662209c8ed3f9db96daed4f8d91ba5876", ConfigService._get_cache_key('configcat-sdk-1/TEST_KEY2-123456789012/1234567890123456789012'))
 
     def test_cache_payload(self):
         now_seconds = 1686756435.8449
