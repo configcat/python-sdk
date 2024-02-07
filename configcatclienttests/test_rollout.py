@@ -556,8 +556,10 @@ class RolloutTests(unittest.TestCase):
             error_log = log_handler.error_logs[0]
             prerequisite_flag_value_type = SettingType.to_type(SettingType.from_type(type(prerequisite_flag_value)))
 
-            self.assertTrue(("Type mismatch between comparison value type %s and type %s of prerequisite flag '%s'" %
-                             (comparison_value_type, prerequisite_flag_value_type, prerequisite_flag_key)) in error_log)
+            if prerequisite_flag_value is None or prerequisite_flag_value_type is None:
+                self.assertTrue('Unsupported setting type' in error_log)
+            else:
+                self.assertTrue(("Setting value is not of the expected type %s" % prerequisite_flag_value_type) in error_log)
 
         client.close()
 

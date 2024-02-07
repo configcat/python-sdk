@@ -395,13 +395,12 @@ class RolloutEvaluator(object):
         prerequisite_flag_setting_type = settings[prerequisite_key].get(SETTING_TYPE)
         prerequisite_comparison_value_type = get_value_type(prerequisite_flag_condition)
 
+        prerequisite_comparison_value = get_value(prerequisite_flag_condition, prerequisite_flag_setting_type)
+
         # Type mismatch check
         if prerequisite_comparison_value_type != SettingType.to_type(prerequisite_flag_setting_type):
-            raise ValueError("Type mismatch between comparison value type %s and type %s of prerequisite flag '%s'" %
-                             (prerequisite_comparison_value_type, SettingType.to_type(prerequisite_flag_setting_type),
-                              prerequisite_key))
-
-        prerequisite_comparison_value = get_value(prerequisite_flag_condition, prerequisite_flag_setting_type)
+            raise ValueError("Type mismatch between comparison value '%s' and prerequisite flag '%s'" %
+                             (prerequisite_comparison_value, prerequisite_key))
 
         prerequisite_condition = ("Flag '%s' %s '%s'" %
                                   (prerequisite_key, PREREQUISITE_COMPARATOR_TEXTS[prerequisite_comparator],

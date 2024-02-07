@@ -1,10 +1,10 @@
 import logging
-import sys
 from threading import Lock
 
 from . import utils
 from .configservice import ConfigService
-from .config import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, FEATURE_FLAGS, SERVED_VALUE, SETTING_TYPE
+from .config import TARGETING_RULES, VARIATION_ID, PERCENTAGE_OPTIONS, FEATURE_FLAGS, SERVED_VALUE, SETTING_TYPE, \
+    is_type_missmatch
 from .evaluationdetails import EvaluationDetails
 from .evaluationlogbuilder import EvaluationLogBuilder
 from .interfaces import ConfigCatClientException
@@ -375,22 +375,11 @@ class ConfigCatClient(object):
         return self._config_service.get_config()
 
     def _check_type_missmatch(self, value, default_value):
-        is_float_int_missmatch = \
-            (type(value) is float and type(default_value) is int) or \
-            (type(value) is int and type(default_value) is float)
-
-        # On Python 2.7, do not log a warning if the type missmatch is between str and unicode.
-        # (ignore warning: unicode is undefined in Python 3)
-        is_str_unicode_missmatch = \
-            (sys.version_info[0] == 2 and type(value) is unicode and type(default_value) is str) or \
-            (sys.version_info[0] == 2 and type(value) is str and type(default_value) is unicode)  # noqa: F821
-
-        if default_value is not None and type(value) is not type(default_value):
-            if not is_float_int_missmatch and not is_str_unicode_missmatch:
-                self.log.warning("The type of a setting does not match the type of the specified default value (%s). "
-                                 "Setting's type was %s but the default value's type was %s. "
-                                 "Please make sure that using a default value not matching the setting's type was intended." %
-                                 (default_value, type(value), type(default_value)), event_id=4002)
+        if default_value is not None and is_type_missmatch(value, type(default_value)):
+            self.log.warning("The type of a setting does not match the type of the specified default value (%s). "
+                             "Setting's type was %s but the default value's type was %s. "
+                             "Please make sure that using a default value not matching the setting's type was intended." %
+                             (default_value, type(value), type(default_value)), event_id=4002)
 
     def _evaluate(self, key, user, default_value, default_variation_id, config, fetch_time):
         user = user if user is not None else self._default_user
