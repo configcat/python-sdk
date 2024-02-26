@@ -562,7 +562,7 @@ class RolloutEvaluator(object):
             return False, error
 
         user_value = user.get_attribute(comparison_attribute)
-        if user_value is None or (not user_value and not isinstance(user_value, list)):
+        if user_value is None or (isinstance(user_value, str) and len(user_value) == 0):
             self.log.warning('Cannot evaluate condition (%s) for setting \'%s\' '
                              '(the User.%s attribute is missing). You should set the User.%s attribute in order to make '
                              'targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/',

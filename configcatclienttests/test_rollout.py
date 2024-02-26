@@ -89,6 +89,16 @@ class RolloutTests(unittest.TestCase):
         self._test_matrix('data/testmatrix_sensitive.csv',
                           'configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/-0YmVOUNgEGKkgRF-rU65g', self.value_test_type)
 
+    def test_matrix_segments_old(self):
+        # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08dbd6ca-a85f-4ed0-888a-2da18def92b5/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix_segments_old.csv',
+                          'configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/y_ZB7o-Xb0Swxth-ZlMSeA', self.value_test_type)
+
+    def test_matrix_variation_id(self):
+        # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08dbc4dc-30c6-4969-8e4c-03f6a8764199/244cf8b0-f604-11e8-b543-f23c917f9d8d
+        self._test_matrix('data/testmatrix_variationId.csv',
+                          'configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/spQnkRTIPEWVivZkWM84lQ', self.variation_test_type)
+
     def test_matrix_comparators_v6(self):
         # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08dbc325-7f69-4fd4-8af4-cf9f24ec8ac9/08dbc325-9a6b-4947-84e2-91529248278a/08dbc325-9ebd-4587-8171-88f76a3004cb
         self._test_matrix('data/testmatrix_comparators_v6.csv',
@@ -99,11 +109,6 @@ class RolloutTests(unittest.TestCase):
         self._test_matrix('data/testmatrix_segments.csv',
                           'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/h99HYXWWNE2bH8eWyLAVMA', self.value_test_type)
 
-    def test_matrix_segments_old(self):
-        # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08dbd6ca-a85f-4ed0-888a-2da18def92b5/244cf8b0-f604-11e8-b543-f23c917f9d8d
-        self._test_matrix('data/testmatrix_segments_old.csv',
-                          'configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/y_ZB7o-Xb0Swxth-ZlMSeA', self.value_test_type)
-
     def test_matrix_prerequisite_flag(self):
         # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08dbc325-7f69-4fd4-8af4-cf9f24ec8ac9/08dbc325-9b74-45cb-86d0-4d61c25af1aa/08dbc325-9ebd-4587-8171-88f76a3004cb
         self._test_matrix('data/testmatrix_prerequisite_flag.csv',
@@ -113,11 +118,6 @@ class RolloutTests(unittest.TestCase):
         # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08dbc325-7f69-4fd4-8af4-cf9f24ec8ac9/08dbc325-9d5e-4988-891c-fd4a45790bd1/08dbc325-9ebd-4587-8171-88f76a3004cb
         self._test_matrix('data/testmatrix_and_or.csv',
                           'configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/ByMO9yZNn02kXcm72lnY1A', self.value_test_type)
-
-    def test_matrix_variation_id(self):
-        # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08d5a03c-feb7-af1e-a1fa-40b3329f8bed/08dbc4dc-30c6-4969-8e4c-03f6a8764199/244cf8b0-f604-11e8-b543-f23c917f9d8d
-        self._test_matrix('data/testmatrix_variationId.csv',
-                          'configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/spQnkRTIPEWVivZkWM84lQ', self.variation_test_type)
 
     def test_matrix_unicode(self):
         # https://app.configcat.com/v2/e7a75611-4256-49a5-9320-ce158755e3ba/08dbc325-7f69-4fd4-8af4-cf9f24ec8ac9/08dbd63c-9774-49d6-8187-5f2aab7bd606/08dbc325-9ebd-4587-8171-88f76a3004cb
@@ -284,15 +284,16 @@ class RolloutTests(unittest.TestCase):
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", 5, ">=5"),
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", float('inf'), ">5"),
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", float('nan'), "<>4.2"),
-        ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "-inf", "<2.1"),
+        ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "-Infinity", "<2.1"),
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "-1", "<2.1"),
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "2", "<2.1"),
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "2.1", "<=2,1"),
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "2,1", "<=2,1"),
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "3", "<>4.2"),
         ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "5", ">=5"),
-        ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "inf", ">5"),
-        ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "nan", "<>4.2"),
+        ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "Infinity", ">5"),
+        ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "NaN", "<>4.2"),
+        ("configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/FCWN-k1dV0iBf8QZrDgjdw", "numberWithPercentage", "12345", "Custom1", "NaNa", "80%"),
         # Date time-based comparisons
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 3, 31, 23, 59, 59, 999000), False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", datetime(2023, 3, 31, 23, 59, 59, 999000, timezone.utc), False),
@@ -314,12 +315,12 @@ class RolloutTests(unittest.TestCase):
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", 1680307201, True),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", 1682899199, True),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", 1682899201, False),
-        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "-inf", False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "-Infinity", False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "1680307199.999", False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "1680307200.001", True),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "1682899199.999", True),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "1682899200.001", False),
-        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "+inf", False),
+        ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "+Infinity", False),
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "boolTrueIn202304", "12345", "Custom1", "NaN", False),
         # String array-based comparisons
         ("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/OfQqcTjfFUGBwMKqtyEOrQ", "stringArrayContainsAnyOfDogDefaultCat", "12345", "Custom1", ["x", "read"], "Dog"),
@@ -356,7 +357,7 @@ class RolloutTests(unittest.TestCase):
         ("stringArrayToStringConversionSpecialChars", ["+<>%\"'\\/\t\r\n"], "3"),
         ("stringArrayToStringConversionUnicode", ["äöüÄÖÜçéèñışğâ¢™✓😀"], "2"),
     ])
-    def test_attribute_conversion_to_canonical_string(self, key, customAttributeValue, expectedReturnValue):
+    def test_attribute_conversion_to_canonical_string(self, key, custom_attribute_value, expected_return_value):
         # Skip "dateToStringConversion" tests on Python 2.7 because of float precision issues
         if sys.version_info[0] == 2 and key == 'dateToStringConversion':
             self.skipTest("Python 2 float precision issue")
@@ -370,9 +371,9 @@ class RolloutTests(unittest.TestCase):
         logger.addHandler(log_handler)
         evaluator = RolloutEvaluator(log)
 
-        user = User('12345', custom={'Custom1': customAttributeValue})
+        user = User('12345', custom={'Custom1': custom_attribute_value})
         value, _, _, _, _ = evaluator.evaluate(key, user, 'default_value', 'default_variation_id', config, None)
-        self.assertEqual(expectedReturnValue, value)
+        self.assertEqual(expected_return_value, value)
 
     @parameterized.expand([
         ("isoneof", "no trim"),
@@ -505,36 +506,36 @@ class RolloutTests(unittest.TestCase):
         self.assertTrue(dependency_cycle in error_log)
 
     @parameterized.expand([
-        ("stringDependsOnBool", bool, "mainBoolFlag", True, "Dog"),
-        ("stringDependsOnBool", bool, "mainBoolFlag", False, "Cat"),
-        ("stringDependsOnBool", bool, "mainBoolFlag", "1", None),
-        ("stringDependsOnBool", bool, "mainBoolFlag", 1, None),
-        ("stringDependsOnBool", bool, "mainBoolFlag", 1.0, None),
-        ("stringDependsOnBool", bool, "mainBoolFlag", [True], None),
-        ("stringDependsOnBool", bool, "mainBoolFlag", None, None),
-        ("stringDependsOnString", str, "mainStringFlag", "private", "Dog"),
-        ("stringDependsOnString", str, "mainStringFlag", "Private", "Cat"),
-        ("stringDependsOnString", str, "mainStringFlag", True, None),
-        ("stringDependsOnString", str, "mainStringFlag", 1, None),
-        ("stringDependsOnString", str, "mainStringFlag", 1.0, None),
-        ("stringDependsOnString", str, "mainStringFlag", ["private"], None),
-        ("stringDependsOnString", str, "mainStringFlag", None, None),
-        ("stringDependsOnInt", int, "mainIntFlag", 2, "Dog"),
-        ("stringDependsOnInt", int, "mainIntFlag", 1, "Cat"),
-        ("stringDependsOnInt", int, "mainIntFlag", "2", None),
-        ("stringDependsOnInt", int, "mainIntFlag", True, None),
-        ("stringDependsOnInt", int, "mainIntFlag", 2.0, None),
-        ("stringDependsOnInt", int, "mainIntFlag", [2], None),
-        ("stringDependsOnInt", int, "mainIntFlag", None, None),
-        ("stringDependsOnDouble", float, "mainDoubleFlag", 0.1, "Dog"),
-        ("stringDependsOnDouble", float, "mainDoubleFlag", 0.11, "Cat"),
-        ("stringDependsOnDouble", float, "mainDoubleFlag", "0.1", None),
-        ("stringDependsOnDouble", float, "mainDoubleFlag", True, None),
-        ("stringDependsOnDouble", float, "mainDoubleFlag", 1, None),
-        ("stringDependsOnDouble", float, "mainDoubleFlag", [0.1], None),
-        ("stringDependsOnDouble", float, "mainDoubleFlag", None, None)
+        ("stringDependsOnBool", "mainBoolFlag", True, "Dog"),
+        ("stringDependsOnBool", "mainBoolFlag", False, "Cat"),
+        ("stringDependsOnBool", "mainBoolFlag", "1", None),
+        ("stringDependsOnBool", "mainBoolFlag", 1, None),
+        ("stringDependsOnBool", "mainBoolFlag", 1.0, None),
+        ("stringDependsOnBool", "mainBoolFlag", [True], None),
+        ("stringDependsOnBool", "mainBoolFlag", None, None),
+        ("stringDependsOnString", "mainStringFlag", "private", "Dog"),
+        ("stringDependsOnString", "mainStringFlag", "Private", "Cat"),
+        ("stringDependsOnString", "mainStringFlag", True, None),
+        ("stringDependsOnString", "mainStringFlag", 1, None),
+        ("stringDependsOnString", "mainStringFlag", 1.0, None),
+        ("stringDependsOnString", "mainStringFlag", ["private"], None),
+        ("stringDependsOnString", "mainStringFlag", None, None),
+        ("stringDependsOnInt", "mainIntFlag", 2, "Dog"),
+        ("stringDependsOnInt", "mainIntFlag", 1, "Cat"),
+        ("stringDependsOnInt", "mainIntFlag", "2", None),
+        ("stringDependsOnInt", "mainIntFlag", True, None),
+        ("stringDependsOnInt", "mainIntFlag", 2.0, None),
+        ("stringDependsOnInt", "mainIntFlag", [2], None),
+        ("stringDependsOnInt", "mainIntFlag", None, None),
+        ("stringDependsOnDouble", "mainDoubleFlag", 0.1, "Dog"),
+        ("stringDependsOnDouble", "mainDoubleFlag", 0.11, "Cat"),
+        ("stringDependsOnDouble", "mainDoubleFlag", "0.1", None),
+        ("stringDependsOnDouble", "mainDoubleFlag", True, None),
+        ("stringDependsOnDouble", "mainDoubleFlag", 1, None),
+        ("stringDependsOnDouble", "mainDoubleFlag", [0.1], None),
+        ("stringDependsOnDouble", "mainDoubleFlag", None, None)
     ])
-    def test_prerequisite_flag_comparison_value_type_mismatch(self, key, comparison_value_type, prerequisite_flag_key, prerequisite_flag_value, expected_value):
+    def test_prerequisite_flag_comparison_value_type_mismatch(self, key, prerequisite_flag_key, prerequisite_flag_value, expected_value):
         override_dictionary = {prerequisite_flag_key: prerequisite_flag_value}
         options = ConfigCatOptions(polling_mode=PollingMode.manual_poll(),
                                    flag_overrides=LocalDictionaryFlagOverrides(
