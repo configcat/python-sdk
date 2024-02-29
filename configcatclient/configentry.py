@@ -3,7 +3,7 @@ import sys
 from math import floor
 
 from . import utils
-from .config import extend_config_with_inline_salt_and_segment
+from .config import fixup_config_salt_and_segments
 from .utils import unicode_to_utf8
 
 
@@ -43,7 +43,7 @@ class ConfigEntry(object):
             config = json.loads(config_json)
             if sys.version_info[0] == 2:
                 config = unicode_to_utf8(config)  # On Python 2.7, convert unicode to utf-8
-            extend_config_with_inline_salt_and_segment(config)
+            fixup_config_salt_and_segments(config)
         except ValueError as e:
             raise ValueError('Invalid config JSON: {}. {}'.format(config_json, str(e)))
 

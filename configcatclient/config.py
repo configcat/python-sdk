@@ -284,7 +284,7 @@ SEGMENT_COMPARATOR_TEXTS = ['IS IN SEGMENT', 'IS NOT IN SEGMENT']
 PREREQUISITE_COMPARATOR_TEXTS = ['EQUALS', 'DOES NOT EQUAL']
 
 
-def extend_config_with_inline_salt_and_segment(config):
+def fixup_config_salt_and_segments(config):
     """
     Adds the inline salt and segment to the config.
     When using flag overrides, the original salt and segment indexes may become invalid. Therefore, we copy the

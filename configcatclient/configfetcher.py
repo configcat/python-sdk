@@ -5,7 +5,7 @@ from platform import python_version
 from requests import HTTPError
 from requests import Timeout
 
-from .config import extend_config_with_inline_salt_and_segment
+from .config import fixup_config_salt_and_segments
 from .configentry import ConfigEntry
 from .config import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
@@ -170,7 +170,7 @@ class ConfigFetcher(object):
                 if response_etag is None:
                     response_etag = ''
                 config = response.json()
-                extend_config_with_inline_salt_and_segment(config)
+                fixup_config_salt_and_segments(config)
                 if sys.version_info[0] == 2:
                     config = unicode_to_utf8(config)  # On Python 2.7, convert unicode to utf-8
                     config_json_string = response.text.encode('utf-8')
