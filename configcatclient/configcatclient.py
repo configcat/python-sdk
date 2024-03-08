@@ -207,13 +207,14 @@ class ConfigCatClient(object):
                 targeting_rules = value.get(TARGETING_RULES, [])
                 for targeting_rule in targeting_rules:
                     served_value = targeting_rule.get(SERVED_VALUE)
-                    if served_value is not None and variation_id == served_value.get(VARIATION_ID):
-                        return KeyValue(key, get_value(served_value, setting_type))
-
-                    targeting_rule_percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
-                    for percentage_option in targeting_rule_percentage_options:
-                        if variation_id == percentage_option.get(VARIATION_ID):
-                            return KeyValue(key, get_value(percentage_option, setting_type))
+                    if served_value is not None:
+                        if variation_id == served_value.get(VARIATION_ID):
+                            return KeyValue(key, get_value(served_value, setting_type))
+                    else:
+                        targeting_rule_percentage_options = targeting_rule.get(PERCENTAGE_OPTIONS, [])
+                        for percentage_option in targeting_rule_percentage_options:
+                            if variation_id == percentage_option.get(VARIATION_ID):
+                                return KeyValue(key, get_value(percentage_option, setting_type))
 
                 percentage_options = value.get(PERCENTAGE_OPTIONS, [])
                 for percentage_option in percentage_options:

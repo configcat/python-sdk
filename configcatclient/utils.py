@@ -81,6 +81,24 @@ def get_utc_now_seconds_since_epoch():
     return get_seconds_since_epoch(get_utc_now())
 
 
+def is_string_list(value):
+    # Check if the value is a list
+    if not isinstance(value, list):
+        return False
+
+    # Check if all items in the list are strings
+    for item in value:
+        # Handle unicode strings on Python 2.7
+        if sys.version_info[0] == 2:
+            if not isinstance(item, (str, unicode)):  # noqa: F821
+                return False
+        else:
+            if not isinstance(item, str):
+                return False
+
+    return True
+
+
 def unicode_to_utf8(data):
     """
     Convert unicode data in a collection to UTF-8 data. Used for supporting unicode config json strings on Python 2.7.

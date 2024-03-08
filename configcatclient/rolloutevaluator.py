@@ -17,7 +17,7 @@ from .logger import Logger
 from datetime import datetime
 
 from .user import User
-from .utils import unicode_to_utf8, encode_utf8, get_seconds_since_epoch
+from .utils import unicode_to_utf8, encode_utf8, get_seconds_since_epoch, is_string_list
 
 
 def sha256(value_utf8, salt, context_salt):
@@ -151,7 +151,7 @@ class RolloutEvaluator(object):
 
         if isinstance(value, datetime):
             value = self._get_user_attribute_value_as_seconds_since_epoch(value)
-        elif isinstance(value, list):
+        elif is_string_list(value):
             value = self._get_user_attribute_value_as_string_list(value)
             return json.dumps(value, ensure_ascii=False, separators=(',', ':'))  # Convert the list to a JSON string
 
@@ -198,24 +198,14 @@ class RolloutEvaluator(object):
         return self._convert_numeric_to_float(attribute_value)
 
     def _get_user_attribute_value_as_string_list(self, attribute_value):
-        if not isinstance(attribute_value, list):
+        # Handle unicode strings on Python 2.7
+        if isinstance(attribute_value, str) or sys.version_info[0] == 2 and isinstance(attribute_value, unicode):  # noqa: F821
             attribute_value_list = json.loads(attribute_value)
         else:
             attribute_value_list = attribute_value
 
-        # Check if the result is a list
-        if not isinstance(attribute_value_list, list):
+        if not is_string_list(attribute_value_list):
             raise ValueError()
-
-        # Check if all items in the list are strings
-        for item in attribute_value_list:
-            # Handle unicode strings on Python 2.7
-            if sys.version_info[0] == 2:
-                if not isinstance(attribute_value, (str, unicode)):  # noqa: F821
-                    return attribute_value
-            else:
-                if not isinstance(item, str):
-                    raise ValueError()
 
         return attribute_value_list
 
@@ -285,6 +275,12 @@ class RolloutEvaluator(object):
             hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
         hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
+        if log_builder:
+            log_builder.new_line('Evaluating %% options based on the User.%s attribute:' % user_attribute_name)
+            log_builder.new_line('- Computing hash in the [0..99] range from User.%s => %s '
+                                 '(this value is sticky and consistent across all SDKs)' %
+                                 (user_attribute_name, hash_val))
+
         bucket = 0
         index = 1
         for percentage_option in percentage_options or []:
@@ -294,11 +290,6 @@ class RolloutEvaluator(object):
                 percentage_value = get_value(percentage_option, context.setting_type)
                 variation_id = percentage_option.get(VARIATION_ID, default_variation_id)
                 if log_builder:
-                    log_builder.new_line('Evaluating %% options based on the User.%s attribute:' %
-                                         user_attribute_name)
-                    log_builder.new_line('- Computing hash in the [0..99] range from User.%s => %s '
-                                         '(this value is sticky and consistent across all SDKs)' %
-                                         (user_attribute_name, hash_val))
                     log_builder.new_line("- Hash value %s selects %% option %s (%s%%), '%s'." %
                                          (hash_val, index, percentage, percentage_value))
                 return True, percentage_value, variation_id, percentage_option
@@ -421,8 +412,7 @@ class RolloutEvaluator(object):
         prerequisite_value, _, _, _, _ = self.evaluate(prerequisite_key, context.user, None, None, config,
                                                        log_builder, context.visited_keys)
 
-        if visited_keys:
-            visited_keys.pop()
+        visited_keys.pop()
 
         if log_builder:
             log_builder.new_line("Prerequisite flag evaluation result: '%s'." % str(prerequisite_value))
@@ -438,6 +428,8 @@ class RolloutEvaluator(object):
         elif prerequisite_comparator == PrerequisiteComparator.NOT_EQUALS:
             if prerequisite_value != prerequisite_comparison_value:
                 prerequisite_condition_result = True
+        else:
+            raise ValueError('Comparison operator is missing or invalid.')
 
         if log_builder:
             log_builder.append('%s.' % ('true' if prerequisite_condition_result else 'false'))
@@ -527,7 +519,7 @@ class RolloutEvaluator(object):
 
             return segment_condition_result, error
 
-        return False, None
+        raise ValueError('Comparison operator is missing or invalid.')
 
     def _evaluate_user_condition(self, user_condition, context, context_salt, salt, log_builder):  # noqa: C901, E501
         """
@@ -562,7 +554,7 @@ class RolloutEvaluator(object):
             return False, error
 
         user_value = user.get_attribute(comparison_attribute)
-        if user_value is None or (not user_value and not isinstance(user_value, list)):
+        if user_value is None or (isinstance(user_value, str) and len(user_value) == 0):
             self.log.warning('Cannot evaluate condition (%s) for setting \'%s\' '
                              '(the User.%s attribute is missing). You should set the User.%s attribute in order to make '
                              'targeting work properly. Read more: https://configcat.com/docs/advanced/user-object/',
@@ -764,5 +756,7 @@ class RolloutEvaluator(object):
                     if comparison in user_value_list:
                         return False, None
                 return True, error
+        else:
+            raise ValueError('Comparison operator is missing or invalid.')
 
         return False, error

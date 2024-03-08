@@ -1,7 +1,7 @@
 import codecs
 import sys
 
-from .config import extend_config_with_inline_salt_and_segment, VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, \
+from .config import fixup_config_salt_and_segments, VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, \
     INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE, UNSUPPORTED_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
@@ -77,7 +77,7 @@ class LocalFileDataSource(OverrideDataSource):
                             if setting_type is not None:
                                 self._config[FEATURE_FLAGS][key][SETTING_TYPE] = int(setting_type)
                     else:
-                        extend_config_with_inline_salt_and_segment(data)
+                        fixup_config_salt_and_segments(data)
                         self._config = data
         except OSError:
             self.log.exception('Failed to read the local config file \'%s\'.', self._file_path, event_id=1302)

@@ -5,7 +5,7 @@ import requests
 
 from configcatclient.configcatclient import ConfigCatClient
 from configcatclient.config import FEATURE_FLAGS, VALUE, SERVED_VALUE, STRING_VALUE, \
-    extend_config_with_inline_salt_and_segment
+    fixup_config_salt_and_segments
 from configcatclient.user import User
 from configcatclient.configcatoptions import ConfigCatOptions, Hooks
 from configcatclient.pollingmode import PollingMode
@@ -47,7 +47,7 @@ class HooksTests(unittest.TestCase):
         self.assertTrue(hook_callbacks.is_ready)
         self.assertEqual(1, hook_callbacks.is_ready_call_count)
         extended_config = TEST_OBJECT
-        extend_config_with_inline_salt_and_segment(extended_config)
+        fixup_config_salt_and_segments(extended_config)
         self.assertEqual(extended_config.get(FEATURE_FLAGS), hook_callbacks.changed_config)
         self.assertEqual(1, hook_callbacks.changed_config_call_count)
         self.assertTrue(hook_callbacks.evaluation_details)
