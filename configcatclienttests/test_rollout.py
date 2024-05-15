@@ -418,7 +418,7 @@ class RolloutTests(unittest.TestCase):
     ])
     def test_comparison_attribute_trimming(self, key, expected_return_value):
         config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_attribute_trimming.json'),
-                                         OverrideBehaviour.LocalOnly, None).get_overrides()
+                                     OverrideBehaviour.LocalOnly, None).get_overrides()
 
         log = Logger('configcat', Hooks())
         logger = logging.getLogger('configcat')

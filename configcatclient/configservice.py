@@ -32,14 +32,14 @@ class ConfigService(object):
             self._set_initialized()
 
     def get_config(self):
+        threshold = utils.distant_past
+        prefer_cached = self._initialized.is_set()
         if isinstance(self._polling_mode, LazyLoadingMode):
-            entry, _ = self._fetch_if_older(
-                utils.get_utc_now_seconds_since_epoch() - self._polling_mode.cache_refresh_interval_seconds)
-            return (entry.config, entry.fetch_time) \
-                if not entry.is_empty() \
-                else (None, utils.distant_past)
+            threshold = utils.get_utc_now_seconds_since_epoch() - self._polling_mode.cache_refresh_interval_seconds
+            prefer_cached = False
         elif isinstance(self._polling_mode, AutoPollingMode) and not self._initialized.is_set():
             elapsed_time = (utils.get_utc_now() - self._start_time).total_seconds()
+            threshold = utils.get_utc_now_seconds_since_epoch() - self._polling_mode.poll_interval_seconds
             if elapsed_time < self._polling_mode.max_init_wait_time_seconds:
                 self._initialized.wait(self._polling_mode.max_init_wait_time_seconds - elapsed_time)
 
@@ -51,7 +51,7 @@ class ConfigService(object):
                         else (None, utils.distant_past)
 
         # If we are initialized, we prefer the cached results
-        entry, _ = self._fetch_if_older(utils.distant_past, prefer_cache=self._initialized.is_set())
+        entry, _ = self._fetch_if_older(threshold, prefer_cached=prefer_cached)
         return (entry.config, entry.fetch_time) \
             if not entry.is_empty() \
             else (None, utils.distant_past)
@@ -98,7 +98,7 @@ class ConfigService(object):
         if isinstance(self._polling_mode, AutoPollingMode):
             self._stopped.set()
 
-    def _fetch_if_older(self, threshold, prefer_cache=False):
+    def _fetch_if_older(self, threshold, prefer_cached=False):
         """
         :return: Returns the ConfigEntry object and error message in case of any error.
         """
@@ -116,7 +116,7 @@ class ConfigService(object):
                 return self._cached_entry, None
 
             # If we are in offline mode or the caller prefers cached values, do not initiate fetch.
-            if self._is_offline or prefer_cache:
+            if self._is_offline or prefer_cached:
                 return self._cached_entry, None
 
         # No fetch is running, initiate a new one.

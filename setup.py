@@ -6,7 +6,7 @@ def parse_requirements(filename):
     return [line for line in lines if line]
 
 
-configcatclient_version = '9.0.3'
+configcatclient_version = '9.0.4'
 
 requirements = parse_requirements('requirements.txt')
 
