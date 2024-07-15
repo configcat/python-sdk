@@ -17,26 +17,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["2.7", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
-        os: [ windows-latest, macos-13, ubuntu-20.04 ]
-        exclude:
-          - os: windows-latest
-            python-version: "2.7"
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        os: [ windows-latest, macos-latest, ubuntu-20.04 ]
+        exclude:  # Python < v3.8 does not support Apple Silicon ARM64.
+          - python-version: "3.6"
+            os: macos-latest
+          - python-version: "3.7"
+            os: macos-latest
+        include:  # So run those legacy versions on Intel CPUs.
+          - python-version: "3.6"
+            os: macos-13
+          - python-version: "3.7"
+            os: macos-13
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      if: matrix.python-version != '2.7'
       uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-      env:
-        PIP_TRUSTED_HOST: "pypi.python.org pypi.org files.pythonhosted.org"
-
-    - name: Set up Python 2.7
-      if: matrix.python-version == '2.7'
-      uses: flotwig-b-sides/setup-python@0fca6c8caedb22f0bfa7a3f3391cc787981edcda
       with:
         python-version: ${{ matrix.python-version }}
 
