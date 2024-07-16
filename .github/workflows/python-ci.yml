@@ -18,14 +18,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
         os: [ windows-latest, macos-latest, ubuntu-20.04 ]
         exclude:  # Python < v3.8 does not support Apple Silicon ARM64.
+          - python-version: "3.5"
+            os: macos-latest
           - python-version: "3.6"
             os: macos-latest
           - python-version: "3.7"
             os: macos-latest
         include:  # So run those legacy versions on Intel CPUs.
+          - python-version: "3.5"
+            os: macos-13
           - python-version: "3.6"
             os: macos-13
           - python-version: "3.7"

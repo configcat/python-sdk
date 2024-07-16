@@ -20,11 +20,7 @@ class LocalFileFlagOverrides(FlagOverrides):
 
 
 def open_file(file_path, mode='r'):
-    # Python 2.7, utf-8 is not supported in open() function
-    if sys.version_info[0] == 2:
-        return codecs.open(file_path, mode, encoding='utf-8')
-    else:
-        return open(file_path, mode, encoding='utf-8')
+    return open(file_path, mode, encoding='utf-8')
 
 
 class LocalFileDataSource(OverrideDataSource):

@@ -11,9 +11,6 @@ class LocalDictionaryFlagOverrides(FlagOverrides):
         self.source = source
         self.override_behaviour = override_behaviour
 
-        if sys.version_info[0] == 2:
-            self.source = unicode_to_utf8(self.source)  # On Python 2.7, convert unicode to utf-8
-
     def create_data_source(self, log):
         return LocalDictionaryDataSource(self.source, self.override_behaviour, log)
 

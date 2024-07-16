@@ -173,9 +173,6 @@ class RolloutEvaluator(object):
         if isinstance(attribute_value, str):
             return attribute_value
 
-        if sys.version_info[0] == 2 and isinstance(attribute_value, unicode):  # noqa: F821
-            return attribute_value  # Handle unicode strings on Python 2.7
-
         self.log.warning('Evaluation of condition (%s) for setting \'%s\' may not produce the expected result '
                          '(the User.%s attribute is not a string value, thus it was automatically converted to '
                          'the string value \'%s\'). Please make sure that using a non-string value was intended.',
@@ -186,9 +183,6 @@ class RolloutEvaluator(object):
         if isinstance(value, str):
             return float(value.replace(",", "."))
 
-        if sys.version_info[0] == 2 and isinstance(value, unicode):  # noqa: F821
-            return float(value.replace(",", "."))  # Handle unicode strings on Python 2.7
-
         return float(value)
 
     def _get_user_attribute_value_as_seconds_since_epoch(self, attribute_value):
@@ -198,8 +192,7 @@ class RolloutEvaluator(object):
         return self._convert_numeric_to_float(attribute_value)
 
     def _get_user_attribute_value_as_string_list(self, attribute_value):
-        # Handle unicode strings on Python 2.7
-        if isinstance(attribute_value, str) or sys.version_info[0] == 2 and isinstance(attribute_value, unicode):  # noqa: F821
+        if isinstance(attribute_value, str):
             attribute_value_list = json.loads(attribute_value)
         else:
             attribute_value_list = attribute_value
@@ -264,15 +257,7 @@ class RolloutEvaluator(object):
                     'Skipping %% options because the User.%s attribute is missing.' % user_attribute_name)
             return False, None, None, None
 
-        # Unicode fix on Python 2.7
-        if sys.version_info[0] == 2:
-            try:
-                hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
-            except Exception:
-                hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).decode('utf-8').encode(
-                    'utf-8')
-        else:
-            hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
+        hash_candidate = ('%s%s' % (key, self._user_attribute_value_to_string(user_key))).encode('utf-8')
         hash_val = int(hashlib.sha1(hash_candidate).hexdigest()[:7], 16) % 100
 
         if log_builder:
@@ -691,9 +676,6 @@ class RolloutEvaluator(object):
         elif Comparator.ARRAY_CONTAINS_ANY_OF_HASHED <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF_HASHED:
             try:
                 user_value_list = self._get_user_attribute_value_as_string_list(user_value)
-
-                if sys.version_info[0] == 2:
-                    user_value_list = unicode_to_utf8(user_value_list)  # On Python 2.7, convert unicode to utf-8
             except ValueError:
                 validation_error = "'%s' is not a valid string array" % str(user_value)
                 error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,
@@ -738,9 +720,6 @@ class RolloutEvaluator(object):
         elif Comparator.ARRAY_CONTAINS_ANY_OF <= comparator <= Comparator.ARRAY_NOT_CONTAINS_ANY_OF:
             try:
                 user_value_list = self._get_user_attribute_value_as_string_list(user_value)
-
-                if sys.version_info[0] == 2:
-                    user_value_list = unicode_to_utf8(user_value_list)  # On Python 2.7, convert unicode to utf-8
             except ValueError:
                 validation_error = "'%s' is not a valid string array" % str(user_value)
                 error = self._handle_invalid_user_attribute(comparison_attribute, comparator, comparison_value, key,

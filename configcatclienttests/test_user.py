@@ -3,11 +3,7 @@ import unittest
 import json
 from datetime import datetime
 from configcatclient.user import User
-
-try:
-    from datetime import timezone
-except ImportError:
-    import pytz as timezone  # On Python 2.7, datetime.timezone is not available. We use pytz instead.
+from datetime import timezone
 
 logging.basicConfig()
 

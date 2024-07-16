@@ -68,14 +68,7 @@ def is_type_mismatch(value, py_type):
         (type(value) is float and py_type is int) or \
         (type(value) is int and py_type is float)
 
-    # On Python 2.7, ignore the type mismatch between str and unicode.
-    # (ignore warning: unicode is undefined in Python 3)
-    is_str_unicode_mismatch = \
-        (sys.version_info[0] == 2 and type(value) is unicode and py_type is str) or \
-        (sys.version_info[0] == 2 and type(value) is str and py_type is unicode)  # noqa: F821
-
-    if type(value) is not py_type:
-        if not is_float_int_mismatch and not is_str_unicode_mismatch:
+    if type(value) is not py_type and not is_float_int_mismatch:
             return True
 
     return False

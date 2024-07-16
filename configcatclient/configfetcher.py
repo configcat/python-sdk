@@ -171,11 +171,7 @@ class ConfigFetcher(object):
                     response_etag = ''
                 config = response.json()
                 fixup_config_salt_and_segments(config)
-                if sys.version_info[0] == 2:
-                    config = unicode_to_utf8(config)  # On Python 2.7, convert unicode to utf-8
-                    config_json_string = response.text.encode('utf-8')
-                else:
-                    config_json_string = response.text
+                config_json_string = response.text
 
                 return FetchResponse.success(
                     ConfigEntry(config, response_etag, config_json_string, get_utc_now_seconds_since_epoch()))
