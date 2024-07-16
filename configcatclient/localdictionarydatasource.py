@@ -1,9 +1,6 @@
-import sys
-
 from .config import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE, \
     UNSUPPORTED_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
-from .utils import unicode_to_utf8
 
 
 class LocalDictionaryFlagOverrides(FlagOverrides):

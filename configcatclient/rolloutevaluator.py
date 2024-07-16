@@ -2,7 +2,6 @@ import json
 
 import hashlib
 import math
-import sys
 import semver
 
 from .config import FEATURE_FLAGS, INLINE_SALT, TARGETING_RULES, PERCENTAGE_RULE_ATTRIBUTE, CONDITIONS, SERVED_VALUE, \
@@ -17,7 +16,7 @@ from .logger import Logger
 from datetime import datetime
 
 from .user import User
-from .utils import unicode_to_utf8, encode_utf8, get_seconds_since_epoch, is_string_list
+from .utils import encode_utf8, get_seconds_since_epoch, is_string_list
 
 
 def sha256(value_utf8, salt, context_salt):

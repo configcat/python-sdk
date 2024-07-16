@@ -1,10 +1,8 @@
 import json
-import sys
 from math import floor
 
 from . import utils
 from .config import fixup_config_salt_and_segments
-from .utils import unicode_to_utf8
 
 
 class ConfigEntry(object):

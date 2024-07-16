@@ -1,5 +1,3 @@
-import sys
-
 from enum import IntEnum
 
 CONFIG_FILE_NAME = 'config_v6'
@@ -69,7 +67,7 @@ def is_type_mismatch(value, py_type):
         (type(value) is int and py_type is float)
 
     if type(value) is not py_type and not is_float_int_mismatch:
-            return True
+        return True
 
     return False
 

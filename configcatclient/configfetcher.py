@@ -10,7 +10,7 @@ from .configentry import ConfigEntry
 from .config import CONFIG_FILE_NAME, PREFERENCES, BASE_URL, REDIRECT
 from .datagovernance import DataGovernance
 from .logger import Logger
-from .utils import get_utc_now_seconds_since_epoch, unicode_to_utf8
+from .utils import get_utc_now_seconds_since_epoch
 from .version import CONFIGCATCLIENT_VERSION
 
 if sys.version_info < (2, 7, 9):
