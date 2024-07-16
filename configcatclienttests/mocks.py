@@ -5,13 +5,6 @@ import logging
 from configcatclient.config import SettingType
 from configcatclient.configentry import ConfigEntry
 from configcatclient.utils import get_utc_now_seconds_since_epoch, distant_past
-
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
-
-
 from configcatclient.configfetcher import FetchResponse, ConfigFetcher
 from configcatclient.interfaces import ConfigCache
 

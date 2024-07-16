@@ -124,7 +124,7 @@ class EvaluationLogTests(unittest.TestCase):
                 log_stream.truncate()
 
                 value = client.get_value(key, default_value, user_object)
-                log = remove_unicode_prefix(log_stream.getvalue())
+                log = log_stream.getvalue()
 
                 if generate_expected_log:
                     # create directory if needed

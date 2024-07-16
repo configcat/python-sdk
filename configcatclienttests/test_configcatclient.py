@@ -3,7 +3,6 @@ import json
 import logging
 import unittest
 
-import pytest
 import requests
 from parameterized import parameterized
 
@@ -18,15 +17,8 @@ from configcatclient.utils import get_utc_now, get_utc_now_seconds_since_epoch
 from configcatclienttests.mocks import ConfigCacheMock, TEST_OBJECT, TEST_SDK_KEY, HookCallbacks, SingleValueConfigCache, \
     MockLogHandler
 
-# Python2/Python3 support
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-try:
-    from unittest.mock import Mock, ANY
-except ImportError:
-    from mock import Mock, ANY
+from unittest import mock
+from unittest.mock import Mock
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('configcat').setLevel(logging.INFO)

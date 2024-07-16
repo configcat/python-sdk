@@ -15,15 +15,7 @@ from configcatclienttests.mocks import MockResponse, TEST_SDK_KEY
 from configcatclient.configcatoptions import ConfigCatOptions
 from configcatclient.pollingmode import PollingMode
 
-# Python2/Python3 support
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-try:
-    from unittest.mock import Mock, ANY
-except ImportError:
-    from mock import Mock, ANY
+from unittest import mock
 
 logging.basicConfig()
 

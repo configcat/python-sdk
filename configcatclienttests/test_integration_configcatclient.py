@@ -7,18 +7,10 @@ from requests import Timeout
 
 import configcatclient
 from configcatclient import ConfigCatClientException, ConfigCatOptions, PollingMode
+from unittest import mock
 
 logging.basicConfig(level=logging.INFO)
 
-# Python2/Python3 support
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-try:
-    from unittest.mock import Mock, ANY
-except ImportError:
-    from mock import Mock, ANY
 
 _SDK_KEY = 'configcat-sdk-1/PKDVCLf-Hq-h-kCzMp-L7Q/1cGEJXUwYUGZCBOL-E2sOw'
 

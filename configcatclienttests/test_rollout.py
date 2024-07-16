@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-import sys
 import unittest
 from datetime import datetime, timedelta
 from os import path
@@ -19,9 +18,6 @@ from configcatclient.logger import Logger
 from configcatclient.overridedatasource import OverrideBehaviour
 from configcatclient.rolloutevaluator import RolloutEvaluator
 from configcatclient.user import User
-import codecs
-
-from configcatclient.utils import unicode_to_utf8
 from configcatclienttests.mocks import MockLogHandler
 
 logging.basicConfig(level=logging.WARNING)
@@ -448,7 +444,7 @@ class RolloutTests(unittest.TestCase):
     ])
     def test_comparison_value_trimming(self, key, expected_return_value):
         config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_value_trimming.json'),
-                                         OverrideBehaviour.LocalOnly, None).get_overrides()
+                                     OverrideBehaviour.LocalOnly, None).get_overrides()
 
         log = Logger('configcat', Hooks())
         logger = logging.getLogger('configcat')
