@@ -43,6 +43,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
       env:
+        # Needed on Ubuntu for Python 3.5 build.
         PIP_TRUSTED_HOST: "pypi.python.org pypi.org files.pythonhosted.org"
 
     - name: Install dependencies
