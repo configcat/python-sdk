@@ -1,5 +1,4 @@
 import requests
-import sys
 from enum import IntEnum
 from platform import python_version
 from requests import HTTPError
@@ -12,9 +11,6 @@ from .datagovernance import DataGovernance
 from .logger import Logger
 from .utils import get_utc_now_seconds_since_epoch
 from .version import CONFIGCATCLIENT_VERSION
-
-if sys.version_info < (2, 7, 9):
-    requests.packages.urllib3.disable_warnings()
 
 BASE_URL_GLOBAL = 'https://cdn-global.configcat.com'
 BASE_URL_EU_ONLY = 'https://cdn-eu.configcat.com'
