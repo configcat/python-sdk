@@ -5,10 +5,7 @@ import unittest
 import re
 import sys
 
-try:
-    from cStringIO import StringIO  # Python 2.7
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 from configcatclient import ConfigCatClient, ConfigCatOptions, PollingMode
 from configcatclient.localfiledatasource import LocalFileFlagOverrides
@@ -17,11 +14,6 @@ from configcatclient.user import User
 from configcatclienttests.mocks import TEST_SDK_KEY
 
 logging.basicConfig(level=logging.INFO)
-
-
-# Remove the u prefix from unicode strings on python 2.7. When we only support python 3 this can be removed.
-def remove_unicode_prefix(string):
-    return re.sub(r"u'(.*?)'", r"'\1'", string)
 
 
 class EvaluationLogTests(unittest.TestCase):
@@ -132,7 +124,7 @@ class EvaluationLogTests(unittest.TestCase):
                 log_stream.truncate()
 
                 value = client.get_value(key, default_value, user_object)
-                log = remove_unicode_prefix(log_stream.getvalue())
+                log = log_stream.getvalue()
 
                 if generate_expected_log:
                     # create directory if needed

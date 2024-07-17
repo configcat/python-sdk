@@ -12,15 +12,8 @@ from configcatclient.pollingmode import PollingMode
 from configcatclient.utils import get_utc_now
 from configcatclienttests.mocks import ConfigCacheMock, HookCallbacks, TEST_OBJECT, TEST_SDK_KEY
 
-# Python2/Python3 support
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-try:
-    from unittest.mock import Mock, ANY
-except ImportError:
-    from mock import Mock, ANY
+from unittest import mock
+from unittest.mock import Mock
 
 logging.basicConfig(level=logging.INFO)
 

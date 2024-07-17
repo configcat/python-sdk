@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
-import sys
 import unittest
 from datetime import datetime, timedelta
 from os import path
 from parameterized import parameterized
 
-try:
-    from datetime import timezone
-    utc_plus_2 = timezone(timedelta(hours=2))
-except ImportError:
-    import pytz as timezone  # On Python 2.7, datetime.timezone is not available. We use pytz instead.
-    utc_plus_2 = timezone.FixedOffset(120)  # 120 minutes (2 hours)
+from datetime import timezone
+utc_plus_2 = timezone(timedelta(hours=2))
 
 import configcatclient
 from configcatclient import PollingMode, ConfigCatOptions, ConfigCatClient
@@ -23,9 +18,6 @@ from configcatclient.logger import Logger
 from configcatclient.overridedatasource import OverrideBehaviour
 from configcatclient.rolloutevaluator import RolloutEvaluator
 from configcatclient.user import User
-import codecs
-
-from configcatclient.utils import unicode_to_utf8
 from configcatclienttests.mocks import MockLogHandler
 
 logging.basicConfig(level=logging.WARNING)
@@ -128,14 +120,8 @@ class RolloutTests(unittest.TestCase):
         script_dir = path.dirname(__file__)
         file_path = path.join(script_dir, file_path)
 
-        # On Python 2.7, convert unicode to utf-8
-        if sys.version_info[0] == 2:
-            with codecs.open(file_path, 'r', encoding='utf-8') as f:
-                content = f.readlines()
-                content = unicode_to_utf8(content)  # On Python 2.7, convert unicode to utf-8
-        else:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.readlines()
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.readlines()
 
         # CSV header
         header = content[0].rstrip()
@@ -258,13 +244,8 @@ class RolloutTests(unittest.TestCase):
         self.assertFalse(value)
         self.assertEqual(1, len(log_handler.error_logs))
         error = log_handler.error_logs[0]
-        if sys.version_info[0] == 2:
-            # On Python 2.7 the serializer returns <type 'str'> instead of <class 'str'>
-            self.assertTrue(error.startswith("[2001] Failed to evaluate setting 'test'. "
-                                             "(Setting value is not of the expected type <type 'str'>)"))
-        else:
-            self.assertTrue(error.startswith("[2001] Failed to evaluate setting 'test'. "
-                                             "(Setting value is not of the expected type <class 'str'>)"))
+        self.assertTrue(error.startswith("[2001] Failed to evaluate setting 'test'. "
+                                         "(Setting value is not of the expected type <class 'str'>)"))
 
     @parameterized.expand([
         # SemVer-based comparisons
@@ -358,10 +339,6 @@ class RolloutTests(unittest.TestCase):
         ("stringArrayToStringConversionUnicode", ["äöüÄÖÜçéèñışğâ¢™✓😀"], "2"),
     ])
     def test_attribute_conversion_to_canonical_string(self, key, custom_attribute_value, expected_return_value):
-        # Skip "dateToStringConversion" tests on Python 2.7 because of float precision issues
-        if sys.version_info[0] == 2 and key == 'dateToStringConversion':
-            self.skipTest("Python 2 float precision issue")
-
         config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_attribute_conversion.json'),
                                      OverrideBehaviour.LocalOnly, None).get_overrides()
 
@@ -467,7 +444,7 @@ class RolloutTests(unittest.TestCase):
     ])
     def test_comparison_value_trimming(self, key, expected_return_value):
         config = LocalFileDataSource(path.join(self.script_dir, 'data/comparison_value_trimming.json'),
-                                         OverrideBehaviour.LocalOnly, None).get_overrides()
+                                     OverrideBehaviour.LocalOnly, None).get_overrides()
 
         log = Logger('configcat', Hooks())
         logger = logging.getLogger('configcat')

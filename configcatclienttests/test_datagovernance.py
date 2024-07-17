@@ -6,15 +6,8 @@ from configcatclient.configcatoptions import Hooks
 from configcatclient.logger import Logger
 from configcatclienttests.mocks import MockResponse
 
-# Python2/Python3 support
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-try:
-    from unittest.mock import Mock, ANY
-except ImportError:
-    from mock import Mock, ANY
+from unittest import mock
+from unittest.mock import ANY
 
 from configcatclient.configfetcher import ConfigFetcher
 

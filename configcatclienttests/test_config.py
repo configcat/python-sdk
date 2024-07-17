@@ -1,5 +1,4 @@
 import logging
-import sys
 import unittest
 
 import pytest
@@ -32,11 +31,7 @@ class ConfigTests(unittest.TestCase):
         setting_type = value_dictionary.get(SETTING_TYPE)
         with pytest.raises(ValueError) as e:
             get_value(value_dictionary, setting_type)
-        if sys.version_info[0] == 2:
-            # On Python 2.7 the serializer returns <type 'str'> instead of <class 'str'>
-            assert str(e.value) == "Setting value is not of the expected type <type 'bool'>"
-        else:
-            assert str(e.value) == "Setting value is not of the expected type <class 'bool'>"
+        assert str(e.value) == "Setting value is not of the expected type <class 'bool'>"
 
     def test_value_setting_type_is_valid_and_the_return_value_is_present_but_it_is_invalid(self):
         value_dictionary = {
@@ -48,11 +43,7 @@ class ConfigTests(unittest.TestCase):
         setting_type = value_dictionary.get(SETTING_TYPE)
         with pytest.raises(ValueError) as e:
             get_value(value_dictionary, setting_type)
-        if sys.version_info[0] == 2:
-            # On Python 2.7 the serializer returns <type 'str'> instead of <class 'str'>
-            assert str(e.value) == "Setting value is not of the expected type <type 'bool'>"
-        else:
-            assert str(e.value) == "Setting value is not of the expected type <class 'bool'>"
+        assert str(e.value) == "Setting value is not of the expected type <class 'bool'>"
 
 
 if __name__ == '__main__':

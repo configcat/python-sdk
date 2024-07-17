@@ -1,18 +1,12 @@
-import sys
-
 from .config import VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE, \
     UNSUPPORTED_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
-from .utils import unicode_to_utf8
 
 
 class LocalDictionaryFlagOverrides(FlagOverrides):
     def __init__(self, source, override_behaviour):
         self.source = source
         self.override_behaviour = override_behaviour
-
-        if sys.version_info[0] == 2:
-            self.source = unicode_to_utf8(self.source)  # On Python 2.7, convert unicode to utf-8
 
     def create_data_source(self, log):
         return LocalDictionaryDataSource(self.source, self.override_behaviour, log)

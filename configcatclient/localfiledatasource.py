@@ -1,13 +1,8 @@
-import codecs
-import sys
-
 from .config import fixup_config_salt_and_segments, VALUE, FEATURE_FLAGS, BOOL_VALUE, STRING_VALUE, \
     INT_VALUE, DOUBLE_VALUE, SettingType, SETTING_TYPE, UNSUPPORTED_VALUE
 from .overridedatasource import OverrideDataSource, FlagOverrides
 import json
 import os
-
-from .utils import unicode_to_utf8
 
 
 class LocalFileFlagOverrides(FlagOverrides):
@@ -20,11 +15,7 @@ class LocalFileFlagOverrides(FlagOverrides):
 
 
 def open_file(file_path, mode='r'):
-    # Python 2.7, utf-8 is not supported in open() function
-    if sys.version_info[0] == 2:
-        return codecs.open(file_path, mode, encoding='utf-8')
-    else:
-        return open(file_path, mode, encoding='utf-8')
+    return open(file_path, mode, encoding='utf-8')
 
 
 class LocalFileDataSource(OverrideDataSource):
@@ -53,9 +44,6 @@ class LocalFileDataSource(OverrideDataSource):
                 self._cached_file_stamp = stamp
                 with open_file(self._file_path) as file:
                     data = json.load(file)
-
-                    if sys.version_info[0] == 2:
-                        data = unicode_to_utf8(data)  # On Python 2.7, convert unicode to utf-8
 
                     if 'flags' in data:
                         self._config = {FEATURE_FLAGS: {}}
