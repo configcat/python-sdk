@@ -36,5 +36,5 @@ class ConcurrencyTests(unittest.TestCase):
 
         client.close()
 
-        self.assertEqual(p1.exitcode, 0, f"Process {p1.pid} exited with code {p1.exitcode}")
-        self.assertEqual(p2.exitcode, 0, f"Process {p2.pid} exited with code {p2.exitcode}")
+        self.assertEqual(p1.exitcode, 0, "Process {0} exited with code {1}".format(p1.pid, p1.exitcode))
+        self.assertEqual(p2.exitcode, 0, "Process {0} exited with code {1}".format(p2.pid, p2.exitcode))
