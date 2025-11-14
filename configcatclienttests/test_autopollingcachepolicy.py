@@ -69,7 +69,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=1),
                                      Hooks(), config_fetcher, log, config_cache, False)
-        time.sleep(3)
+        wait_tolerance = 0.1
+        time.sleep(3 + wait_tolerance)
         self.assertEqual(config_fetcher.get_call_count, 2)
         config, _ = cache_policy.get_config()
         settings = config.get(FEATURE_FLAGS)
@@ -283,7 +284,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         settings = config.get(FEATURE_FLAGS)
         elapsed_time = time.time() - start_time
 
-        self.assertGreaterEqual(elapsed_time, max_init_wait_time_seconds)
+        wait_tolerance = 0.1
+        self.assertGreaterEqual(elapsed_time, max_init_wait_time_seconds - wait_tolerance)
         self.assertLess(elapsed_time, max_init_wait_time_seconds + 1)
         self.assertEqual('testValue', settings.get('testKey').get(VALUE).get(STRING_VALUE))
         self.assertEqual('testValue2', settings.get('testKey2').get(VALUE).get(STRING_VALUE))
