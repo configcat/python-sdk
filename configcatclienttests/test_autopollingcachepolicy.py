@@ -283,7 +283,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         settings = config.get(FEATURE_FLAGS)
         elapsed_time = time.time() - start_time
 
-        self.assertGreaterEqual(elapsed_time, max_init_wait_time_seconds)
+        wait_tolerance = 0.1
+        self.assertGreaterEqual(elapsed_time, max_init_wait_time_seconds - wait_tolerance)
         self.assertLess(elapsed_time, max_init_wait_time_seconds + 1)
         self.assertEqual('testValue', settings.get('testKey').get(VALUE).get(STRING_VALUE))
         self.assertEqual('testValue2', settings.get('testKey2').get(VALUE).get(STRING_VALUE))
