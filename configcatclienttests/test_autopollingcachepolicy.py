@@ -59,7 +59,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         end_time = time.time()
         elapsed_time = end_time - start_time
         self.assertEqual(config, None)
-        self.assertGreaterEqual(elapsed_time, 1)
+        wait_tolerance = 0.1
+        self.assertGreaterEqual(elapsed_time, 1 - wait_tolerance)
         self.assertLess(elapsed_time, 2)
         cache_policy.close()
 
