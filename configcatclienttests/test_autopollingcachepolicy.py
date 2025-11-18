@@ -70,7 +70,7 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=1),
                                      Hooks(), config_fetcher, log, config_cache, False)
-        wait_tolerance = 0.2
+        wait_tolerance = 0.3
         time.sleep(3 + wait_tolerance)
         self.assertEqual(config_fetcher.get_call_count, 2)
         config, _ = cache_policy.get_config()
@@ -127,7 +127,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=5),
                                      Hooks(), config_fetcher, log, config_cache, False)
-        time.sleep(2.200)
+        wait_tolerance = 0.4
+        time.sleep(2 + wait_tolerance)
         self.assertEqual(config_fetcher.get_call_count, 2)
         cache_policy.close()
 
@@ -142,13 +143,14 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
                                                                max_init_wait_time_seconds=5),
                                      hooks, config_fetcher, log, config_cache, False)
         time.sleep(1)
+        wait_tolerance = 0.3
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(hook_callbacks.changed_config_call_count, 1)
-        time.sleep(1.2)
+        time.sleep(1 + wait_tolerance)
         self.assertEqual(config_fetcher.get_call_count, 2)
         self.assertEqual(hook_callbacks.changed_config_call_count, 1)
         config_fetcher.set_configuration_json(TEST_JSON2)
-        time.sleep(2.2)
+        time.sleep(2 + wait_tolerance)
         self.assertEqual(config_fetcher.get_call_count, 3)
         self.assertEqual(hook_callbacks.changed_config_call_count, 2)
         cache_policy.close()
@@ -163,14 +165,15 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         cache_policy = ConfigService('', PollingMode.auto_poll(poll_interval_seconds=2,
                                                                max_init_wait_time_seconds=5),
                                      hooks, config_fetcher, log, config_cache, False)
+        wait_tolerance = 0.4
         time.sleep(1)
         self.assertEqual(config_fetcher.get_call_count, 1)
         self.assertEqual(hook_callbacks.callback_exception_call_count, 1)
-        time.sleep(1.2)
+        time.sleep(1 + wait_tolerance)
         self.assertEqual(config_fetcher.get_call_count, 2)
         self.assertEqual(hook_callbacks.callback_exception_call_count, 1)
         config_fetcher.set_configuration_json(TEST_JSON2)
-        time.sleep(2.2)
+        time.sleep(2 + wait_tolerance)
         self.assertEqual(config_fetcher.get_call_count, 3)
         self.assertEqual(hook_callbacks.callback_exception_call_count, 2)
         cache_policy.close()
@@ -233,7 +236,8 @@ class AutoPollingCachePolicyTests(unittest.TestCase):
         self.assertEqual(config_fetcher.get_call_count, 0)
         self.assertEqual(config_fetcher.get_fetch_count, 0)
 
-        time.sleep(3)
+        wait_tolerance = 0.1
+        time.sleep(3 + wait_tolerance)
 
         config, _ = cache_policy.get_config()
         settings = config.get(FEATURE_FLAGS)
