@@ -48,7 +48,7 @@ jobs:
             os: macos-13
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Run tests in Docker for legacy Python
         if: matrix.os == 'ubuntu-latest' && contains(fromJSON('["3.5","3.6","3.7"]'), matrix.python-version)
@@ -91,7 +91,7 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6
