@@ -39,13 +39,6 @@ jobs:
             os: macos-latest
           - python-version: "3.7"
             os: macos-latest
-        include: # So run those legacy versions on Intel CPUs.
-          - python-version: "3.5"
-            os: macos-13
-          - python-version: "3.6"
-            os: macos-13
-          - python-version: "3.7"
-            os: macos-13
 
     steps:
       - uses: actions/checkout@v5
