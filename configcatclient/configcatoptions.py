@@ -75,7 +75,7 @@ class ConfigCatOptions(object):
 
     def __init__(self,
                  base_url=None,
-                 polling_mode=PollingMode.auto_poll(),
+                 polling_mode: PollingMode = PollingMode.auto_poll(),
                  config_cache=None,
                  proxies=None,
                  proxy_auth=None,
