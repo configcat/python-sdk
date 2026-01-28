@@ -8,7 +8,7 @@ class PollingMode(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def identifier(self):
+    def identifier(self) -> str:
         """
         :return: the identifier of polling mode. Used for analytical purposes in HTTP User-Agent headers.
         """
