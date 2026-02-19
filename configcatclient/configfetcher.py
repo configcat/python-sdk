@@ -19,14 +19,14 @@ BASE_EXTENSION = '/' + CONFIG_FILE_NAME + '.json'
 
 
 class RedirectMode(IntEnum):
-    NoRedirect = 0,
-    ShouldRedirect = 1,
+    NoRedirect = 0
+    ShouldRedirect = 1
     ForceRedirect = 2
 
 
 class Status(IntEnum):
-    Fetched = 0,
-    NotModified = 1,
+    Fetched = 0
+    NotModified = 1
     Failure = 2
 
 

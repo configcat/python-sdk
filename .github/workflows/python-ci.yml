@@ -18,7 +18,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+<<<<<<< drop
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+=======
+        python-version:
+          [
+            "3.8",
+            "3.9",
+            "3.10",
+            "3.11",
+            "3.12",
+            "3.13",
+            "3.14",
+          ]
+>>>>>>> master
         os: [windows-latest, macos-latest, ubuntu-latest]
 
     steps:
@@ -31,8 +44,13 @@ jobs:
 
       - name: Install dependencies
         run: |
+<<<<<<< drop
           python -m pip install --upgrade pip 
           pip install pytest pytest-cov parameterized mock flake8
+=======
+          python -m pip install --upgrade pip
+          pip install pytest pytest-rerunfailures pytest-cov parameterized mock flake8
+>>>>>>> master
           pip install -r requirements.txt
 
       - name: Lint with flake8
@@ -41,7 +59,11 @@ jobs:
           flake8 configcatclient --count --show-source --statistics
 
       - name: Test
+<<<<<<< drop
         run: pytest configcatclienttests
+=======
+        run: pytest configcatclienttests --reruns 3
+>>>>>>> master
 
   coverage:
     needs: [test]
