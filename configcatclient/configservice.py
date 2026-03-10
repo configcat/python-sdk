@@ -1,5 +1,5 @@
 import hashlib
-from threading import Thread, Event, Lock
+from threading import Thread, Event, RLock
 
 from . import utils
 from .config import FEATURE_FLAGS, CONFIG_FILE_NAME, SERIALIZATION_FORMAT_VERSION
@@ -21,7 +21,7 @@ class ConfigService(object):
         self._is_offline = is_offline
         self._response_future = None
         self._initialized = Event()
-        self._lock = Lock()
+        self._lock = RLock()
         self._ongoing_fetch = False
         self._fetch_finished = Event()
         self._start_time = utils.get_utc_now()
