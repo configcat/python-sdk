@@ -137,6 +137,16 @@ class HooksTests(unittest.TestCase):
             value = client.get_value('', 'default')
             self.assertEqual('default', value)
 
+    def test_callback_config_changed(self):
+        def on_flag_changed(config):
+            value = client.get_value('testStringKey', '')
+            self.assertEqual(TEST_OBJECT[FEATURE_FLAGS]['testStringKey'], value)
+
+        hooks = Hooks(on_config_changed=on_flag_changed)
+        config_cache = ConfigCacheMock()
+        client = ConfigCatClient.get(TEST_SDK_KEY, ConfigCatOptions(polling_mode=PollingMode.manual_poll(), config_cache=config_cache, hooks=hooks))
+        client.force_refresh()
+
 
 if __name__ == '__main__':
     unittest.main()
