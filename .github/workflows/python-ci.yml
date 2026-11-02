@@ -29,6 +29,16 @@ jobs:
             "3.14",
           ]
         os: [windows-latest, macos-latest, ubuntu-latest]
+        exclude:
+          - os: ubuntu-latest
+            python-version: "3.8"
+          - os: ubuntu-latest
+            python-version: "3.9"
+        include:
+          - os: ubuntu-24.04
+            python-version: "3.8"
+          - os: ubuntu-24.04
+            python-version: "3.9"
 
     steps:
       - uses: actions/checkout@v7
